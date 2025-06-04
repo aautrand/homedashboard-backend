@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any
+from typing import Any, Dict
+
 from dashboard.src.weather.clients.models.observation import Observation
+
 
 class ObservationMapper(ABC):
     @abstractmethod

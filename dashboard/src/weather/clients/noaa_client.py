@@ -1,10 +1,13 @@
 import requests
+
 from dashboard.src.weather.clients.base import WeatherClient
-from dashboard.src.weather.clients.models.mappers.noaa_mapper import NOAAObservationMapper
+from dashboard.src.weather.clients.models.mappers.noaa_mapper import (
+    NOAAObservationMapper,
+)
 
 
 class NOAAWeatherClient(WeatherClient):
-    BASE_URL = 'https://api.weather.gov'
+    BASE_URL = "https://api.weather.gov"
     mapper = NOAAObservationMapper()
 
     def fetch_raw_observation(self, location: str) -> dict:

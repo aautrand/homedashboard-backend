@@ -1,9 +1,13 @@
 from flask import Flask
+
 from dashboard.src.weather.clients.noaa_client import NOAAWeatherClient
+
 
 def register_blueprints(app):
     from dashboard.src.weather import bp
+
     app.register_blueprint(bp)
+
 
 def create_app():
     app = Flask(__name__)

@@ -1,6 +1,6 @@
 import json
-from dataclasses import dataclass, asdict
-from typing import Optional, Any, Dict, Callable
+from dataclasses import asdict, dataclass
+from typing import Any, Callable, Dict, Optional
 
 
 @dataclass

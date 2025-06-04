@@ -1,8 +1,8 @@
 from flask import Blueprint
+
 from dashboard.src.weather.clients.base import get_weather_client
 
-
-bp = Blueprint('weather', __name__, url_prefix="/weather")
+bp = Blueprint("weather", __name__, url_prefix="/weather")
 
 
 @bp.route("/current")
