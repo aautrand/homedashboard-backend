@@ -7,3 +7,7 @@ run:
 format:
 	isort .
 	black .
+
+format-check:
+	isort --check --diff .
+	black --check --diff .
