@@ -1,12 +1,14 @@
 services:
   dashboard_be:
-    build: ..
+    build: .
     ports:
-      - "5000:5000"
+      - "8000:8000"
     volumes:
       - .:/app
     environment:
       - FLASK_ENV=development
+      - FLASK_RUN_PORT=8000
+      - FLASK_RUN_HOST=0.0.0.0
     depends_on:
       - db
 

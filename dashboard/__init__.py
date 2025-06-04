@@ -8,7 +8,6 @@ def register_blueprints(app):
 def create_app():
     app = Flask(__name__)
 
-
     # Configuration
     app.config["WEATHER_CLIENT"] = NOAAWeatherClient()
     # TODO Find out what happens if I register the blueprint before setting the config
