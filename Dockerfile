@@ -1,5 +1,5 @@
 # Use a small Python base image
-FROM python:3.11-slim
+FROM python:3-alpine
 
 # Set workdir
 WORKDIR /app
@@ -21,10 +21,10 @@ COPY . .
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=development
 ENV FLASK_RUN_HOST=0.0.0.0
-ENV FLASK_RUN_PORT=8000
+ENV FLASK_RUN_PORT=8050
 
 # Expose the default Flask port
-EXPOSE 5000
+EXPOSE 8050
 
 # Use Gunicorn for production‐grade serving
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8050", "app:app"]
