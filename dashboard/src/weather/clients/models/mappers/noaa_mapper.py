@@ -1,14 +1,10 @@
 from typing import Any, Dict, Optional
 
+from dashboard.src.utils.helpers import _get
 from dashboard.src.weather.clients.models.observation import Observation
 
 from .base import ObservationMapper
 
-
-def _get(d: Dict, *keys) -> Any:
-    for k in keys:
-        d = d.get(k, {})
-    return d.get("value") if isinstance(d, dict) else None
 
 
 class NOAAObservationMapper(ObservationMapper):

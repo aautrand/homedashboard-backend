@@ -1,20 +1,41 @@
-from flask import Flask
+import logging
+import os
+from pathlib import Path
 
+from flask import Flask
+from dashboard.src.utils.Loggers import IgnoreIcalFilter
 from dashboard.src.weather.clients.noaa_client import NOAAWeatherClient
 
 
-def register_blueprints(app):
-    from dashboard.src.weather import bp
+def setup_config(app):
 
-    app.register_blueprint(bp)
+    app.config["WEATHER_CLIENT"] = NOAAWeatherClient()
+    app.config["APPLE_USER"] = os.getenv("APPLE_USER")
+    app.config["APPLE_DASHBOARD_SECRET"] = os.getenv("APPLE_DASHBOARD_SECRET")
+    app.config["CALDAV_ICLOUD_URL"] = os.getenv("CALDAV_ICLOUD_URL")
+    app.config["RABBIT_URL"] = os.getenv("RABBIT_URL")
+
+
+def setup_logging():
+    logging.getLogger().addFilter(IgnoreIcalFilter())
+
+
+def register_blueprints(app):
+    from dashboard.src.weather import weather
+    from dashboard.src.calendar import calendar
+
+    app.register_blueprint(weather)
+    app.register_blueprint(calendar)
 
 
 def create_app():
+
     app = Flask(__name__)
 
     # Configuration
-    app.config["WEATHER_CLIENT"] = NOAAWeatherClient()
-    # TODO Find out what happens if I register the blueprint before setting the config
+    setup_config(app)
+
+    # Register blueprints
     register_blueprints(app)
 
     return app
