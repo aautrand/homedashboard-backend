@@ -6,7 +6,6 @@ from dashboard.src.weather.clients.models.observation import Observation
 from .base import ObservationMapper
 
 
-
 class NOAAObservationMapper(ObservationMapper):
     def map(self, raw: Dict[str, Any]) -> Observation:
         props = raw.get("properties", {})

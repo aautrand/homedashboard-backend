@@ -1,4 +1,5 @@
 from datetime import datetime, time
+
 from flask import Blueprint, current_app
 
 from dashboard.src.calendar.clients.base import get_calendar_client

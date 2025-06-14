@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 from flask import Flask
+
 from dashboard.src.utils.Loggers import IgnoreIcalFilter
 from dashboard.src.weather.clients.noaa_client import NOAAWeatherClient
 
@@ -21,8 +22,8 @@ def setup_logging():
 
 
 def register_blueprints(app):
-    from dashboard.src.weather import weather
     from dashboard.src.calendar import calendar
+    from dashboard.src.weather import weather
 
     app.register_blueprint(weather)
     app.register_blueprint(calendar)
