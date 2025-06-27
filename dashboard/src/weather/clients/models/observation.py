@@ -4,11 +4,13 @@ from typing import Any, Dict, Optional
 
 
 @dataclass
-class Observation:
+class WeatherObservation:
+    text_description: Optional[str]
     station_id: Optional[str]
     wind_speed: Optional[float]
     wind_direction: Optional[float]
     temperature: Optional[float]
+    temperature_f: Optional[float]
     dewpoint: Optional[float]
     visibility: Optional[float]
     raw_message: Optional[str]

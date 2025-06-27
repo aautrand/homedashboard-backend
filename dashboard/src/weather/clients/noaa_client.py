@@ -10,9 +10,13 @@ class NOAAWeatherClient(WeatherClient):
     BASE_URL = "https://api.weather.gov"
     mapper = NOAAObservationMapper()
 
-    def fetch_raw_observation(self, location: str) -> dict:
+    def fetch_raw_observation(self, location: str):
         pts = requests.get(f"{self.BASE_URL}/points/{location}").json()
+        forecast = requests.get(pts["properties"]["forecast"]).json()
+
         station = pts["properties"]["radarStation"]
-        return requests.get(
+        observations = requests.get(
             f"{self.BASE_URL}/stations/{station}/observations/latest"
         ).json()
+
+        return pts, forecast, observations

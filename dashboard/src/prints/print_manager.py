@@ -1,0 +1,100 @@
+import json
+from datetime import datetime, time, timedelta
+
+from flask import current_app
+
+from dashboard.src.calendar import get_calendar_client
+from dashboard.src.prints.receipts.formatter import ReceiptFormatter
+from dashboard.src.prints.receipts.section import (
+    MultiElementSection,
+    SingleElementSection,
+)
+from dashboard.src.tasks.birthdays import BirthdayProcessor
+from dashboard.src.weather.clients.base import get_weather_client
+
+
+class PrintManager:
+    @staticmethod
+    def extract_birthdays(events):
+        birthdays = []
+        for event in events:
+            json_events = json.loads(event)
+            if "birthday" in json_events["summary"].lower():
+                birthdays.append(json_events["summary"].split(" ")[0].replace("'s", ""))
+                events.remove(event)
+        return birthdays
+
+    @staticmethod
+    def extract_events(events):
+        all_day_events = []
+        timed_events = []
+        calendar_events = []
+        for raw in events[:]:
+            data = json.loads(raw)
+            dt = datetime.fromisoformat(data["start_time"])
+            # blank out midnight; otherwise HH:MM
+            if dt.hour == 0 and dt.minute == 0:
+                all_day_events.append(data["summary"])
+            else:
+                time_str = dt.strftime("%H:%M")
+                timed_events.append((time_str, data["summary"]))
+            events.remove(raw)
+
+        timed_events.sort(
+            key=lambda x: (
+                x[0] == "",  # False (i.e. non-blank) comes before True
+                datetime.strptime(x[0], "%H:%M").time() if x[0] else time.min,
+            )
+        )
+
+        return all_day_events, timed_events, calendar_events
+
+    @staticmethod
+    def print_tasks():
+        receipt_formatter = ReceiptFormatter()
+
+        # weather
+        weather_client = get_weather_client("noaa")
+        current = weather_client.get_current_weather(current_app.config["LAT_LONG"])
+        formatted_weather = [
+            f"Current: {current.temperature}C / {current.temperature_f}F"
+        ]
+        receipt_formatter.add_section(
+            MultiElementSection(
+                title="Weather",
+                items=[f"{current.temperature}C", f"{current.temperature_f}F"],
+                bullet="",
+            )
+        )
+
+        # get calendar events
+        calendar_client = get_calendar_client()
+
+        # today = datetime.today()
+        today = datetime.today()
+        start = datetime.combine(today, time(hour=0, minute=0))
+        end = datetime.combine(today, time(hour=23, minute=59))
+        calendars = [current_app.config["MAIN_CALENDAR"], "Chores"]
+        event_list = calendar_client.get_today_events(calendars, start, end)
+
+        # Insert birthdays
+        birthdays = PrintManager.extract_birthdays(event_list)
+        receipt_formatter.add_section(MultiElementSection("Birthdays", birthdays))
+
+        # Insert calendar events
+        all_day_events, timed_events, calendar_events = PrintManager.extract_events(
+            event_list
+        )
+        receipt_formatter.add_section(
+            MultiElementSection(
+                "Calendar",
+                timed_events,
+                bullet="*",
+                formatter=lambda t: f"{t[0]} - {t[1]}",
+            )
+        )
+
+        # TODO Insert chores
+        # Insert tasks
+        final = receipt_formatter.build()
+        return final
