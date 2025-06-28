@@ -22,7 +22,6 @@ def setup_logging():
 
 
 def register_blueprints(app):
-    from dashboard.src.banking import banking
     from dashboard.src.calendar import calendar
     from dashboard.src.tasks import tasks
     from dashboard.src.weather import weather
@@ -30,7 +29,6 @@ def register_blueprints(app):
     app.register_blueprint(weather)
     app.register_blueprint(calendar)
     app.register_blueprint(tasks)
-    app.register_blueprint(banking)
 
 
 def setup_message_broker(app):
