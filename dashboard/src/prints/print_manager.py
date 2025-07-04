@@ -6,9 +6,7 @@ from flask import current_app
 
 from dashboard.src.calendar import get_calendar_client
 from dashboard.src.prints.receipts.formatter import ReceiptFormatter
-from dashboard.src.prints.receipts.section import (
-    MultiElementSection,
-)
+from dashboard.src.prints.receipts.section import MultiElementSection
 from dashboard.src.utils.helpers import latex_to_png, scp_files
 from dashboard.src.weather.clients.base import get_weather_client
 
@@ -117,4 +115,4 @@ class PrintManager:
             latex_to_png(expr, i, fname, fontsize=9, dpi=300, pad_inches=0.05)
             print(f"Wrote {fname}")
 
-        scp_files(files,"printer", "printers", "/tmp/")
+        scp_files(files, "printer", "printers", "/tmp/")

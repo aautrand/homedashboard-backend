@@ -23,15 +23,16 @@ def setup_logging():
 
 
 def register_blueprints(app):
+    from dashboard.src.ai import ai
     from dashboard.src.calendar import calendar
     from dashboard.src.tasks import tasks
     from dashboard.src.weather import weather
-    from dashboard.src.ai import ai
 
     app.register_blueprint(weather)
     app.register_blueprint(calendar)
     app.register_blueprint(tasks)
     app.register_blueprint(ai)
+
 
 def setup_message_broker(app):
     message_broker_client = get_message_broker_client()

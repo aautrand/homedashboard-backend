@@ -5,6 +5,7 @@ from flask import current_app
 from fontTools.ttLib.tables.ttProgram import instructions
 from openai import OpenAI
 
+
 class OpenAIClient:
     def __init__(self):
         self.client = OpenAI(
