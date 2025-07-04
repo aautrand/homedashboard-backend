@@ -1,5 +1,6 @@
 import json
-from datetime import datetime, time, timedelta
+import os
+from datetime import datetime, time
 
 from flask import current_app
 
@@ -7,9 +8,8 @@ from dashboard.src.calendar import get_calendar_client
 from dashboard.src.prints.receipts.formatter import ReceiptFormatter
 from dashboard.src.prints.receipts.section import (
     MultiElementSection,
-    SingleElementSection,
 )
-from dashboard.src.tasks.birthdays import BirthdayProcessor
+from dashboard.src.utils.helpers import latex_to_png, scp_files
 from dashboard.src.weather.clients.base import get_weather_client
 
 
@@ -87,6 +87,14 @@ class PrintManager:
         )
         receipt_formatter.add_section(
             MultiElementSection(
+                "All Day Events",
+                all_day_events,
+                bullet="-",
+            )
+        )
+
+        receipt_formatter.add_section(
+            MultiElementSection(
                 "Calendar",
                 timed_events,
                 bullet="*",
@@ -98,3 +106,15 @@ class PrintManager:
         # Insert tasks
         final = receipt_formatter.build()
         return final
+
+    @staticmethod
+    def print_problems(formulas):
+        out_dir = "/tmp"
+        files = []
+        for i, expr in enumerate(formulas, start=1):
+            fname = os.path.join(out_dir, f"item_{i:02d}.png")
+            files.append(fname)
+            latex_to_png(expr, i, fname, fontsize=9, dpi=300, pad_inches=0.05)
+            print(f"Wrote {fname}")
+
+        scp_files(files,"printer", "printers", "/tmp/")
