@@ -4,7 +4,7 @@ import os
 from flask import Flask
 
 from dashboard.src.message_broker.clients.base import get_message_broker_client
-from dashboard.src.utils.Loggers import IgnoreIcalFilter
+from dashboard.src.utils.logging import setup_logging
 
 
 def setup_config(app):
@@ -16,10 +16,6 @@ def setup_config(app):
     app.config["RABBITMQ_HOST"] = os.getenv("RABBITMQ_HOST")
     app.config["LAT_LONG"] = os.getenv("LAT_LONG")
     app.config["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
-
-
-def setup_logging():
-    logging.getLogger().addFilter(IgnoreIcalFilter())
 
 
 def register_blueprints(app):
@@ -45,6 +41,7 @@ def create_app():
 
     # Configuration
     setup_config(app)
+    setup_logging()
 
     # Register blueprints
     register_blueprints(app)
