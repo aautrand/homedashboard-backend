@@ -19,7 +19,10 @@ dependencies = [
     "dotenv (>=0.9.9,<0.10.0)",
     "vobject (>=0.9.9,<0.10.0)",
     "matplotlib (>=3.10.3,<4.0.0)",
-    "openai (>=1.93.0,<2.0.0)"
+    "openai (>=1.93.0,<2.0.0)",
+    "sqlalchemy (>=2.0.41,<3.0.0)",
+    "psycopg2-binary (>=2.9.10,<3.0.0)",
+    "alembic (>=1.16.2,<2.0.0)"
 ]
 
 [tool.poetry]
