@@ -27,7 +27,7 @@ def current():
     print_manager = PrintManager()
     tasks = print_manager.print_tasks()
     rabbit_client = get_message_broker_client()
-    rabbit_client.send_message(exchange="", routing_key="text-print", body=tasks)
+    rabbit_client.send_message(exchange="", routing_key="home", body=tasks)
     return {"status": "ok"}
 
 
