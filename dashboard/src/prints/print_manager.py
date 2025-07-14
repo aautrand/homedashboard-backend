@@ -57,6 +57,7 @@ class PrintManager:
         formatted_weather = [
             f"Current: {current.temperature}C / {current.temperature_f}F"
         ]
+
         receipt_formatter.add_section(
             MultiElementSection(
                 title="Weather",
@@ -113,6 +114,5 @@ class PrintManager:
             fname = os.path.join(out_dir, f"item_{i:02d}.png")
             files.append(fname)
             latex_to_png(expr, i, fname, fontsize=9, dpi=300, pad_inches=0.05)
-            print(f"Wrote {fname}")
 
         scp_files(files, "printer", "printers", "/tmp/")

@@ -27,7 +27,7 @@ def current():
     print_manager = PrintManager()
     tasks = print_manager.print_tasks()
     rabbit_client = get_message_broker_client()
-    rabbit_client.send_message(exchange="", routing_key="hello", body=tasks)
+    rabbit_client.send_message(exchange="", routing_key="text-print", body=tasks)
     return {"status": "ok"}
 
 
@@ -58,11 +58,11 @@ def math_problems():
         .replace(" json", "")
         .replace("```", "")
     )
-    print(f"ChatGPT says: \n{formulas}")
     lines = [normalize(line) for line in formulas.splitlines() if line.strip()]
     print_manager.print_problems(lines)
     rabbit_client = get_message_broker_client()
-    payload = {"count": len(lines) + 127}
+    # TODO why 127?
+    payload = {"count": len(lines)}
     rabbit_client.send_message(
         exchange="", routing_key="image_print", body=str(payload)
     )
