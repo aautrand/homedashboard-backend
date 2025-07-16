@@ -11,28 +11,28 @@ class IgnoreIcalFilter(logging.Filter):
 
 
 def setup_logging():
-    dictConfig({
-        "version": 1,
-        "formatters": {
-            "detailed": {
-                "format": (
-                    "[%(asctime)s] %(levelname)s "
-                    "in %(name)s (%(filename)s:%(lineno)d): %(message)s"
-                ),
+    dictConfig(
+        {
+            "version": 1,
+            "formatters": {
+                "detailed": {
+                    "format": (
+                        "[%(asctime)s] %(levelname)s "
+                        "in %(name)s (%(filename)s:%(lineno)d): %(message)s"
+                    ),
+                },
             },
-        },
-        "handlers": {
-            "wsgi": {
-                "class": "logging.StreamHandler",
-                "formatter": "detailed",
-                "stream": "ext://sys.stdout",
+            "handlers": {
+                "wsgi": {
+                    "class": "logging.StreamHandler",
+                    "formatter": "detailed",
+                    "stream": "ext://sys.stdout",
+                },
             },
-        },
-        "root": {
-            "level": "INFO",
-            "handlers": ["wsgi"],
-        },
-    })
+            "root": {
+                "level": "INFO",
+                "handlers": ["wsgi"],
+            },
+        }
+    )
     logging.getLogger().addFilter(IgnoreIcalFilter())
-
-

@@ -11,6 +11,7 @@ from dashboard.src.utils.helpers import latex_to_png, scp_files
 from dashboard.src.weather.clients.base import get_weather_client
 from dashboard.src.weather.clients.models.open_weather import OpenWeather
 
+
 class PrintManager:
 
     @staticmethod
@@ -21,7 +22,6 @@ class PrintManager:
             f"Forecast (Celsius):    {weather.daily_min_temp} / {weather.daily_max_temp}",
             f"Forecast (Fahrenheit): {int((weather.daily_min_temp * 1.8) + 32)} / {int((weather.daily_max_temp * 1.8) + 32)}",
             f"Forecast Conditions:   {weather_conditions}",
-
         ]
         return items
 
@@ -66,9 +66,15 @@ class PrintManager:
 
         # weather
         weather_client = get_weather_client("open-weather")
-        current_weather = weather_client.get_current_weather(current_app.config["LAT_LONG"])
-        forecast_weather = weather_client.get_forecast_weather(current_app.config["LAT_LONG"])
-        weather = OpenWeather.from_current_and_forecast(current_weather, forecast_weather)
+        current_weather = weather_client.get_current_weather(
+            current_app.config["LAT_LONG"]
+        )
+        forecast_weather = weather_client.get_forecast_weather(
+            current_app.config["LAT_LONG"]
+        )
+        weather = OpenWeather.from_current_and_forecast(
+            current_weather, forecast_weather
+        )
 
         weather_items = PrintManager.extract_weather(weather)
         receipt_formatter.add_section(

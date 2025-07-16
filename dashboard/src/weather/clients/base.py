@@ -4,8 +4,7 @@ from dashboard.src.weather.clients.models.mappers.base import ObservationMapper
 from dashboard.src.weather.clients.models.observation import WeatherObservation
 
 
-class WeatherClient(ABC):
-    ...
+class WeatherClient(ABC): ...
 
 
 # optional: a factory to pick your client by name

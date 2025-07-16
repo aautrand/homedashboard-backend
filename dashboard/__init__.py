@@ -2,9 +2,10 @@ import os
 
 from flask import Flask, request
 
+from dashboard.src.db import create_session
 from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.utils.logging import setup_logging
-from dashboard.src.db import create_session
+
 
 def setup_config(app):
     app.config["APPLE_USER"] = os.getenv("APPLE_USER")
@@ -22,12 +23,13 @@ def setup_config(app):
     app.config["DB_NAME"] = os.getenv("DB_NAME")
     app.config["OPEN_WEATHER_API_KEY"] = os.getenv("OPEN_WEATHER_API_KEY")
 
+
 def register_blueprints(app):
     from dashboard.src.ai import ai
     from dashboard.src.calendar import calendar
+    from dashboard.src.learning import learning
     from dashboard.src.tasks import tasks
     from dashboard.src.weather import weather
-    from dashboard.src.learning import learning
 
     app.register_blueprint(weather)
     app.register_blueprint(calendar)
@@ -35,9 +37,11 @@ def register_blueprints(app):
     app.register_blueprint(ai)
     app.register_blueprint(learning)
 
+
 def setup_message_broker(app):
     message_broker_client = get_message_broker_client()
     app.config["message_broker_client"] = message_broker_client
+
 
 def configure_db(app):
 
@@ -55,6 +59,7 @@ def configure_db(app):
             db.commit()
 
         db.close()
+
 
 def create_app():
 

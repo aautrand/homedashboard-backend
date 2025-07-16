@@ -2,12 +2,11 @@ import os
 from logging.config import fileConfig
 from pathlib import Path
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from dotenv import load_dotenv
+from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
-from dotenv import load_dotenv
 env_path = Path(__file__).parents[1] / ".env"
 load_dotenv(env_path)
 
@@ -16,11 +15,11 @@ load_dotenv(env_path)
 config = context.config
 
 # grab variables
-user     = os.getenv("DB_USER")
+user = os.getenv("DB_USER")
 password = os.getenv("DB_PASSWORD")
-host     = os.getenv("DB_HOST")
-port     = os.getenv("DB_PORT")
-name     = os.getenv("DB_NAME")
+host = os.getenv("DB_HOST")
+port = os.getenv("DB_PORT")
+name = os.getenv("DB_NAME")
 
 if not all([user, password, host, port, name]):
     raise RuntimeError("One or more DB_* env vars are missing")
@@ -87,9 +86,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

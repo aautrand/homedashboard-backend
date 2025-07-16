@@ -1,19 +1,18 @@
 import json
-from dashboard.src.db import Base
 from datetime import datetime
-from sqlalchemy import func
-from sqlalchemy import DateTime, Text, Boolean
-from sqlalchemy.orm import Mapped, mapped_column
 from typing import Any, Dict
+
+from sqlalchemy import Boolean, DateTime, Text, func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from dashboard.src.db import Base
 
 
 class Card(Base):
-    __tablename__ = 'cards'
+    __tablename__ = "cards"
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     created_date: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        server_default=func.now()
+        DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     title: Mapped[str] = mapped_column(Text, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
