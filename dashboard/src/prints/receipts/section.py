@@ -11,9 +11,7 @@ class Section(ABC):
     def _content_lines(self) -> List[str]: ...
 
     def render(self) -> List[str]:
-        lines = [f"_{self.title}_"]
-        lines.extend(self._content_lines())
-        return lines
+        return self._content_lines()
 
 
 class MultiElementSection(Section):

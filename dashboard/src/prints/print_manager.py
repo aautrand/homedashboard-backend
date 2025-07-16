@@ -9,9 +9,22 @@ from dashboard.src.prints.receipts.formatter import ReceiptFormatter
 from dashboard.src.prints.receipts.section import MultiElementSection
 from dashboard.src.utils.helpers import latex_to_png, scp_files
 from dashboard.src.weather.clients.base import get_weather_client
-
+from dashboard.src.weather.clients.models.open_weather import OpenWeather
 
 class PrintManager:
+
+    @staticmethod
+    def extract_weather(weather):
+        weather_conditions = weather.weather[0].description
+        items = [
+            f"Current:               {int(weather.main.temp)}C / {int((weather.main.temp * 1.8) + 32)}F",
+            f"Forecast (Celsius):    {weather.daily_min_temp} / {weather.daily_max_temp}",
+            f"Forecast (Fahrenheit): {int((weather.daily_min_temp * 1.8) + 32)} / {int((weather.daily_max_temp * 1.8) + 32)}",
+            f"Forecast Conditions:   {weather_conditions}",
+
+        ]
+        return items
+
     @staticmethod
     def extract_birthdays(events):
         birthdays = []
@@ -52,16 +65,16 @@ class PrintManager:
         receipt_formatter = ReceiptFormatter()
 
         # weather
-        weather_client = get_weather_client("noaa")
-        current = weather_client.get_current_weather(current_app.config["LAT_LONG"])
-        formatted_weather = [
-            f"Current: {current.temperature}C / {current.temperature_f}F"
-        ]
+        weather_client = get_weather_client("open-weather")
+        current_weather = weather_client.get_current_weather(current_app.config["LAT_LONG"])
+        forecast_weather = weather_client.get_forecast_weather(current_app.config["LAT_LONG"])
+        weather = OpenWeather.from_current_and_forecast(current_weather, forecast_weather)
 
+        weather_items = PrintManager.extract_weather(weather)
         receipt_formatter.add_section(
             MultiElementSection(
                 title="Weather",
-                items=[f"{current.temperature}C", f"{current.temperature_f}F"],
+                items=weather_items,
                 bullet="",
             )
         )
@@ -78,28 +91,31 @@ class PrintManager:
 
         # Insert birthdays
         birthdays = PrintManager.extract_birthdays(event_list)
-        receipt_formatter.add_section(MultiElementSection("Birthdays", birthdays))
+        if birthdays:
+            receipt_formatter.add_section(MultiElementSection(" Birthdays ", birthdays))
 
         # Insert calendar events
         all_day_events, timed_events, calendar_events = PrintManager.extract_events(
             event_list
         )
-        receipt_formatter.add_section(
-            MultiElementSection(
-                "All Day Events",
-                all_day_events,
-                bullet="-",
+        if all_day_events:
+            receipt_formatter.add_section(
+                MultiElementSection(
+                    " All Day Events ",
+                    all_day_events,
+                    bullet="-",
+                )
             )
-        )
 
-        receipt_formatter.add_section(
-            MultiElementSection(
-                "Calendar",
-                timed_events,
-                bullet="*",
-                formatter=lambda t: f"{t[0]} - {t[1]}",
+        if timed_events:
+            receipt_formatter.add_section(
+                MultiElementSection(
+                    " Calendar ",
+                    timed_events,
+                    bullet="*",
+                    formatter=lambda t: f"{t[0]} - {t[1]}",
+                )
             )
-        )
 
         # TODO Insert chores
         # Insert tasks

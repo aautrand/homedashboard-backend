@@ -1,5 +1,5 @@
 import re
-
+import json
 from flask import Blueprint, request
 
 from dashboard.src.ai.clients.openai_client import OpenAIClient
@@ -25,9 +25,9 @@ def normalize(expr: str) -> str:
 @tasks.route("/print")
 def current():
     print_manager = PrintManager()
-    tasks = print_manager.print_tasks()
+    tasks_list = print_manager.print_tasks()
     rabbit_client = get_message_broker_client()
-    rabbit_client.send_message(exchange="", routing_key="text_print", body=tasks)
+    rabbit_client.send_message(exchange="", routing_key="text_print", body=json.dumps(tasks_list))
     return {"status": "ok"}
 
 

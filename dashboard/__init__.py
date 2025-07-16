@@ -20,7 +20,7 @@ def setup_config(app):
     app.config["DB_USER"] = os.getenv("DB_USER")
     app.config["DB_PASSWORD"] = os.getenv("DB_PASSWORD")
     app.config["DB_NAME"] = os.getenv("DB_NAME")
-
+    app.config["OPEN_WEATHER_API_KEY"] = os.getenv("OPEN_WEATHER_API_KEY")
 
 def register_blueprints(app):
     from dashboard.src.ai import ai
