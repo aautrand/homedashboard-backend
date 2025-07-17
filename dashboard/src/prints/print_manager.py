@@ -10,6 +10,10 @@ from dashboard.src.prints.receipts.section import MultiElementSection
 from dashboard.src.utils.helpers import latex_to_png, scp_files
 from dashboard.src.weather.clients.base import get_weather_client
 from dashboard.src.weather.clients.models.open_weather import OpenWeather
+from logging import getLogger
+
+
+logger = getLogger(__name__)
 
 
 class PrintManager:
@@ -93,8 +97,11 @@ class PrintManager:
         today = datetime.today()
         start = datetime.combine(today, time(hour=0, minute=0))
         end = datetime.combine(today, time(hour=23, minute=59))
+        logger.info(f"start: {start}, end: {end}, today: {today}")
         calendars = [current_app.config["MAIN_CALENDAR"], "Chores"]
+        logger.info(f"calendars: {calendars}")
         event_list = calendar_client.get_today_events(calendars, start, end)
+        logger.info(f"event_list: {event_list}")
 
         # Insert birthdays
         birthdays = PrintManager.extract_birthdays(event_list)

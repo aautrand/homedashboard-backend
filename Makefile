@@ -29,6 +29,8 @@ push-image:
 	  echo "Aborted."; exit 1; \
 	fi; \
 	echo $$new_ver > $(VERSION_FILE); \
+	git add $(VERSION_FILE)
+	git commit -m "SYSTEM: Updating version"
 	docker build -t $(IMAGE):$$new_ver .; \
 	docker push $(IMAGE):$$new_ver
 	scp .env mainserver:/home/aautrand/homedashboard-be/.env
