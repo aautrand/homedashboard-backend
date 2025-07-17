@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, time
+from datetime import datetime, time, timezone
 
 from flask import current_app
 
@@ -94,7 +94,7 @@ class PrintManager:
         calendar_client = get_calendar_client()
 
         # today = datetime.today()
-        today = datetime.today()
+        today = datetime.now(timezone.utc).astimezone()
         start = datetime.combine(today, time(hour=0, minute=0))
         end = datetime.combine(today, time(hour=23, minute=59))
         logger.info(f"start: {start}, end: {end}, today: {today}")
