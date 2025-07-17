@@ -7,6 +7,9 @@ from dashboard.src.ai.clients.openai_client import OpenAIClient
 from dashboard.src.ai.prompts import math_prompt_template
 from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.print_manager import PrintManager
+from logging import getLogger
+
+logger = getLogger(__name__)
 
 tasks = Blueprint("tasks", __name__, url_prefix="/tasks")
 
@@ -25,6 +28,7 @@ def normalize(expr: str) -> str:
 
 @tasks.route("/print")
 def current():
+    logger.info("Printing tasks")
     print_manager = PrintManager()
     tasks_list = print_manager.print_tasks()
     rabbit_client = get_message_broker_client()
