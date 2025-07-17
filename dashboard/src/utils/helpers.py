@@ -73,3 +73,20 @@ def scp_files(
     # run and then delete
     subprocess.run(cmd, check=True)
     delete_files(files)
+
+
+def get_version():
+    from pathlib import Path
+
+    # If you want it relative to this script file:
+    current_dir = Path(__file__).resolve().parent
+    print(current_dir)
+    # Navigate three directories up (parents[0] is one up, parents[2] is three up)
+    target_file = current_dir.parents[2] / "version"
+    print(target_file)
+    print("Looking for:", target_file)
+    if target_file.exists():
+        content = target_file.read_text().strip()
+        return content
+    else:
+        print("File not found!")

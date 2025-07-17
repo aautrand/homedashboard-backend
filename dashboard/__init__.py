@@ -4,6 +4,7 @@ from flask import Flask, request
 
 from dashboard.src.db import create_session
 from dashboard.src.message_broker.clients.base import get_message_broker_client
+from dashboard.src.utils.helpers import get_version
 from dashboard.src.utils.logging import setup_logging
 
 
@@ -64,6 +65,12 @@ def configure_db(app):
 def create_app():
 
     app = Flask(__name__)
+
+    @app.route("/info")
+    def info():
+        app_info = {"version": get_version()}
+
+        return app_info
 
     # Configuration
     setup_config(app)
