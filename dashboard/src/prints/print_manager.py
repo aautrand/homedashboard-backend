@@ -16,10 +16,11 @@ class PrintManager:
 
     @staticmethod
     def extract_weather(weather):
-        weather_conditions = weather.weather[0].description
+        weather_conditions = ", ".join(w.description for w in weather.weather)
+
         items = [
             f"Current:               {int(weather.main.temp)}C / {int((weather.main.temp * 1.8) + 32)}F",
-            f"Forecast (Celsius):    {weather.daily_min_temp} / {weather.daily_max_temp}",
+            f"Forecast (Celsius):    {int(weather.daily_min_temp)} / {int(weather.daily_max_temp)}",
             f"Forecast (Fahrenheit): {int((weather.daily_min_temp * 1.8) + 32)} / {int((weather.daily_max_temp * 1.8) + 32)}",
             f"Forecast Conditions:   {weather_conditions}",
         ]
