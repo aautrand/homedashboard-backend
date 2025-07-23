@@ -4,7 +4,7 @@ import re
 from flask import Blueprint, request
 
 from dashboard.src.ai.clients.openai_client import OpenAIClient
-from dashboard.src.ai.prompts import math_prompt_template
+from dashboard.src.ai.prompts import problem_generator_prompt
 from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.print_manager import PrintManager
 from logging import getLogger
@@ -43,7 +43,8 @@ def latex_to_image():
     print_manager = PrintManager()
     data = request.get_json()
     formulas = data.get("formulas", [])  # each is e.g. "x^3 \cdot x^4"
-
+    # TODO  need to move creating the images to this side instead of on the rapsi.
+    #       Raspi cant handle installing matplotlib. It hangs for matplotlib
     print_manager.print_problems(formulas)
     rabbit_client = get_message_broker_client()
     payload = {"count": len(formulas)}
@@ -60,17 +61,16 @@ def math_problems():
     prompt = data.get("prompt", [])
 
     openai_client = OpenAIClient()
-    formulas = (
-        openai_client.generate_chatgpt_response("gpt-4o", math_prompt_template, prompt)
+    raw_problems = (
+        openai_client.generate_chatgpt_response("gpt-4o", problem_generator_prompt, prompt)
         .replace(" json", "")
         .replace("```", "")
     )
-    lines = [normalize(line) for line in formulas.splitlines() if line.strip()]
-    print_manager.print_problems(lines)
+    json_problems = json.loads(raw_problems)
+    # print_manager.print_problems(json_problems)
     rabbit_client = get_message_broker_client()
-    # TODO why 127?
-    payload = {"count": len(lines)}
-    rabbit_client.send_message(
-        exchange="", routing_key="image_print", body=str(payload)
-    )
-    return "finished"
+    # payload = {"count": len(lines)}
+    # rabbit_client.send_message(
+    #     exchange="", routing_key="image_print", body=str(payload)
+    # )
+    return {"status": "disabled"}

@@ -137,12 +137,20 @@ class PrintManager:
         return final
 
     @staticmethod
-    def print_problems(formulas):
-        out_dir = "/tmp"
-        files = []
-        for i, expr in enumerate(formulas, start=1):
-            fname = os.path.join(out_dir, f"item_{i:02d}.png")
-            files.append(fname)
-            latex_to_png(expr, i, fname, fontsize=9, dpi=300, pad_inches=0.05)
+    def print_problems(problems):
+        for problem in problems["problems"]:
+            if problems["type"] == "word":
+                ...
+            elif problem["type"] == "formula":
+                ...
+            else:
+                ...
 
-        scp_files(files, "printer", "printers", "/tmp/")
+            # out_dir = "/tmp"
+            # files = []
+            # for i, expr in enumerate(formulas, start=1):
+            #     fname = os.path.join(out_dir, f"item_{i:02d}.png")
+            #     files.append(fname)
+            #     latex_to_png(expr, i, fname, fontsize=9, dpi=300, pad_inches=0.05)
+            #
+            # scp_files(files, "printer", "printers", "/tmp/")
