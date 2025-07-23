@@ -56,19 +56,19 @@ def latex_to_image():
 
 @tasks.route("/math-problems")
 def math_problems():
-    print_manager = PrintManager()
-    data = request.get_json()
-    prompt = data.get("prompt", [])
-
-    openai_client = OpenAIClient()
-    raw_problems = (
-        openai_client.generate_chatgpt_response("gpt-4o", problem_generator_prompt, prompt)
-        .replace(" json", "")
-        .replace("```", "")
-    )
-    json_problems = json.loads(raw_problems)
+    # print_manager = PrintManager()
+    # data = request.get_json()
+    # prompt = data.get("prompt", [])
+    #
+    # openai_client = OpenAIClient()
+    # raw_problems = (
+    #     openai_client.generate_chatgpt_response("gpt-4o", problem_generator_prompt, prompt)
+    #     .replace(" json", "")
+    #     .replace("```", "")
+    # )
+    # json_problems = json.loads(raw_problems)
     # print_manager.print_problems(json_problems)
-    rabbit_client = get_message_broker_client()
+    # rabbit_client = get_message_broker_client()
     # payload = {"count": len(lines)}
     # rabbit_client.send_message(
     #     exchange="", routing_key="image_print", body=str(payload)

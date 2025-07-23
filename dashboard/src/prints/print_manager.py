@@ -95,8 +95,9 @@ class PrintManager:
 
         # today = datetime.today()
         today = datetime.now(timezone.utc).astimezone()
-        start = datetime.combine(today, time(hour=0, minute=0))
-        end = datetime.combine(today, time(hour=23, minute=59))
+        start = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        end = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+
         logger.info(f"start: {start}, end: {end}, today: {today}")
         calendars = [current_app.config["MAIN_CALENDAR"], "Chores"]
         logger.info(f"calendars: {calendars}")
@@ -136,15 +137,15 @@ class PrintManager:
         final = receipt_formatter.build()
         return final
 
-    @staticmethod
-    def print_problems(problems):
-        for problem in problems["problems"]:
-            if problems["type"] == "word":
-                ...
-            elif problem["type"] == "formula":
-                ...
-            else:
-                ...
+    # @staticmethod
+    # def print_problems(problems):
+    #     for problem in problems["problems"]:
+    #         if problems["type"] == "word":
+    #             ...
+    #         elif problem["type"] == "formula":
+    #             ...
+    #         else:
+    #             ...
 
             # out_dir = "/tmp"
             # files = []
