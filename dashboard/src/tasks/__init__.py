@@ -1,5 +1,6 @@
 import json
 import re
+from logging import getLogger
 
 from flask import Blueprint, request
 
@@ -9,8 +10,6 @@ from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.print_manager import PrintManager
 from dashboard.src.prints.receipts.formatter import MathPrinterFormatter
 from dashboard.src.utils.helpers import get_hash
-
-from logging import getLogger
 
 logger = getLogger(__name__)
 

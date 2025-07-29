@@ -1,8 +1,11 @@
 import json
 import os
 from datetime import datetime, time, timezone
+from logging import getLogger
 
+import pytz
 from flask import current_app
+
 from dashboard.src.calendar import get_calendar_client
 from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.receipts.formatter import ReceiptFormatter
@@ -10,8 +13,6 @@ from dashboard.src.prints.receipts.section import MultiElementSection
 from dashboard.src.utils.helpers import latex_to_png, scp_files
 from dashboard.src.weather.clients.base import get_weather_client
 from dashboard.src.weather.clients.models.open_weather import OpenWeather
-from logging import getLogger
-import pytz
 
 logger = getLogger(__name__)
 

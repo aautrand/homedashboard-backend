@@ -1,4 +1,3 @@
-
 math_problem_generator_prompt = """
 SYSTEM:
 You are a seasoned school-level random problem-writer AI for Mathematics.

@@ -1,5 +1,5 @@
-import json
 import hashlib
+import json
 import os
 import subprocess
 from typing import Any, Dict
@@ -92,6 +92,7 @@ def get_version():
     else:
         print("File not found!")
 
+
 def get_hash(obj):
-    normalized = json.dumps(obj, sort_keys=True, separators=(',', ';'))
+    normalized = json.dumps(obj, sort_keys=True, separators=(",", ";"))
     return hashlib.sha256(normalized.encode()).hexdigest()

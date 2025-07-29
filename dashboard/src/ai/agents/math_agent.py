@@ -2,13 +2,16 @@ import json
 
 from dashboard.src.ai.prompts import math_problem_generator_prompt
 
+
 class MathAgent:
     def __init__(self, client):
         self.client = client
 
     def generate_problems(self, prompt):
         raw_problems = (
-            self.client.generate_chatgpt_response("gpt-4o", math_problem_generator_prompt, prompt)
+            self.client.generate_chatgpt_response(
+                "gpt-4o", math_problem_generator_prompt, prompt
+            )
             .replace("json", "")
             .replace("```", "")
         )

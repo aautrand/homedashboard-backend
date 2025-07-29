@@ -2,8 +2,9 @@ import os
 import textwrap
 from datetime import datetime
 from typing import Dict, List
+
 from dashboard.src.prints.receipts.section import Section
-from dashboard.src.utils.helpers import get_hash, scp_files, latex_to_png
+from dashboard.src.utils.helpers import get_hash, latex_to_png, scp_files
 
 
 class ReceiptFormatter:
@@ -31,8 +32,15 @@ class PrinterFormatter:
     def __init__(self):
         self.instructions = {"instructions": []}
 
-    def _process_latex(self, img_source, high_density_vertical=True, high_density_horizontal=True,
-                       impl='bitImageRaster', fragment_height=960, center=False):
+    def _process_latex(
+        self,
+        img_source,
+        high_density_vertical=True,
+        high_density_horizontal=True,
+        impl="bitImageRaster",
+        fragment_height=960,
+        center=False,
+    ):
         latex_hash = get_hash(img_source)
         out_dir = "/tmp"
         files = []
@@ -42,50 +50,96 @@ class PrinterFormatter:
 
         scp_files(files, "printer", "printers", "/tmp/")
 
-        self.instructions["instructions"].append({"image": {
-            "img_source": fname,
-            "high_density_vertical": high_density_vertical,
-            "high_density_horizontal": high_density_horizontal,
-            "impl": impl,
-            "fragment_height": fragment_height,
-            "center": center,
-        }})
+        self.instructions["instructions"].append(
+            {
+                "image": {
+                    "img_source": fname,
+                    "high_density_vertical": high_density_vertical,
+                    "high_density_horizontal": high_density_horizontal,
+                    "impl": impl,
+                    "fragment_height": fragment_height,
+                    "center": center,
+                }
+            }
+        )
 
-    def _process_image(self, img_source, high_density_vertical=True, high_density_horizontal=True, impl='bitImageRaster', fragment_height=960, center=False):
-        self.instructions["instructions"].append({"image": {
-            "img_source": img_source,
-            "high_density_vertical": high_density_vertical,
-            "high_density_horizontal": high_density_horizontal,
-            "impl": impl,
-            "fragment_height": fragment_height,
-            "center": center,
-        }})
+    def _process_image(
+        self,
+        img_source,
+        high_density_vertical=True,
+        high_density_horizontal=True,
+        impl="bitImageRaster",
+        fragment_height=960,
+        center=False,
+    ):
+        self.instructions["instructions"].append(
+            {
+                "image": {
+                    "img_source": img_source,
+                    "high_density_vertical": high_density_vertical,
+                    "high_density_horizontal": high_density_horizontal,
+                    "impl": impl,
+                    "fragment_height": fragment_height,
+                    "center": center,
+                }
+            }
+        )
 
-    def _process_qr(self, content, ec=0, size=3, model=2, native=False, center=False, impl=None, image_arguments=None):
-        self.instructions["instructions"].append({"qr": {
-            "content": content,
-            "ec": ec,
-            "size": size,
-            "model": model,
-            "native": native,
-            "center": center,
-            "impl": impl,
-            "image_arguments": image_arguments,
-        }})
+    def _process_qr(
+        self,
+        content,
+        ec=0,
+        size=3,
+        model=2,
+        native=False,
+        center=False,
+        impl=None,
+        image_arguments=None,
+    ):
+        self.instructions["instructions"].append(
+            {
+                "qr": {
+                    "content": content,
+                    "ec": ec,
+                    "size": size,
+                    "model": model,
+                    "native": native,
+                    "center": center,
+                    "impl": impl,
+                    "image_arguments": image_arguments,
+                }
+            }
+        )
 
-    def _process_barcode(self, code, bc='EAN13', height=64, width=3, pos='BELOW', font='A', align_ct=True, function_type=None, check=True, force_software=False):
-        self.instructions["instructions"].append({"barcode": {
-            "code": code,
-            "bc": bc,
-            "height": height,
-            "width": width,
-            "pos": pos,
-            "font": font,
-            "align_ct": align_ct,
-            "function_type": function_type,
-            "check": check,
-            "force_software": force_software,
-        }})
+    def _process_barcode(
+        self,
+        code,
+        bc="EAN13",
+        height=64,
+        width=3,
+        pos="BELOW",
+        font="A",
+        align_ct=True,
+        function_type=None,
+        check=True,
+        force_software=False,
+    ):
+        self.instructions["instructions"].append(
+            {
+                "barcode": {
+                    "code": code,
+                    "bc": bc,
+                    "height": height,
+                    "width": width,
+                    "pos": pos,
+                    "font": font,
+                    "align_ct": align_ct,
+                    "function_type": function_type,
+                    "check": check,
+                    "force_software": force_software,
+                }
+            }
+        )
 
     def _process_text(self, text):
         self.instructions["instructions"].append({"text": text})
@@ -93,42 +147,61 @@ class PrinterFormatter:
     def _process_textln(self, text):
         max_width = 42
         # wrap on word boundaries, never cutting words
-        lines = textwrap.wrap(text,
-                              width=max_width,
-                              break_long_words=False,
-                              replace_whitespace=False)
+        lines = textwrap.wrap(
+            text, width=max_width, break_long_words=False, replace_whitespace=False
+        )
         for line in lines:
             self.instructions["instructions"].append({"textln": line})
 
     def _process_ln(self, count=1):
         self.instructions["instructions"].append({"ln": count})
 
-    def _process_set(self, align=None, font=None, bold=None, underline=None, width=None, height=None, density=None, invert=None, smooth=None, flip=None, normal_textsize=None, double_width=None, double_height=None, custom_size=None):
-        self.instructions["instructions"].append({
-            "set": {
-                "align": align,
-                "font": font,
-                "bold": bold,
-                "underline": underline,
-                "width": width,
-                "height":height,
-                "density":density,
-                "invert":invert,
-                "smooth":smooth,
-                "flip":flip,
-                "normal_textsize":normal_textsize,
-                "double_width":double_width,
-                "double_height":double_height,
-                "custom_size":custom_size,
-            },
-        })
+    def _process_set(
+        self,
+        align=None,
+        font=None,
+        bold=None,
+        underline=None,
+        width=None,
+        height=None,
+        density=None,
+        invert=None,
+        smooth=None,
+        flip=None,
+        normal_textsize=None,
+        double_width=None,
+        double_height=None,
+        custom_size=None,
+    ):
+        self.instructions["instructions"].append(
+            {
+                "set": {
+                    "align": align,
+                    "font": font,
+                    "bold": bold,
+                    "underline": underline,
+                    "width": width,
+                    "height": height,
+                    "density": density,
+                    "invert": invert,
+                    "smooth": smooth,
+                    "flip": flip,
+                    "normal_textsize": normal_textsize,
+                    "double_width": double_width,
+                    "double_height": double_height,
+                    "custom_size": custom_size,
+                },
+            }
+        )
 
-    def _process_block_text(self, txt, font='0', columns=None):
-        self.instructions["instructions"].append({
-            "block_text": txt,
-            "font": font,
-            "columns": columns,
-        })
+    def _process_block_text(self, txt, font="0", columns=None):
+        self.instructions["instructions"].append(
+            {
+                "block_text": txt,
+                "font": font,
+                "columns": columns,
+            }
+        )
 
 
 class MathPrinterFormatter(PrinterFormatter):

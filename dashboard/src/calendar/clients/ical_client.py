@@ -6,6 +6,7 @@ from dashboard.src.calendar.clients.models.mappers.ical_mapper import (
     ICalCalendarSequentialEventMapper,
 )
 
+
 class ICalClient(CalendarClient):
 
     sequential_mapper = ICalCalendarSequentialEventMapper()
