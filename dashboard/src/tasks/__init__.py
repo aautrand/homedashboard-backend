@@ -3,10 +3,13 @@ import re
 
 from flask import Blueprint, request
 
+from dashboard.src.ai.agents.math_agent import MathAgent
 from dashboard.src.ai.clients.openai_client import OpenAIClient
-from dashboard.src.ai.prompts import problem_generator_prompt
 from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.print_manager import PrintManager
+from dashboard.src.prints.receipts.formatter import MathPrinterFormatter
+from dashboard.src.utils.helpers import get_hash
+
 from logging import getLogger
 
 logger = getLogger(__name__)
@@ -56,21 +59,19 @@ def latex_to_image():
 
 @tasks.route("/math-problems")
 def math_problems():
-    # print_manager = PrintManager()
-    # data = request.get_json()
-    # prompt = data.get("prompt", [])
-    #
-    # openai_client = OpenAIClient()
-    # raw_problems = (
-    #     openai_client.generate_chatgpt_response("gpt-4o", problem_generator_prompt, prompt)
-    #     .replace(" json", "")
-    #     .replace("```", "")
-    # )
-    # json_problems = json.loads(raw_problems)
-    # print_manager.print_problems(json_problems)
-    # rabbit_client = get_message_broker_client()
-    # payload = {"count": len(lines)}
-    # rabbit_client.send_message(
-    #     exchange="", routing_key="image_print", body=str(payload)
-    # )
-    return {"status": "disabled"}
+    print_manager = PrintManager()
+    data = request.get_json()
+    prompt = data.get("prompt", [])
+
+    openai_client = OpenAIClient()
+    math_agent = MathAgent(client=openai_client)
+    raw_problems = math_agent.generate_problems(prompt)
+    raw_problems["problem_hash"] = get_hash(raw_problems)
+
+    problem_formatter = MathPrinterFormatter()
+    print_formatted_problems = problem_formatter.process(raw_problems)
+
+    # TODO insert problem into the db
+    print_manager.print_problems(print_formatted_problems)
+
+    return {"status": "disabled", "problems": raw_problems["problems"]}

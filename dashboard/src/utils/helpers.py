@@ -1,3 +1,5 @@
+import json
+import hashlib
 import os
 import subprocess
 from typing import Any, Dict
@@ -13,7 +15,6 @@ def _get(d: Dict, *keys) -> Any:
 
 def latex_to_png(
     expr: str,
-    number: int,
     filename: str,
     fontsize: int = 20,
     dpi: int = 300,
@@ -32,7 +33,7 @@ def latex_to_png(
     fig.patch.set_facecolor("white")
 
     # Prefix the number outside math mode, then the formula in math mode
-    text = f"{number}. ${expr}$"
+    text = f"${expr}$"
     fig.text(0, 0, text, fontsize=fontsize, ha="left", va="bottom")
 
     # draw & tightly crop
@@ -90,3 +91,7 @@ def get_version():
         return content
     else:
         print("File not found!")
+
+def get_hash(obj):
+    normalized = json.dumps(obj, sort_keys=True, separators=(',', ';'))
+    return hashlib.sha256(normalized.encode()).hexdigest()

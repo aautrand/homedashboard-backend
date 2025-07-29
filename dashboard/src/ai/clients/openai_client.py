@@ -1,8 +1,5 @@
 import os
-from decimal import Overflow
 
-from flask import current_app
-from fontTools.ttLib.tables.ttProgram import instructions
 from openai import OpenAI
 
 

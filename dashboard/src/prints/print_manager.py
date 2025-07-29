@@ -3,15 +3,15 @@ import os
 from datetime import datetime, time, timezone
 
 from flask import current_app
-
 from dashboard.src.calendar import get_calendar_client
+from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.receipts.formatter import ReceiptFormatter
 from dashboard.src.prints.receipts.section import MultiElementSection
 from dashboard.src.utils.helpers import latex_to_png, scp_files
 from dashboard.src.weather.clients.base import get_weather_client
 from dashboard.src.weather.clients.models.open_weather import OpenWeather
 from logging import getLogger
-
+import pytz
 
 logger = getLogger(__name__)
 
@@ -137,21 +137,10 @@ class PrintManager:
         final = receipt_formatter.build()
         return final
 
-    # @staticmethod
-    # def print_problems(problems):
-    #     for problem in problems["problems"]:
-    #         if problems["type"] == "word":
-    #             ...
-    #         elif problem["type"] == "formula":
-    #             ...
-    #         else:
-    #             ...
+    @staticmethod
+    def print_problems(problems):
+        rabbit_client = get_message_broker_client()
 
-            # out_dir = "/tmp"
-            # files = []
-            # for i, expr in enumerate(formulas, start=1):
-            #     fname = os.path.join(out_dir, f"item_{i:02d}.png")
-            #     files.append(fname)
-            #     latex_to_png(expr, i, fname, fontsize=9, dpi=300, pad_inches=0.05)
-            #
-            # scp_files(files, "printer", "printers", "/tmp/")
+        rabbit_client.send_message(
+            exchange="", routing_key="image_print", body=json.dumps(problems)
+        )

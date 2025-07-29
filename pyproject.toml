@@ -22,7 +22,8 @@ dependencies = [
     "openai (>=1.93.0,<2.0.0)",
     "sqlalchemy (>=2.0.41,<3.0.0)",
     "psycopg2-binary (>=2.9.10,<3.0.0)",
-    "alembic (>=1.16.2,<2.0.0)"
+    "alembic (>=1.16.2,<2.0.0)",
+    "pytz (>=2025.2,<2026.0)"
 ]
 
 [tool.poetry]
