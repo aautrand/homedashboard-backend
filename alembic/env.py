@@ -39,6 +39,12 @@ fileConfig(config.config_file_name)
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
 from dashboard.src.db import Base
+from dashboard.src.learning.models.study import Study
+from dashboard.src.learning.models.topic import Topic
+from dashboard.src.learning.models.card import Card
+from dashboard.src.learning.models.score import Score
+from dashboard.src.learning.models.problem import Problem
+from dashboard.src.learning.models.subject import Subject
 
 target_metadata = Base.metadata
 

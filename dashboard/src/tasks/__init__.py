@@ -6,6 +6,7 @@ from flask import Blueprint, request
 
 from dashboard.src.ai.agents.math_agent import MathAgent
 from dashboard.src.ai.clients.openai_client import OpenAIClient
+from dashboard.src.learning.learning_manager import ProblemManager
 from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.print_manager import PrintManager
 from dashboard.src.prints.receipts.formatter import MathPrinterFormatter
@@ -45,8 +46,6 @@ def latex_to_image():
     print_manager = PrintManager()
     data = request.get_json()
     formulas = data.get("formulas", [])  # each is e.g. "x^3 \cdot x^4"
-    # TODO  need to move creating the images to this side instead of on the rapsi.
-    #       Raspi cant handle installing matplotlib. It hangs for matplotlib
     print_manager.print_problems(formulas)
     rabbit_client = get_message_broker_client()
     payload = {"count": len(formulas)}
@@ -67,10 +66,12 @@ def math_problems():
     raw_problems = math_agent.generate_problems(prompt)
     raw_problems["problem_hash"] = get_hash(raw_problems)
 
+    problem_manager = ProblemManager()
+    problem_manager.add_problem(raw_problems)
+
     problem_formatter = MathPrinterFormatter()
     print_formatted_problems = problem_formatter.process(raw_problems)
 
-    # TODO insert problem into the db
     print_manager.print_problems(print_formatted_problems)
 
     return {"status": "disabled", "problems": raw_problems["problems"]}

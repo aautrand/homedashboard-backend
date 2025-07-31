@@ -18,6 +18,7 @@ class Topic(Base):
     subtopics = relationship(
         "Topic", back_populates="parent", cascade="all, delete-orphan"
     )
+
     # one‑to‑many → problems
     problems = relationship(
         "Problem", back_populates="topic", cascade="all, delete-orphan"
