@@ -1,15 +1,13 @@
 from caldav import DAVClient
 from flask import current_app
 
-from dashboard.src.calendar.clients.base import CalendarClient
-from dashboard.src.calendar.clients.models.mappers.ical_mapper import (
-    ICalCalendarSequentialEventMapper,
-)
+from dashboard.src.calendars.clients.base import CalendarClient
+import dashboard.src.calendars.clients.models.mappers.ical_mapper
 
 
 class ICalClient(CalendarClient):
 
-    sequential_mapper = ICalCalendarSequentialEventMapper()
+    sequential_mapper = dashboard.src.calendars.clients.models.mappers.ical_mapper.ICalCalendarSequentialEventMapper()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

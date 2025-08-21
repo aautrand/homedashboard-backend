@@ -1,5 +1,3 @@
-import queue
-
 from flask import current_app
 from pika import BlockingConnection, ConnectionParameters
 

@@ -12,4 +12,4 @@ class WTTRWeatherClient(WeatherClient):
 
     def fetch_raw_observation(self, location: str) -> dict:
         weather = requests.get(f"{self.BASE_URL}/{location}?format=%C+%t+%W")
-        return {"weather": weather.text}
+        return {"condition": weather.text}

@@ -4,6 +4,12 @@ from sqlalchemy.orm import relationship
 from dashboard.src.db import Base
 
 
+class TopicCardAssociation(Base):
+    __tablename__ = "topic_card_association"
+    topic_id = Column(Integer, ForeignKey("topics.id"), primary_key=True)
+    card_id = Column(Integer, ForeignKey("cards.id"), primary_key=True)
+
+
 class Topic(Base):
     __tablename__ = "topics"
     id = Column(Integer, primary_key=True)
@@ -22,4 +28,9 @@ class Topic(Base):
     # one‑to‑many → problems
     problems = relationship(
         "Problem", back_populates="topic", cascade="all, delete-orphan"
+    )
+
+    # many‑to‑many → cards
+    cards = relationship(
+        "Card", secondary=TopicCardAssociation.__table__, back_populates="topics"
     )

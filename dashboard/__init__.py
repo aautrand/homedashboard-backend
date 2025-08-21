@@ -27,7 +27,7 @@ def setup_config(app):
 
 def register_blueprints(app):
     from dashboard.src.ai import ai
-    from dashboard.src.calendar import calendar
+    from dashboard.src.calendars import calendar
     from dashboard.src.learning import learning
     from dashboard.src.tasks import tasks
     from dashboard.src.weather import weather

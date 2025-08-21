@@ -2,9 +2,16 @@ from datetime import datetime, time
 
 from flask import Blueprint, current_app
 
-from dashboard.src.calendar.clients.base import get_calendar_client
+from dashboard.src.calendars.clients.base import get_calendar_client
+from dashboard.src.calendars.helpers import get_text_calendar
 
 calendar = Blueprint("calendar", __name__, url_prefix="/calendar")
+
+
+@calendar.route("/text")
+def text_calendar():
+    text_calendar = get_text_calendar()
+    return {"calendar": text_calendar}
 
 
 @calendar.route("/events")

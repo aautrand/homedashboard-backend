@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from dashboard.src.calendar.clients.models.calendar_event import CalendarEvent
+from dashboard.src.calendars.clients.models.calendar_event import CalendarEvent
 
 
 class CalendarMapper(ABC):
