@@ -96,11 +96,12 @@ class TopicManager:
         return self.db.execute(stmt).scalars().all()
 
     def add_subtopic(self, parent_topic_id: int, subtopic_name: str, subject_id: int):
-        subtopic = Topic(name=subtopic_name, subject_id=subject_id, parent_topic_id=parent_topic_id)
+        subtopic = Topic(
+            name=subtopic_name, subject_id=subject_id, parent_topic_id=parent_topic_id
+        )
         self.db.add(subtopic)
         self.db.commit()
         return subtopic
-
 
 
 class ProblemManager:
@@ -110,13 +111,15 @@ class ProblemManager:
     def add_problem(self, problem: dict):
         # Map problem json to Problem object
         # If topic is not in db insert it then link problem to it
-        topic_id = problem.get('topic_id')
+        topic_id = problem.get("topic_id")
         if not topic_id:
             # If topic name is provided but no ID, try to find or create topic
-            topic_name = problem.get('topic_name')
-            subject_id = problem.get('subject_id')
+            topic_name = problem.get("topic_name")
+            subject_id = problem.get("subject_id")
             if topic_name and subject_id:
-                stmt = select(Topic).where(Topic.name == topic_name, Topic.subject_id == subject_id)
+                stmt = select(Topic).where(
+                    Topic.name == topic_name, Topic.subject_id == subject_id
+                )
                 topic = self.db.execute(stmt).scalar_one_or_none()
                 if not topic:
                     topic = Topic(name=topic_name, subject_id=subject_id)

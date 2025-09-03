@@ -47,7 +47,7 @@ class Card(Base):
                 result[column.name] = value
 
         # Add topics as a list of topic names
-        result['topics'] = [topic.name for topic in self.topics]
+        result["topics"] = [topic.name for topic in self.topics]
         return result
 
     def to_json(self) -> str:
