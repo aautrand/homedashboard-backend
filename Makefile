@@ -31,4 +31,4 @@ push-image:
 	echo $$new_ver > $(VERSION_FILE); \
 	docker build -t $(IMAGE):$$new_ver .; \
 	docker push $(IMAGE):$$new_ver
-	scp .env mainserver:/home/aautrand/homedashboard-be/.env
+	scp .env newmain:/home/aautrand/homedashboard-be/.env
