@@ -5,6 +5,7 @@ from sqlalchemy import select
 
 from dashboard.src.learning.learning_manager import (
     CardManager,
+    ChecklistManager,
     SubjectManager,
     TopicManager,
 )
@@ -86,6 +87,67 @@ def create_subject():
     subject = subject_manager.add_subject(name=data["name"])
 
     return jsonify({"id": subject.id, "name": subject.name}), 201
+
+
+@learning.route("/checklists", methods=["POST"])
+def create_checklist():
+    data = request.get_json()
+
+    if not data or "title" not in data:
+        return jsonify({"error": "Missing required field: title"}), 400
+
+    checklist_manager = ChecklistManager(request.db)
+    checklist = checklist_manager.add_checklist(
+        title=data["title"], items=data.get("items", [])
+    )
+
+    return jsonify(checklist.to_dict()), 201
+
+
+@learning.route("/checklists", methods=["GET"])
+def get_checklists():
+    checklist_manager = ChecklistManager(request.db)
+    checklists = checklist_manager.get_all_checklists()
+    response = [checklist.to_dict() for checklist in checklists]
+    return jsonify(response)
+
+
+@learning.route("/checklists/<int:checklist_id>", methods=["GET"])
+def get_checklist(checklist_id):
+    checklist_manager = ChecklistManager(request.db)
+    checklist = checklist_manager.get_checklist(checklist_id)
+
+    if not checklist:
+        return jsonify({"error": "Checklist not found"}), 404
+
+    return jsonify(checklist.to_dict())
+
+
+@learning.route("/checklists/<int:checklist_id>", methods=["PUT"])
+def update_checklist(checklist_id):
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    checklist_manager = ChecklistManager(request.db)
+    checklist = checklist_manager.update_checklist(checklist_id, **data)
+
+    if not checklist:
+        return jsonify({"error": "Checklist not found"}), 404
+
+    return jsonify(checklist.to_dict())
+
+
+@learning.route("/checklists/<int:checklist_id>", methods=["DELETE"])
+def delete_checklist(checklist_id):
+    checklist_manager = ChecklistManager(request.db)
+    checklist = checklist_manager.delete_checklist(checklist_id)
+
+    if not checklist:
+        return jsonify({"error": "Checklist not found"}), 404
+
+    return jsonify({"message": "Checklist deleted successfully"})
 
 
 # TODO Add insert card endpoint

@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from dashboard.src.learning.models.card import Card
+from dashboard.src.learning.models.checklist import Checklist
 from dashboard.src.learning.models.problem import Problem
 from dashboard.src.learning.models.score import Score
 from dashboard.src.learning.models.subject import Subject
@@ -139,3 +140,39 @@ class ProblemManager:
         self.db.add(score_obj)
         self.db.commit()
         return score_obj
+
+
+class ChecklistManager:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def add_checklist(self, title: str, items: list[str] = None):
+        if items is None:
+            items = []
+        checklist = Checklist(title=title, items=items)
+        self.db.add(checklist)
+        self.db.commit()
+        return checklist
+
+    def get_checklist(self, checklist_id: int):
+        return self.db.get(Checklist, checklist_id)
+
+    def get_all_checklists(self):
+        stmt = select(Checklist)
+        return self.db.execute(stmt).scalars().all()
+
+    def update_checklist(self, checklist_id: int, **kwargs):
+        checklist = self.db.get(Checklist, checklist_id)
+        if checklist:
+            for key, value in kwargs.items():
+                if hasattr(checklist, key):
+                    setattr(checklist, key, value)
+            self.db.commit()
+        return checklist
+
+    def delete_checklist(self, checklist_id: int):
+        checklist = self.db.get(Checklist, checklist_id)
+        if checklist:
+            self.db.delete(checklist)
+            self.db.commit()
+        return checklist
