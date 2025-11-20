@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from flask import Blueprint, jsonify, request
@@ -10,6 +11,8 @@ from dashboard.src.learning.learning_manager import (
     TopicManager,
 )
 from dashboard.src.learning.models.card import Card
+from dashboard.src.message_broker.clients.base import get_message_broker_client
+from dashboard.src.prints.print_manager import PrintManager
 
 learning = Blueprint("learning", __name__, url_prefix="/learning")
 
@@ -148,6 +151,25 @@ def delete_checklist(checklist_id):
         return jsonify({"error": "Checklist not found"}), 404
 
     return jsonify({"message": "Checklist deleted successfully"})
+
+
+@learning.route("/checklists/<int:checklist_id>/print", methods=["POST"])
+def print_checklist(checklist_id):
+    checklist_manager = ChecklistManager(request.db)
+    checklist = checklist_manager.get_checklist(checklist_id)
+
+    if not checklist:
+        return jsonify({"error": "Checklist not found"}), 404
+
+    print_manager = PrintManager()
+    checklist_data = print_manager.print_checklist(checklist)
+
+    rabbit_client = get_message_broker_client()
+    rabbit_client.send_message(
+        exchange="", routing_key="text_print", body=json.dumps(checklist_data)
+    )
+
+    return jsonify({"status": "ok"})
 
 
 # TODO Add insert card endpoint

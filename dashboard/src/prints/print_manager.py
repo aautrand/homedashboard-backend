@@ -142,3 +142,20 @@ class PrintManager:
         rabbit_client.send_message(
             exchange="", routing_key="image_print", body=json.dumps(problems)
         )
+
+    @staticmethod
+    def print_checklist(checklist):
+        receipt_formatter = ReceiptFormatter()
+
+        # Add checklist items as a section with checkboxes
+        checklist_items = [f"[ ] {item}" for item in checklist.items]
+        receipt_formatter.add_section(
+            MultiElementSection(
+                title=f" {checklist.title} ",
+                items=checklist_items,
+                bullet="",
+            )
+        )
+
+        final = receipt_formatter.build()
+        return final
