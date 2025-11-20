@@ -1,10 +1,11 @@
 import json
-from datetime import datetime, time, timezone
+from datetime import date, datetime, time, timezone
 from logging import getLogger
 
-from flask import current_app
+from flask import current_app, request
 
 from dashboard.src.calendars import get_calendar_client
+from dashboard.src.learning.learning_manager import RoutineTaskManager
 from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.receipts.formatter import ReceiptFormatter
 from dashboard.src.prints.receipts.section import MultiElementSection
@@ -130,7 +131,27 @@ class PrintManager:
                 )
             )
 
-        # TODO Insert chores
+        # Insert routine tasks
+        routine_manager = RoutineTaskManager(request.db)
+        today_date = today.date()
+        routine_tasks = routine_manager.get_tasks_for_date(today_date)
+
+        if routine_tasks:
+            # Mark interval-based tasks as shown
+            for task in routine_tasks:
+                if task.interval_days:
+                    routine_manager.mark_task_shown(task.id, today_date)
+
+            # Format tasks with checkboxes
+            routine_items = [f"[ ] {task.title}" for task in routine_tasks]
+            receipt_formatter.add_section(
+                MultiElementSection(
+                    " Routines ",
+                    routine_items,
+                    bullet="",
+                )
+            )
+
         # Insert tasks
         final = receipt_formatter.build()
         return final

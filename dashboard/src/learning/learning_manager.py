@@ -1,9 +1,11 @@
+from datetime import date, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from dashboard.src.learning.models.card import Card
 from dashboard.src.learning.models.checklist import Checklist
 from dashboard.src.learning.models.problem import Problem
+from dashboard.src.learning.models.routine_task import RoutineTask
 from dashboard.src.learning.models.score import Score
 from dashboard.src.learning.models.subject import Subject
 from dashboard.src.learning.models.topic import Topic
@@ -176,3 +178,173 @@ class ChecklistManager:
             self.db.delete(checklist)
             self.db.commit()
         return checklist
+
+
+class RoutineTaskManager:
+    def __init__(self, db: Session):
+        self.db = db
+
+    @staticmethod
+    def matches_cron_pattern(pattern: str, check_date: date) -> bool:
+        """
+        Check if a date matches a cron pattern.
+        Pattern format: "day_of_week day_of_month month"
+        - day_of_week: 0-6 (0=Sunday), * for any, ranges (1-5), lists (1,3,5)
+        - day_of_month: 1-31, * for any, ranges, lists
+        - month: 1-12, * for any, ranges, lists
+        """
+        if not pattern:
+            return False
+
+        parts = pattern.split()
+        if len(parts) != 3:
+            return False
+
+        dow_pattern, dom_pattern, month_pattern = parts
+
+        # Get date components
+        # Python weekday(): Monday=0, Sunday=6
+        # We want: Sunday=0, Monday=1, ..., Saturday=6
+        day_of_week = (check_date.weekday() + 1) % 7
+        day_of_month = check_date.day
+        month = check_date.month
+
+        # Check month
+        if not RoutineTaskManager._matches_cron_field(month_pattern, month, 1, 12):
+            return False
+
+        # Check day of month
+        if not RoutineTaskManager._matches_cron_field(dom_pattern, day_of_month, 1, 31):
+            return False
+
+        # Check day of week
+        if not RoutineTaskManager._matches_cron_field(dow_pattern, day_of_week, 0, 6):
+            return False
+
+        return True
+
+    @staticmethod
+    def _matches_cron_field(pattern: str, value: int, min_val: int, max_val: int) -> bool:
+        """
+        Check if a value matches a cron field pattern.
+        Supports: *, ranges (1-5), lists (1,3,5)
+        """
+        if pattern == "*":
+            return True
+
+        # Handle ranges (e.g., "1-5")
+        if "-" in pattern:
+            try:
+                start, end = map(int, pattern.split("-"))
+                return start <= value <= end
+            except ValueError:
+                return False
+
+        # Handle lists (e.g., "1,3,5")
+        if "," in pattern:
+            try:
+                values = list(map(int, pattern.split(",")))
+                return value in values
+            except ValueError:
+                return False
+
+        # Handle single value
+        try:
+            return int(pattern) == value
+        except ValueError:
+            return False
+
+    def add_routine_task(
+        self,
+        title: str,
+        schedule_pattern: str = None,
+        interval_days: int = None,
+        priority: int = 0,
+        active: bool = True,
+    ):
+        """Add a new routine task."""
+        routine_task = RoutineTask(
+            title=title,
+            schedule_pattern=schedule_pattern,
+            interval_days=interval_days,
+            priority=priority,
+            active=active,
+        )
+        self.db.add(routine_task)
+        self.db.commit()
+        return routine_task
+
+    def get_routine_task(self, task_id: int):
+        """Get a specific routine task by ID."""
+        return self.db.get(RoutineTask, task_id)
+
+    def get_all_routine_tasks(self):
+        """Get all routine tasks ordered by priority."""
+        stmt = select(RoutineTask).order_by(RoutineTask.priority)
+        return self.db.execute(stmt).scalars().all()
+
+    def get_active_routine_tasks(self):
+        """Get all active routine tasks ordered by priority."""
+        stmt = (
+            select(RoutineTask)
+            .where(RoutineTask.active == True)
+            .order_by(RoutineTask.priority)
+        )
+        return self.db.execute(stmt).scalars().all()
+
+    def get_tasks_for_date(self, check_date: date):
+        """
+        Get all routine tasks that should be shown for a given date.
+        Handles both cron patterns and interval-based scheduling.
+        """
+        active_tasks = self.get_active_routine_tasks()
+        matching_tasks = []
+
+        for task in active_tasks:
+            should_show = False
+
+            # Check interval-based scheduling
+            if task.interval_days:
+                if not task.last_shown_date:
+                    should_show = True
+                else:
+                    days_since = (check_date - task.last_shown_date).days
+                    if days_since >= task.interval_days:
+                        should_show = True
+
+            # Check cron pattern
+            if task.schedule_pattern and self.matches_cron_pattern(
+                task.schedule_pattern, check_date
+            ):
+                should_show = True
+
+            if should_show:
+                matching_tasks.append(task)
+
+        return matching_tasks
+
+    def update_routine_task(self, task_id: int, **kwargs):
+        """Update a routine task."""
+        task = self.db.get(RoutineTask, task_id)
+        if task:
+            for key, value in kwargs.items():
+                if hasattr(task, key):
+                    setattr(task, key, value)
+            self.db.commit()
+        return task
+
+    def delete_routine_task(self, task_id: int):
+        """Delete a routine task."""
+        task = self.db.get(RoutineTask, task_id)
+        if task:
+            self.db.delete(task)
+            self.db.commit()
+        return task
+
+    def mark_task_shown(self, task_id: int, shown_date: date):
+        """Mark a task as shown on a specific date (for interval tracking)."""
+        task = self.db.get(RoutineTask, task_id)
+        if task:
+            task.last_shown_date = shown_date
+            self.db.commit()
+        return task
