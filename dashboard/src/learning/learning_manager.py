@@ -393,3 +393,11 @@ class ReminderManager:
             self.db.delete(reminder)
             self.db.commit()
         return reminder
+
+    def mark_reminder_shown(self, reminder_id: int, shown_date: date):
+        """Mark a reminder as shown on a specific date."""
+        reminder = self.db.get(Reminder, reminder_id)
+        if reminder:
+            reminder.last_shown_date = shown_date
+            self.db.commit()
+        return reminder

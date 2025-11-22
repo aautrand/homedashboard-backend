@@ -157,6 +157,10 @@ class PrintManager:
         active_reminders = reminder_manager.get_active_reminders()
 
         if active_reminders:
+            # Mark reminders as shown
+            for reminder in active_reminders:
+                reminder_manager.mark_reminder_shown(reminder.id, today_date)
+
             reminder_items = [reminder.title for reminder in active_reminders]
             receipt_formatter.add_section(
                 MultiElementSection(
