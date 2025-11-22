@@ -5,7 +5,7 @@ from logging import getLogger
 from flask import current_app, request
 
 from dashboard.src.calendars import get_calendar_client
-from dashboard.src.learning.learning_manager import ReminderManager, RoutineTaskManager
+from dashboard.src.learning.learning_manager import ReminderManager, RoutineTaskManager, SubjectManager
 from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.receipts.formatter import ReceiptFormatter
 from dashboard.src.prints.receipts.section import MultiElementSection
@@ -167,6 +167,24 @@ class PrintManager:
                     " Reminders ",
                     reminder_items,
                     bullet="!",
+                )
+            )
+
+        # Insert studies (spaced repetition)
+        subject_manager = SubjectManager(request.db)
+        study_subjects = subject_manager.get_subjects_for_study_today(today_date, max_subjects=1)
+
+        if study_subjects:
+            # Mark subjects as studied
+            for subject in study_subjects:
+                subject_manager.mark_subject_studied(subject.id, today_date)
+
+            study_items = [f"Study: {subject.name}" for subject in study_subjects]
+            receipt_formatter.add_section(
+                MultiElementSection(
+                    " Today's Study ",
+                    study_items,
+                    bullet="*",
                 )
             )
 

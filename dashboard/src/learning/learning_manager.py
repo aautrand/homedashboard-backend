@@ -75,6 +75,85 @@ class SubjectManager:
         stmt = select(Subject)
         return self.db.execute(stmt).scalars().all()
 
+    def get_study_subjects(self):
+        """Get all subjects with study_active=True."""
+        stmt = select(Subject).where(Subject.study_active == True)
+        return self.db.execute(stmt).scalars().all()
+
+    @staticmethod
+    def calculate_study_interval(times_shown: int) -> int:
+        """
+        Calculate the interval in days based on times_shown using a flattened logarithmic pattern.
+        Pattern: 1,1,1,1,1, 2,2,2, 3,3,3,3,3, 5,5,5,5, 8,8,8,8, 13,13,13,13, ...
+        """
+        # Define intervals: (interval_days, repetition_count)
+        intervals = [
+            (1, 5),   # Show 0-4:   1 day interval, 5 times
+            (2, 3),   # Show 5-7:   2 day interval, 3 times
+            (3, 5),   # Show 8-12:  3 day interval, 5 times
+            (5, 4),   # Show 13-16: 5 day interval, 4 times
+            (8, 4),   # Show 17-20: 8 day interval, 4 times
+            (13, 4),  # Show 21-24: 13 day interval, 4 times
+            (21, 999),# Show 25+:   21 day interval, indefinitely
+        ]
+
+        count = 0
+        for interval_days, repetitions in intervals:
+            if times_shown < count + repetitions:
+                return interval_days
+            count += repetitions
+
+        # Fallback (should never reach here)
+        return 21
+
+    def get_subjects_for_study_today(self, today: date, max_subjects: int = 1):
+        """
+        Get subjects that should be studied today based on spaced repetition.
+        Returns at most max_subjects, prioritizing round-robin (oldest last_shown_date first).
+        """
+        study_subjects = self.get_study_subjects()
+        eligible = []
+
+        for subject in study_subjects:
+            # Never shown before
+            if subject.last_shown_date is None:
+                eligible.append(subject)
+                continue
+
+            # Calculate required interval
+            required_interval = self.calculate_study_interval(subject.times_shown)
+
+            # Check if enough days have passed
+            days_since = (today - subject.last_shown_date).days
+            if days_since >= required_interval:
+                eligible.append(subject)
+
+        # Sort by last_shown_date (None first, then oldest)
+        # This creates round-robin behavior
+        eligible.sort(key=lambda s: s.last_shown_date or date.min)
+
+        # Return at most max_subjects
+        return eligible[:max_subjects]
+
+    def mark_subject_studied(self, subject_id: int, studied_date: date):
+        """Mark a subject as studied, incrementing times_shown and updating last_shown_date."""
+        subject = self.db.get(Subject, subject_id)
+        if subject:
+            subject.times_shown += 1
+            subject.last_shown_date = studied_date
+            self.db.commit()
+        return subject
+
+    def update_subject(self, subject_id: int, **kwargs):
+        """Update a subject."""
+        subject = self.db.get(Subject, subject_id)
+        if subject:
+            for key, value in kwargs.items():
+                if hasattr(subject, key):
+                    setattr(subject, key, value)
+            self.db.commit()
+        return subject
+
 
 class TopicManager:
     def __init__(self, db: Session):

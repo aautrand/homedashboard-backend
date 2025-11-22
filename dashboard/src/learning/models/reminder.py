@@ -1,8 +1,8 @@
 import json
-from datetime import datetime
-from typing import Any, Dict
+from datetime import date, datetime
+from typing import Any, Dict, Optional
 
-from sqlalchemy import Boolean, DateTime, Text, func
+from sqlalchemy import Boolean, Date, DateTime, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from dashboard.src.db import Base
@@ -18,6 +18,7 @@ class Reminder(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
     )
     title: Mapped[str] = mapped_column(Text, nullable=False)
+    last_shown_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     def __repr__(self) -> str:
@@ -37,6 +38,8 @@ class Reminder(Base):
         for column in self.__table__.columns:
             value = getattr(self, column.name)
             if isinstance(value, datetime):
+                result[column.name] = value.isoformat() if value else None
+            elif isinstance(value, date):
                 result[column.name] = value.isoformat() if value else None
             else:
                 result[column.name] = value
