@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from dashboard.src.learning.models.card import Card
 from dashboard.src.learning.models.checklist import Checklist
 from dashboard.src.learning.models.problem import Problem
+from dashboard.src.learning.models.reminder import Reminder
 from dashboard.src.learning.models.routine_task import RoutineTask
 from dashboard.src.learning.models.score import Score
 from dashboard.src.learning.models.subject import Subject
@@ -348,3 +349,47 @@ class RoutineTaskManager:
             task.last_shown_date = shown_date
             self.db.commit()
         return task
+
+
+class ReminderManager:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def add_reminder(self, title: str, active: bool = True):
+        """Add a new reminder."""
+        reminder = Reminder(title=title, active=active)
+        self.db.add(reminder)
+        self.db.commit()
+        return reminder
+
+    def get_reminder(self, reminder_id: int):
+        """Get a specific reminder by ID."""
+        return self.db.get(Reminder, reminder_id)
+
+    def get_all_reminders(self):
+        """Get all reminders."""
+        stmt = select(Reminder)
+        return self.db.execute(stmt).scalars().all()
+
+    def get_active_reminders(self):
+        """Get all active reminders."""
+        stmt = select(Reminder).where(Reminder.active == True)
+        return self.db.execute(stmt).scalars().all()
+
+    def update_reminder(self, reminder_id: int, **kwargs):
+        """Update a reminder."""
+        reminder = self.db.get(Reminder, reminder_id)
+        if reminder:
+            for key, value in kwargs.items():
+                if hasattr(reminder, key):
+                    setattr(reminder, key, value)
+            self.db.commit()
+        return reminder
+
+    def delete_reminder(self, reminder_id: int):
+        """Delete a reminder."""
+        reminder = self.db.get(Reminder, reminder_id)
+        if reminder:
+            self.db.delete(reminder)
+            self.db.commit()
+        return reminder

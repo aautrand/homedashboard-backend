@@ -5,7 +5,7 @@ from logging import getLogger
 from flask import current_app, request
 
 from dashboard.src.calendars import get_calendar_client
-from dashboard.src.learning.learning_manager import RoutineTaskManager
+from dashboard.src.learning.learning_manager import ReminderManager, RoutineTaskManager
 from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.receipts.formatter import ReceiptFormatter
 from dashboard.src.prints.receipts.section import MultiElementSection
@@ -149,6 +149,20 @@ class PrintManager:
                     " Routines ",
                     routine_items,
                     bullet="",
+                )
+            )
+
+        # Insert reminders
+        reminder_manager = ReminderManager(request.db)
+        active_reminders = reminder_manager.get_active_reminders()
+
+        if active_reminders:
+            reminder_items = [reminder.title for reminder in active_reminders]
+            receipt_formatter.add_section(
+                MultiElementSection(
+                    " Reminders ",
+                    reminder_items,
+                    bullet="!",
                 )
             )
 
