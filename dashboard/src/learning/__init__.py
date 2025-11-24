@@ -334,7 +334,7 @@ def get_todays_routines():
     return jsonify(response)
 
 
-@learning.route("/reminders", methods=["POST"])
+@learning.route("/reminder", methods=["POST"])
 def create_reminder():
     data = request.get_json()
 
@@ -350,7 +350,7 @@ def create_reminder():
     return jsonify(reminder.to_dict()), 201
 
 
-@learning.route("/reminders", methods=["GET"])
+@learning.route("/reminder", methods=["GET"])
 def get_reminders():
     reminder_manager = ReminderManager(request.db)
     reminders = reminder_manager.get_all_reminders()
@@ -358,7 +358,7 @@ def get_reminders():
     return jsonify(response)
 
 
-@learning.route("/reminders/<int:reminder_id>", methods=["GET"])
+@learning.route("/reminder/<int:reminder_id>", methods=["GET"])
 def get_reminder(reminder_id):
     reminder_manager = ReminderManager(request.db)
     reminder = reminder_manager.get_reminder(reminder_id)
@@ -369,7 +369,7 @@ def get_reminder(reminder_id):
     return jsonify(reminder.to_dict())
 
 
-@learning.route("/reminders/<int:reminder_id>", methods=["PUT"])
+@learning.route("/reminder/<int:reminder_id>", methods=["PUT"])
 def update_reminder(reminder_id):
     data = request.get_json()
 
@@ -385,7 +385,7 @@ def update_reminder(reminder_id):
     return jsonify(reminder.to_dict())
 
 
-@learning.route("/reminders/<int:reminder_id>", methods=["DELETE"])
+@learning.route("/reminder/<int:reminder_id>", methods=["DELETE"])
 def delete_reminder(reminder_id):
     reminder_manager = ReminderManager(request.db)
     reminder = reminder_manager.delete_reminder(reminder_id)
