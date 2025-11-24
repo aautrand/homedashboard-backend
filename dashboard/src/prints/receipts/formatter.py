@@ -4,7 +4,8 @@ from datetime import datetime
 from typing import Dict, List
 
 from dashboard.src.prints.receipts.section import Section
-from dashboard.src.utils.helpers import get_hash, latex_to_png, scp_files
+from dashboard.src.storage import get_storage_client
+from dashboard.src.utils.helpers import get_hash, latex_to_png
 
 
 class ReceiptFormatter:
@@ -43,12 +44,12 @@ class PrinterFormatter:
     ):
         latex_hash = get_hash(img_source)
         out_dir = "/tmp"
-        files = []
         fname = os.path.join(out_dir, f"{latex_hash}.png")
-        files.append(fname)
         latex_to_png(img_source, fname, fontsize=9, dpi=300, pad_inches=0.05)
 
-        scp_files(files, "printer", "printers", "/tmp/")
+        # Upload to MinIO
+        storage_client = get_storage_client("minio")
+        storage_client.upload_file(fname)
 
         self.instructions["instructions"].append(
             {
@@ -230,7 +231,8 @@ class MathPrinterFormatter(PrinterFormatter):
             self._process_ln(2)
 
     def add_problem_hash(self, problem_hash):
-        self._process_qr("http://localhost:8050/learning/score/" + problem_hash)
+        self_host = os.getenv("SELF_HOST", "localhost")
+        self._process_qr(f"http://{self_host}:8050/learning/score/{problem_hash}")
 
     def add_score(self, problem_count):
         self._process_ln(5)
