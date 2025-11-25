@@ -29,7 +29,7 @@ push-image:
 	if [[ "$$confirm" != [yY] ]]; then echo "Aborted."; exit 1; fi; \
 	echo $$new_ver > $(VERSION_FILE); \
 	git add $(VERSION_FILE); \
-	git commit -m "Bump version to $$new_ver"; \
+	git commit -m "[system] Bump version to $$new_ver"; \
 	docker build -t $(IMAGE):$$new_ver .; \
 	docker push $(IMAGE):$$new_ver; \
 	scp .env ganymede:/home/aautrand/homedashboard-be/.env
