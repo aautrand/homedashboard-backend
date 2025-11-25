@@ -40,6 +40,17 @@ def update_card(card_id):
     return jsonify(card.to_dict())
 
 
+@cards_bp.route("/cards/<int:card_id>", methods=["DELETE"])
+def delete_card(card_id):
+    card_manager = CardManager(request.db)
+    card = card_manager.delete_card(card_id)
+
+    if not card:
+        return jsonify({"error": "Card not found"}), 404
+
+    return jsonify({"message": "Card deleted successfully"}), 200
+
+
 @cards_bp.route("/cards", methods=["GET"])
 def get_cards():
     card_manager = CardManager(request.db)
