@@ -9,6 +9,19 @@ from dashboard.src.learning.models.card import Card
 cards_bp = Blueprint("cards", __name__)
 
 
+@cards_bp.route("/cards", methods=["POST"])
+def create_card():
+    data = request.get_json()
+
+    if not data or "title" not in data or "content" not in data:
+        return jsonify({"error": "Missing required fields: title, content"}), 400
+
+    card_manager = CardManager(request.db)
+    card = card_manager.add_card(title=data["title"], content=data["content"])
+
+    return jsonify(card.to_dict()), 201
+
+
 @cards_bp.route("/cards/<int:card_id>", methods=["PUT"])
 def update_card(card_id):
     data = request.get_json()
