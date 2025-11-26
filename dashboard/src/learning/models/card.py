@@ -18,6 +18,7 @@ class Card(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     reviewed: Mapped[bool] = mapped_column(Boolean, default=False)
     reviewed_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    grokked: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # many‑to‑many → topics
     topics = relationship(

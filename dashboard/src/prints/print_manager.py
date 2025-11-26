@@ -5,7 +5,7 @@ from logging import getLogger
 from flask import current_app, request
 
 from dashboard.src.calendars import get_calendar_client
-from dashboard.src.learning.learning_manager import ReminderManager, RoutineTaskManager, SubjectManager
+from dashboard.src.learning.learning_manager import CardManager, ReminderManager, RoutineTaskManager, SubjectManager
 from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.receipts.formatter import ReceiptFormatter
 from dashboard.src.prints.receipts.section import MultiElementSection
@@ -185,6 +185,20 @@ class PrintManager:
                     " Today's Study ",
                     study_items,
                     bullet="*",
+                )
+            )
+
+        # Insert questions
+        card_manager = CardManager(request.db)
+        non_grokked_cards = card_manager.get_non_grokked_cards()
+
+        if non_grokked_cards:
+            card_items = [card.title for card in non_grokked_cards]
+            receipt_formatter.add_section(
+                MultiElementSection(
+                    " Recent Questions ",
+                    card_items,
+                    bullet="?",
                 )
             )
 

@@ -46,6 +46,11 @@ class CardManager:
         stmt = select(Card)
         return self.db.execute(stmt).scalars().all()
 
+    def get_non_grokked_cards(self):
+        """Get all cards that have not been grokked."""
+        stmt = select(Card).where(Card.grokked == False).order_by(Card.created_date.desc())
+        return self.db.execute(stmt).scalars().all()
+
 
 class SubjectManager:
     def __init__(self, db: Session):
