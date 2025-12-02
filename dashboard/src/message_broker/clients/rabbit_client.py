@@ -20,7 +20,7 @@ class RabbitMQClient(MessageBrokerClient):
         return connection
 
     def publish(self, exchange, routing_key, body) -> None:
-        self.channel.queue_declare(queue="hello")
+        self.channel.queue_declare(queue=routing_key)
         self.channel.basic_publish(
             exchange=exchange, routing_key=routing_key, body=body
         )

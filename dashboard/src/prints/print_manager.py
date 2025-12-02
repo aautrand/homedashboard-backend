@@ -40,19 +40,39 @@ class PrintManager:
         return birthdays
 
     @staticmethod
-    def extract_events(events):
+    def extract_events(events, today_date):
         all_day_events = []
         timed_events = []
         calendar_events = []
         for raw in events[:]:
             data = json.loads(raw)
-            dt = datetime.fromisoformat(data["start_time"])
-            # blank out midnight; otherwise HH:MM
-            if dt.hour == 0 and dt.minute == 0:
-                all_day_events.append(data["summary"])
+            start_time_str = data["start_time"]
+
+            # Parse the start time - handle both date-only and datetime formats
+            if "T" in start_time_str:
+                dt = datetime.fromisoformat(start_time_str)
+                event_date = dt.date()
             else:
-                time_str = dt.strftime("%H:%M")
-                timed_events.append((time_str, data["summary"]))
+                # Date-only format (all-day events)
+                event_date = datetime.fromisoformat(start_time_str).date()
+
+            # Skip events that don't start today
+            if event_date != today_date:
+                events.remove(raw)
+                continue
+
+            # Categorize the event
+            if "T" in start_time_str:
+                dt = datetime.fromisoformat(start_time_str)
+                if dt.hour == 0 and dt.minute == 0:
+                    all_day_events.append(data["summary"])
+                else:
+                    time_str = dt.strftime("%H:%M")
+                    timed_events.append((time_str, data["summary"]))
+            else:
+                # Date-only events are all-day events
+                all_day_events.append(data["summary"])
+
             events.remove(raw)
 
         timed_events.sort(
@@ -92,10 +112,12 @@ class PrintManager:
         # get calendar events
         calendar_client = get_calendar_client()
 
-        # today = datetime.today()
-        today = datetime.now(timezone.utc).astimezone()
+        # Use naive datetime (no timezone info) for CalDAV queries
+        today = datetime.now()
+
         start = today.replace(hour=0, minute=0, second=0, microsecond=0)
-        end = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+        end = today.replace(hour=23, minute=59, second=58, microsecond=0)
+        print(today, start, end)
 
         logger.info(f"start: {start}, end: {end}, today: {today}")
         calendars = [current_app.config["MAIN_CALENDAR"], "Chores"]
@@ -109,8 +131,9 @@ class PrintManager:
             receipt_formatter.add_section(MultiElementSection(" Birthdays ", birthdays))
 
         # Insert calendar events
+        today_date = today.date()
         all_day_events, timed_events, calendar_events = PrintManager.extract_events(
-            event_list
+            event_list, today_date
         )
         if all_day_events:
             receipt_formatter.add_section(
@@ -133,7 +156,6 @@ class PrintManager:
 
         # Insert routine tasks
         routine_manager = RoutineTaskManager(request.db)
-        today_date = today.date()
         routine_tasks = routine_manager.get_tasks_for_date(today_date)
 
         if routine_tasks:
@@ -196,9 +218,9 @@ class PrintManager:
             card_items = [card.title for card in non_grokked_cards]
             receipt_formatter.add_section(
                 MultiElementSection(
-                    " Recent Questions ",
+                    " Pop Quiz ",
                     card_items,
-                    bullet="?",
+                    bullet="-",
                 )
             )
 
@@ -229,4 +251,38 @@ class PrintManager:
         )
 
         final = receipt_formatter.build()
+        return final
+
+    @staticmethod
+    def print_text(text):
+
+        receipt_formatter = ReceiptFormatter()
+
+        # Add checklist items as a section with checkboxes
+        receipt_formatter.add_section(
+            MultiElementSection(
+                title=f"",
+                items=text,
+                bullet="",
+            )
+        )
+
+        final = receipt_formatter.build("")
+        return final
+
+    @staticmethod
+    def print_text_delayed(text):
+
+        receipt_formatter = ReceiptFormatter()
+
+        # Add checklist items as a section with checkboxes
+        receipt_formatter.add_section(
+            MultiElementSection(
+                title=f"",
+                items=text,
+                bullet="",
+            )
+        )
+
+        final = receipt_formatter.build("")
         return final

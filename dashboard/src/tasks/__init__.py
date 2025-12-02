@@ -40,20 +40,6 @@ def current():
     return {"status": "ok"}
 
 
-@tasks.route("/latex")
-def latex_to_image():
-    print_manager = PrintManager()
-    data = request.get_json()
-    formulas = data.get("formulas", [])  # each is e.g. "x^3 \cdot x^4"
-    print_manager.print_problems(formulas)
-    rabbit_client = get_message_broker_client()
-    payload = {"count": len(formulas)}
-    rabbit_client.send_message(
-        exchange="", routing_key="image_print", body=str(payload)
-    )
-    return "finished"
-
-
 @tasks.route("/math-problems")
 def math_problems():
     print_manager = PrintManager()
@@ -70,4 +56,4 @@ def math_problems():
 
     print_manager.print_problems(print_formatted_problems)
 
-    return {"status": "disabled", "problems": raw_problems["problems"]}
+    return {"status": "successful", "problems": raw_problems["problems"]}

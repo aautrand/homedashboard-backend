@@ -16,11 +16,14 @@ class ReceiptFormatter:
     def add_section(self, section: Section) -> None:
         self.sections.append(section)
 
-    def build(self) -> Dict:
+    def build(self, title=None) -> Dict:
         # format like "__Oct 2, 2025__"
-        task_print = {
-            "title": f"  {self.dt.strftime('%b')} {self.dt.day}, {self.dt.year}  ",
-        }
+        if title is None:
+            task_print = {
+                "title": f"  {self.dt.strftime('%b')} {self.dt.day}, {self.dt.year}  ",
+            }
+        else:
+            task_print = {"title": title}
 
         for section in self.sections:
             task_print[section.title] = section.render()

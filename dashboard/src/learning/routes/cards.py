@@ -56,8 +56,12 @@ def get_cards():
     card_manager = CardManager(request.db)
     reviewed = request.args.get("reviewed", None)
 
-    if reviewed and reviewed.lower() == "false":
+    if reviewed is None:
+        cards = card_manager.get_all_cards()
+    elif reviewed.lower() == "false":
         cards = card_manager.get_non_reviewed_cards()
+    elif reviewed.lower() == "true":
+        cards = card_manager.get_reviewed_cards()
     else:
         cards = card_manager.get_all_cards()
 

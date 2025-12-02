@@ -38,6 +38,10 @@ class CardManager:
             self.db.commit()
         return card
 
+    def get_reviewed_cards(self):
+        stmt = select(Card).where(Card.reviewed == True)
+        return self.db.execute(stmt).scalars().all()
+
     def get_non_reviewed_cards(self):
         stmt = select(Card).where(Card.reviewed == False)
         return self.db.execute(stmt).scalars().all()
@@ -47,8 +51,8 @@ class CardManager:
         return self.db.execute(stmt).scalars().all()
 
     def get_non_grokked_cards(self):
-        """Get all cards that have not been grokked."""
-        stmt = select(Card).where(Card.grokked == False).order_by(Card.created_date.desc())
+        """Get all cards that have not been grokked and are not up for review."""
+        stmt = select(Card).where(Card.grokked == False, Card.reviewed == True).order_by(Card.created_date.desc())
         return self.db.execute(stmt).scalars().all()
 
 

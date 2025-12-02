@@ -32,12 +32,14 @@ def register_blueprints(app):
     from dashboard.src.learning import learning
     from dashboard.src.tasks import tasks
     from dashboard.src.weather import weather
+    from dashboard.src.prints import prints
 
     app.register_blueprint(weather)
     app.register_blueprint(calendar)
     app.register_blueprint(tasks)
     app.register_blueprint(ai)
     app.register_blueprint(learning)
+    app.register_blueprint(prints)
 
 
 def setup_message_broker(app):
