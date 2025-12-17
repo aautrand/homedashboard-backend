@@ -3,7 +3,7 @@ import time
 from flask import Blueprint, request
 
 from dashboard import get_message_broker_client
-from prints.print_manager import PrintManager
+from dashboard.src.prints.print_manager import PrintManager
 
 prints = Blueprint('print', __name__, url_prefix='/prints')
 

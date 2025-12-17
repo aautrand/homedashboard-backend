@@ -1,10 +1,8 @@
-import json
 from logging import getLogger
 
 from flask import Blueprint, request
 
-from dashboard.src.message_broker.clients.base import get_message_broker_client
-from dashboard.src.prints.print_manager import PrintManager
+from dashboard.src.prints import print_manager
 
 logger = getLogger(__name__)
 
@@ -13,20 +11,27 @@ prints_bp = Blueprint("prints", __name__)
 
 @prints_bp.route("/print/pop-quiz", methods=["POST"])
 def print_pop_quiz():
+    """
+    Print a pop quiz.
+
+    Request body (JSON):
+        - num_questions (int, optional): Number of questions to include.
+            If not provided, includes all available questions.
+        - include_answers (bool, optional): Whether to print answers. Defaults to True.
+
+    Returns:
+        JSON with status, quiz_id, question_count, and message.
+    """
     logger.info("Printing pop quiz")
     data = request.get_json() or {}
+
+    num_questions = data.get("num_questions")
     include_answers = data.get("include_answers", True)
 
-    print_manager = PrintManager()
-    pop_quiz, cards, quiz = print_manager.print_pop_quiz()
-    rabbit_client = get_message_broker_client()
-    rabbit_client.send_message(
-        exchange="", routing_key="text_print", body=json.dumps(pop_quiz)
+    result = print_manager.print_pop_quiz(
+        db=request.db,
+        num_questions=num_questions,
+        include_answers=include_answers,
     )
-    # Print answers immediately after (if requested)
-    if include_answers and cards:
-        answers = print_manager.print_pop_quiz_answers(cards)
-        rabbit_client.send_message(
-            exchange="", routing_key="text_print", body=json.dumps(answers)
-        )
-    return {"status": "ok", "quiz_id": quiz.id if quiz else None}
+
+    return result

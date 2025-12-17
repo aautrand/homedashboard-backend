@@ -289,25 +289,22 @@ class PrintManager:
         return final
 
     @staticmethod
-    def print_pop_quiz():
+    def build_pop_quiz(cards: list) -> dict:
+        """
+        Build the pop quiz receipt data from a list of cards.
+
+        Args:
+            cards: List of Card objects to include in the quiz
+
+        Returns:
+            Dictionary with the formatted receipt data
+        """
         receipt_formatter = ReceiptFormatter()
         now = datetime.now()
 
-        # Insert questions
-        card_manager = CardManager(request.db)
-        non_grokked_cards = card_manager.get_non_grokked_cards()
-
-        # Randomize the order
-        randomized_cards = list(non_grokked_cards)
-        random.shuffle(randomized_cards)
-
-        quiz = None
-        if randomized_cards:
-            quiz_manager = QuizManager(request.db)
-            quiz = quiz_manager.create_quiz(randomized_cards)
-
+        if cards:
             card_items = []
-            for card in randomized_cards:
+            for card in cards:
                 card_items.append(card.title)
                 card_items.append("[ ]    [ ]    [ ]\n")
             receipt_formatter.add_section(
@@ -320,11 +317,19 @@ class PrintManager:
 
         # Format title with date and time (e.g., "Dec 17, 2025 14:30")
         title = f"  {now.strftime('%b')} {now.day}, {now.year} {now.strftime('%H:%M')}  "
-        final = receipt_formatter.build(title=title)
-        return final, randomized_cards, quiz
+        return receipt_formatter.build(title=title)
 
     @staticmethod
-    def print_pop_quiz_answers(cards):
+    def build_pop_quiz_answers(cards: list) -> dict:
+        """
+        Build the pop quiz answers receipt data from a list of cards.
+
+        Args:
+            cards: List of Card objects to include answers for
+
+        Returns:
+            Dictionary with the formatted receipt data
+        """
         receipt_formatter = ReceiptFormatter()
 
         if cards:
@@ -340,5 +345,73 @@ class PrintManager:
                 )
             )
 
-        final = receipt_formatter.build()
-        return final
+        return receipt_formatter.build()
+
+
+def print_pop_quiz(
+    db,
+    num_questions: int = None,
+    include_answers: bool = True,
+) -> dict:
+    """
+    Print a pop quiz with randomized questions.
+
+    This is the main entry point for printing pop quizzes. It can be called
+    from HTTP endpoints, voice assistants, or any other interface.
+
+    Args:
+        db: Database session
+        num_questions: Number of questions to include. If None, includes all available.
+        include_answers: Whether to print the answers after the quiz.
+
+    Returns:
+        Dictionary with:
+            - status: "ok" or "error"
+            - quiz_id: ID of the created quiz (or None if no questions)
+            - question_count: Number of questions in the quiz
+            - message: Human-readable status message
+    """
+    card_manager = CardManager(db)
+    non_grokked_cards = card_manager.get_non_grokked_cards()
+
+    if not non_grokked_cards:
+        return {
+            "status": "ok",
+            "quiz_id": None,
+            "question_count": 0,
+            "message": "No questions available for quiz",
+        }
+
+    # Randomize the order
+    randomized_cards = list(non_grokked_cards)
+    random.shuffle(randomized_cards)
+
+    # Limit to requested number of questions
+    if num_questions is not None and num_questions > 0:
+        randomized_cards = randomized_cards[:num_questions]
+
+    # Create quiz record in database
+    quiz_manager = QuizManager(db)
+    quiz = quiz_manager.create_quiz(randomized_cards)
+
+    # Build and send quiz to printer
+    rabbit_client = get_message_broker_client()
+
+    quiz_data = PrintManager.build_pop_quiz(randomized_cards)
+    rabbit_client.send_message(
+        exchange="", routing_key="text_print", body=json.dumps(quiz_data)
+    )
+
+    # Print answers if requested
+    if include_answers:
+        answers_data = PrintManager.build_pop_quiz_answers(randomized_cards)
+        rabbit_client.send_message(
+            exchange="", routing_key="text_print", body=json.dumps(answers_data)
+        )
+
+    return {
+        "status": "ok",
+        "quiz_id": quiz.id,
+        "question_count": len(randomized_cards),
+        "message": f"Printed pop quiz with {len(randomized_cards)} questions",
+    }
