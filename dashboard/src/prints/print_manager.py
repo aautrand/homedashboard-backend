@@ -286,3 +286,50 @@ class PrintManager:
 
         final = receipt_formatter.build("")
         return final
+
+    @staticmethod
+    def print_pop_quiz():
+        receipt_formatter = ReceiptFormatter()
+        now = datetime.now()
+
+        # Insert questions
+        card_manager = CardManager(request.db)
+        non_grokked_cards = card_manager.get_non_grokked_cards()
+
+        if non_grokked_cards:
+            card_items = []
+            for card in non_grokked_cards:
+                card_items.append(card.title)
+                card_items.append("[ ]    [ ]    [ ]\n")
+            receipt_formatter.add_section(
+                MultiElementSection(
+                    " Pop Quiz ",
+                    card_items,
+                    bullet="",
+                )
+            )
+
+        # Format title with date and time (e.g., "Dec 17, 2025 14:30")
+        title = f"  {now.strftime('%b')} {now.day}, {now.year} {now.strftime('%H:%M')}  "
+        final = receipt_formatter.build(title=title)
+        return final, non_grokked_cards
+
+    @staticmethod
+    def print_pop_quiz_answers(cards):
+        receipt_formatter = ReceiptFormatter()
+
+        if cards:
+            answer_items = []
+            for card in cards:
+                answer_items.append(f"{card.title}")
+                answer_items.append(f"  {card.content}\n")
+            receipt_formatter.add_section(
+                MultiElementSection(
+                    " Pop Quiz Answers ",
+                    answer_items,
+                    bullet="",
+                )
+            )
+
+        final = receipt_formatter.build()
+        return final

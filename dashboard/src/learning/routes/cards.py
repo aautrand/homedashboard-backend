@@ -22,6 +22,28 @@ def create_card():
     return jsonify(card.to_dict()), 201
 
 
+@cards_bp.route("/cards/batch", methods=["POST"])
+def create_cards_batch():
+    data = request.get_json()
+
+    if not data or not isinstance(data, list):
+        return jsonify({"error": "Expected a list of cards"}), 400
+
+    card_manager = CardManager(request.db)
+    created_cards = []
+
+    for card_data in data:
+        if "title" not in card_data or "content" not in card_data:
+            return jsonify({"error": "Each card must have title and content"}), 400
+
+        card = card_manager.add_card(
+            title=card_data["title"], content=card_data["content"]
+        )
+        created_cards.append(card.to_dict())
+
+    return jsonify(created_cards), 201
+
+
 @cards_bp.route("/cards/<int:card_id>", methods=["PUT"])
 def update_card(card_id):
     data = request.get_json()

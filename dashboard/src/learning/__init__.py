@@ -2,6 +2,7 @@ from flask import Blueprint
 
 from dashboard.src.learning.routes.cards import cards_bp
 from dashboard.src.learning.routes.checklists import checklists_bp
+from dashboard.src.learning.routes.prints import prints_bp
 from dashboard.src.learning.routes.reminders import reminders_bp
 from dashboard.src.learning.routes.routines import routines_bp
 from dashboard.src.learning.routes.subjects import subjects_bp
@@ -16,3 +17,4 @@ learning.register_blueprint(subjects_bp)
 learning.register_blueprint(checklists_bp)
 learning.register_blueprint(routines_bp)
 learning.register_blueprint(reminders_bp)
+learning.register_blueprint(prints_bp)
