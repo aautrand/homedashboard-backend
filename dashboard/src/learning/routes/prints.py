@@ -18,7 +18,7 @@ def print_pop_quiz():
     include_answers = data.get("include_answers", True)
 
     print_manager = PrintManager()
-    pop_quiz, cards = print_manager.print_pop_quiz()
+    pop_quiz, cards, quiz = print_manager.print_pop_quiz()
     rabbit_client = get_message_broker_client()
     rabbit_client.send_message(
         exchange="", routing_key="text_print", body=json.dumps(pop_quiz)
@@ -29,4 +29,4 @@ def print_pop_quiz():
         rabbit_client.send_message(
             exchange="", routing_key="text_print", body=json.dumps(answers)
         )
-    return {"status": "ok"}
+    return {"status": "ok", "quiz_id": quiz.id if quiz else None}

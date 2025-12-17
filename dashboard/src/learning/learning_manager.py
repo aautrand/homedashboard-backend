@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from dashboard.src.learning.models.card import Card
 from dashboard.src.learning.models.checklist import Checklist
 from dashboard.src.learning.models.problem import Problem
+from dashboard.src.learning.models.card import KnowledgeLevel
+from dashboard.src.learning.models.quiz import AnswerScore, Quiz, QuizAnswer, QuizQuestion
 from dashboard.src.learning.models.reminder import Reminder
 from dashboard.src.learning.models.routine_task import RoutineTask
 from dashboard.src.learning.models.score import Score
@@ -489,3 +491,149 @@ class ReminderManager:
             reminder.last_shown_date = shown_date
             self.db.commit()
         return reminder
+
+
+class QuizManager:
+    MASTERY_THRESHOLD = 3  # consecutive correct to become MASTERED
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    def create_quiz(self, cards: list[Card]) -> Quiz:
+        """Create a new quiz with the given cards in order."""
+        quiz = Quiz()
+        self.db.add(quiz)
+        self.db.flush()
+
+        for position, card in enumerate(cards):
+            quiz_question = QuizQuestion(
+                quiz_id=quiz.id,
+                card_id=card.id,
+                position=position,
+            )
+            self.db.add(quiz_question)
+
+        self.db.commit()
+        return quiz
+
+    def get_quiz(self, quiz_id: int) -> Quiz:
+        """Get a quiz by ID."""
+        return self.db.get(Quiz, quiz_id)
+
+    def get_all_quizzes(self) -> list[Quiz]:
+        """Get all quizzes ordered by creation date (newest first)."""
+        stmt = select(Quiz).order_by(Quiz.created_date.desc())
+        return self.db.execute(stmt).scalars().all()
+
+    def get_quiz_questions(self, quiz_id: int) -> list[QuizQuestion]:
+        """Get all questions for a quiz in order."""
+        stmt = (
+            select(QuizQuestion)
+            .where(QuizQuestion.quiz_id == quiz_id)
+            .order_by(QuizQuestion.position)
+        )
+        return self.db.execute(stmt).scalars().all()
+
+    def record_answer(self, quiz_question_id: int, score: int) -> QuizAnswer:
+        """
+        Record an answer for a quiz question and update the card's knowledge level.
+
+        Args:
+            quiz_question_id: The ID of the quiz question
+            score: 0=incorrect, 1=partial, 2=correct (use AnswerScore enum)
+
+        Returns:
+            The created QuizAnswer
+        """
+        quiz_answer = QuizAnswer(
+            quiz_question_id=quiz_question_id,
+            score=score,
+        )
+        self.db.add(quiz_answer)
+
+        # Get the card and update its knowledge level
+        quiz_question = self.db.get(QuizQuestion, quiz_question_id)
+        if quiz_question:
+            card = self.db.get(Card, quiz_question.card_id)
+            if card:
+                self._update_card_knowledge(card, score)
+
+        self.db.commit()
+        return quiz_answer
+
+    def _update_card_knowledge(self, card: Card, score: int) -> None:
+        """Update a card's knowledge level based on the answer score."""
+        # Update consecutive correct counter
+        if score == AnswerScore.CORRECT:
+            card.consecutive_correct = (card.consecutive_correct or 0) + 1
+        else:
+            card.consecutive_correct = 0
+
+        # Calculate new knowledge level
+        if card.consecutive_correct >= self.MASTERY_THRESHOLD:
+            card.knowledge_level = KnowledgeLevel.MASTERED
+            card.grokked = True  # Mark as grokked when mastered
+        elif card.consecutive_correct >= 2:
+            card.knowledge_level = KnowledgeLevel.KNOWN
+        elif score == AnswerScore.CORRECT:
+            # Single correct - at least FAMILIAR
+            if (card.knowledge_level or 0) < KnowledgeLevel.FAMILIAR:
+                card.knowledge_level = KnowledgeLevel.FAMILIAR
+        elif score == AnswerScore.PARTIAL:
+            # Partial correct - at least LEARNING, cap at FAMILIAR
+            if (card.knowledge_level or 0) < KnowledgeLevel.LEARNING:
+                card.knowledge_level = KnowledgeLevel.LEARNING
+            elif (card.knowledge_level or 0) > KnowledgeLevel.FAMILIAR:
+                card.knowledge_level = KnowledgeLevel.FAMILIAR
+        else:
+            # Incorrect - drop to LEARNING
+            card.knowledge_level = KnowledgeLevel.LEARNING
+
+    def get_answers_for_question(self, quiz_question_id: int) -> list[QuizAnswer]:
+        """Get all answers for a specific question."""
+        stmt = (
+            select(QuizAnswer)
+            .where(QuizAnswer.quiz_question_id == quiz_question_id)
+            .order_by(QuizAnswer.created_date)
+        )
+        return self.db.execute(stmt).scalars().all()
+
+    def get_answers_for_card(self, card_id: int) -> list[QuizAnswer]:
+        """Get all answers for a specific card across all quizzes."""
+        stmt = (
+            select(QuizAnswer)
+            .join(QuizQuestion)
+            .where(QuizQuestion.card_id == card_id)
+            .order_by(QuizAnswer.created_date)
+        )
+        return self.db.execute(stmt).scalars().all()
+
+    def get_card_stats(self, card_id: int) -> dict:
+        """Get statistics for a card's quiz performance."""
+        answers = self.get_answers_for_card(card_id)
+        card = self.db.get(Card, card_id)
+
+        total = len(answers)
+        if total == 0:
+            return {
+                "total_answers": 0,
+                "correct": 0,
+                "partial": 0,
+                "incorrect": 0,
+                "knowledge_level": KnowledgeLevel(card.knowledge_level or 0).name,
+                "consecutive_correct": card.consecutive_correct or 0,
+            }
+
+        correct = sum(1 for a in answers if a.score == AnswerScore.CORRECT)
+        partial = sum(1 for a in answers if a.score == AnswerScore.PARTIAL)
+        incorrect = sum(1 for a in answers if a.score == AnswerScore.INCORRECT)
+
+        return {
+            "total_answers": total,
+            "correct": correct,
+            "partial": partial,
+            "incorrect": incorrect,
+            "correct_percentage": round(correct / total * 100, 1),
+            "knowledge_level": KnowledgeLevel(card.knowledge_level or 0).name,
+            "consecutive_correct": card.consecutive_correct or 0,
+        }

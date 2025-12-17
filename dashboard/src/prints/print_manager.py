@@ -1,11 +1,12 @@
 import json
+import random
 from datetime import date, datetime, time, timezone
 from logging import getLogger
 
 from flask import current_app, request
 
 from dashboard.src.calendars import get_calendar_client
-from dashboard.src.learning.learning_manager import CardManager, ReminderManager, RoutineTaskManager, SubjectManager
+from dashboard.src.learning.learning_manager import CardManager, QuizManager, ReminderManager, RoutineTaskManager, SubjectManager
 from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.receipts.formatter import ReceiptFormatter
 from dashboard.src.prints.receipts.section import MultiElementSection
@@ -296,9 +297,17 @@ class PrintManager:
         card_manager = CardManager(request.db)
         non_grokked_cards = card_manager.get_non_grokked_cards()
 
-        if non_grokked_cards:
+        # Randomize the order
+        randomized_cards = list(non_grokked_cards)
+        random.shuffle(randomized_cards)
+
+        quiz = None
+        if randomized_cards:
+            quiz_manager = QuizManager(request.db)
+            quiz = quiz_manager.create_quiz(randomized_cards)
+
             card_items = []
-            for card in non_grokked_cards:
+            for card in randomized_cards:
                 card_items.append(card.title)
                 card_items.append("[ ]    [ ]    [ ]\n")
             receipt_formatter.add_section(
@@ -312,7 +321,7 @@ class PrintManager:
         # Format title with date and time (e.g., "Dec 17, 2025 14:30")
         title = f"  {now.strftime('%b')} {now.day}, {now.year} {now.strftime('%H:%M')}  "
         final = receipt_formatter.build(title=title)
-        return final, non_grokked_cards
+        return final, randomized_cards, quiz
 
     @staticmethod
     def print_pop_quiz_answers(cards):
