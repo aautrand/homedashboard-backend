@@ -289,12 +289,13 @@ class PrintManager:
         return final
 
     @staticmethod
-    def build_pop_quiz(cards: list) -> dict:
+    def build_pop_quiz(cards: list, quiz_id: int = None) -> dict:
         """
         Build the pop quiz receipt data from a list of cards.
 
         Args:
             cards: List of Card objects to include in the quiz
+            quiz_id: Optional quiz ID to display on the receipt
 
         Returns:
             Dictionary with the formatted receipt data
@@ -315,8 +316,10 @@ class PrintManager:
                 )
             )
 
-        # Format title with date and time (e.g., "Dec 17, 2025 14:30")
+        # Format title with date, time, and quiz ID (e.g., "Dec 17, 2025 14:30 #42")
         title = f"  {now.strftime('%b')} {now.day}, {now.year} {now.strftime('%H:%M')}  "
+        if quiz_id is not None:
+            title = f"  {now.strftime('%b')} {now.day}, {now.year} {now.strftime('%H:%M')} #{quiz_id}  "
         return receipt_formatter.build(title=title)
 
     @staticmethod
@@ -397,7 +400,7 @@ def print_pop_quiz(
     # Build and send quiz to printer
     rabbit_client = get_message_broker_client()
 
-    quiz_data = PrintManager.build_pop_quiz(randomized_cards)
+    quiz_data = PrintManager.build_pop_quiz(randomized_cards, quiz_id=quiz.id)
     rabbit_client.send_message(
         exchange="", routing_key="text_print", body=json.dumps(quiz_data)
     )
@@ -414,4 +417,123 @@ def print_pop_quiz(
         "quiz_id": quiz.id,
         "question_count": len(randomized_cards),
         "message": f"Printed pop quiz with {len(randomized_cards)} questions",
+    }
+
+
+def reprint_quiz(db, quiz_id: int, include_answers: bool = True, randomize: bool = True) -> dict:
+    """
+    Reprint a previously generated quiz.
+
+    Args:
+        db: Database session
+        quiz_id: ID of the quiz to reprint
+        include_answers: Whether to also print answers (default True)
+        randomize: Whether to randomize question order (default True)
+
+    Returns:
+        Dictionary with:
+            - status: "ok" or "error"
+            - quiz_id: ID of the quiz
+            - question_count: Number of questions in the quiz
+            - message: Human-readable status message
+    """
+    quiz_manager = QuizManager(db)
+    quiz = quiz_manager.get_quiz(quiz_id)
+
+    if not quiz:
+        return {
+            "status": "error",
+            "quiz_id": quiz_id,
+            "question_count": 0,
+            "message": f"Quiz #{quiz_id} not found",
+        }
+
+    # Get the cards in quiz order
+    questions = quiz_manager.get_quiz_questions(quiz_id)
+    cards = [q.card for q in questions]
+
+    if not cards:
+        return {
+            "status": "ok",
+            "quiz_id": quiz_id,
+            "question_count": 0,
+            "message": f"Quiz #{quiz_id} has no questions",
+        }
+
+    # Randomize order if requested
+    if randomize:
+        cards = list(cards)
+        random.shuffle(cards)
+
+    # Build and send quiz to printer
+    rabbit_client = get_message_broker_client()
+    quiz_data = PrintManager.build_pop_quiz(cards, quiz_id=quiz_id)
+    rabbit_client.send_message(
+        exchange="", routing_key="text_print", body=json.dumps(quiz_data)
+    )
+
+    if include_answers:
+        answers_data = PrintManager.build_pop_quiz_answers(cards)
+        rabbit_client.send_message(
+            exchange="", routing_key="text_print", body=json.dumps(answers_data)
+        )
+
+    return {
+        "status": "ok",
+        "quiz_id": quiz_id,
+        "question_count": len(cards),
+        "message": f"Reprinted quiz #{quiz_id} ({len(cards)} questions)",
+    }
+
+
+def print_quiz_answers(db, quiz_id: int) -> dict:
+    """
+    Print the answers for a specific quiz.
+
+    Args:
+        db: Database session
+        quiz_id: ID of the quiz to print answers for
+
+    Returns:
+        Dictionary with:
+            - status: "ok" or "error"
+            - quiz_id: ID of the quiz
+            - question_count: Number of questions in the quiz
+            - message: Human-readable status message
+    """
+    quiz_manager = QuizManager(db)
+    quiz = quiz_manager.get_quiz(quiz_id)
+
+    if not quiz:
+        return {
+            "status": "error",
+            "quiz_id": quiz_id,
+            "question_count": 0,
+            "message": f"Quiz #{quiz_id} not found",
+        }
+
+    # Get the cards in quiz order
+    questions = quiz_manager.get_quiz_questions(quiz_id)
+    cards = [q.card for q in questions]
+
+    if not cards:
+        return {
+            "status": "ok",
+            "quiz_id": quiz_id,
+            "question_count": 0,
+            "message": f"Quiz #{quiz_id} has no questions",
+        }
+
+    # Build and send answers to printer
+    rabbit_client = get_message_broker_client()
+    answers_data = PrintManager.build_pop_quiz_answers(cards)
+    rabbit_client.send_message(
+        exchange="", routing_key="text_print", body=json.dumps(answers_data)
+    )
+
+    return {
+        "status": "ok",
+        "quiz_id": quiz_id,
+        "question_count": len(cards),
+        "message": f"Printed answers for quiz #{quiz_id} ({len(cards)} questions)",
     }

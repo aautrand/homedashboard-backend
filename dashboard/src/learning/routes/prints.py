@@ -35,3 +35,77 @@ def print_pop_quiz():
     )
 
     return result
+
+
+@prints_bp.route("/print/quiz/<int:quiz_id>", methods=["POST"])
+def reprint_quiz(quiz_id: int):
+    """
+    Reprint a previously generated quiz.
+
+    Args:
+        quiz_id: ID of the quiz (from URL path)
+
+    Request body (JSON, optional):
+        - include_answers (bool, optional): Whether to print answers. Defaults to True.
+        - randomize (bool, optional): Whether to randomize question order. Defaults to True.
+
+    Returns:
+        JSON with status, quiz_id, question_count, and message.
+    """
+    logger.info(f"Reprinting quiz #{quiz_id}")
+    data = request.get_json() or {}
+    include_answers = data.get("include_answers", True)
+    randomize = data.get("randomize", True)
+
+    result = print_manager.reprint_quiz(
+        db=request.db,
+        quiz_id=quiz_id,
+        include_answers=include_answers,
+        randomize=randomize,
+    )
+
+    return result
+
+
+@prints_bp.route("/print/quiz/<int:quiz_id>/answers", methods=["POST"])
+def print_quiz_answers(quiz_id: int):
+    """
+    Print the answers for a specific quiz.
+
+    Args:
+        quiz_id: ID of the quiz (from URL path)
+
+    Returns:
+        JSON with status, quiz_id, question_count, and message.
+    """
+    logger.info(f"Printing answers for quiz #{quiz_id}")
+
+    result = print_manager.print_quiz_answers(
+        db=request.db,
+        quiz_id=quiz_id,
+    )
+
+    return result
+
+
+@prints_bp.route("/quiz", methods=["GET"])
+def get_quizzes():
+    """
+    Get all quizzes, ordered by creation date (newest first).
+
+    Returns:
+        JSON list of quizzes with id, created_date, and question_count.
+    """
+    from dashboard.src.learning.learning_manager import QuizManager
+
+    quiz_manager = QuizManager(request.db)
+    quizzes = quiz_manager.get_all_quizzes()
+
+    return [
+        {
+            "id": quiz.id,
+            "created_date": quiz.created_date.isoformat(),
+            "question_count": len(quiz.questions),
+        }
+        for quiz in quizzes
+    ]
