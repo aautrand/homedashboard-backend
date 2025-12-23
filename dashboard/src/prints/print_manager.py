@@ -189,7 +189,7 @@ class PrintManager:
                 MultiElementSection(
                     " Reminders ",
                     reminder_items,
-                    bullet="!",
+                    bullet="o ",
                 )
             )
 
@@ -221,7 +221,7 @@ class PrintManager:
                 MultiElementSection(
                     " Pop Quiz ",
                     card_items,
-                    bullet="-",
+                    bullet="[] ",
                 )
             )
 
