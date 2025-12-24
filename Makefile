@@ -30,6 +30,6 @@ push-image:
 	echo $$new_ver > $(VERSION_FILE); \
 	git add $(VERSION_FILE); \
 	git commit -m "[system] Bump version to $$new_ver"; \
-	docker build -t $(IMAGE):$$new_ver .; \
-	docker push $(IMAGE):$$new_ver; \
+	podman build -t $(IMAGE):$$new_ver .; \
+	podman push $(IMAGE):$$new_ver; \
 	scp .env ganymede:/home/aautrand/homedashboard-be/.env
