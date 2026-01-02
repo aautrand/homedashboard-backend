@@ -52,12 +52,12 @@ class PrinterFormatter:
 
         # Upload to MinIO
         storage_client = get_storage_client("minio")
-        storage_client.upload_file(fname)
+        file_location = storage_client.upload_file(fname)
 
         self.instructions["instructions"].append(
             {
                 "image": {
-                    "img_source": fname,
+                    "img_source": file_location,
                     "high_density_vertical": high_density_vertical,
                     "high_density_horizontal": high_density_horizontal,
                     "impl": impl,

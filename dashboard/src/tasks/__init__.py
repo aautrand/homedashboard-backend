@@ -1,5 +1,7 @@
 import json
+import os
 import re
+import uuid
 from logging import getLogger
 
 from flask import Blueprint, request
@@ -9,7 +11,8 @@ from dashboard.src.ai.clients.openai_client import OpenAIClient
 from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.print_manager import PrintManager
 from dashboard.src.prints.receipts.formatter import MathPrinterFormatter
-from dashboard.src.utils.helpers import get_hash
+from dashboard.src.storage import get_storage_client
+from dashboard.src.utils.helpers import get_hash, latex_to_png
 
 logger = getLogger(__name__)
 
@@ -26,6 +29,68 @@ def normalize(expr: str) -> str:
     expr = re.sub(r"^\\\((.*)\\\)$", r"\1", expr)
     expr = re.sub(r"^\\\[(.*)\\\]$", r"\1", expr)
     return expr.strip()
+
+
+def convert_latex_to_images(problems: list) -> list:
+    """
+    Convert LaTeX elements in problems to images stored in MinIO.
+
+    For each element with kind="latex", converts the LaTeX to a PNG image,
+    uploads it to MinIO in the "problems" bucket, and replaces the element
+    with an image reference containing the URL.
+
+    Args:
+        problems: List of problem dictionaries with elements
+
+    Returns:
+        Modified problems list with LaTeX elements converted to image references
+    """
+    storage_client = get_storage_client("minio")
+
+    for problem in problems:
+        for element in problem.get("elements", []):
+            if element.get("kind") == "latex":
+                latex_content = element["content"]
+                logger.info(f"Converting LaTeX to image: {latex_content[:50]}...")
+
+                # Normalize LaTeX to strip $...$ and \(...\) delimiters
+                latex_content = normalize(latex_content)
+                logger.info(f"Normalized LaTeX: {latex_content[:50]}...")
+
+                # Generate unique filename
+                unique_id = uuid.uuid4().hex
+                filename = f"{unique_id}.png"
+                local_path = os.path.join("/tmp", filename)
+
+                try:
+                    # Convert LaTeX to PNG
+                    latex_to_png(latex_content, local_path, fontsize=12, dpi=300, pad_inches=0.05)
+                    logger.info(f"Created PNG at {local_path}, exists: {os.path.exists(local_path)}")
+
+                    # Verify file was created before uploading
+                    if not os.path.exists(local_path):
+                        logger.error(f"Failed to create PNG file at {local_path}")
+                        continue
+
+                    # Upload to MinIO in "problems" bucket
+                    image_url = storage_client.upload_file(local_path, filename, bucket="problems")
+                    logger.info(f"Uploaded to MinIO: {image_url}")
+
+                    # Update element to be an image reference (store path, not full URL)
+                    element["kind"] = "image"
+                    element["content"] = f"problems/{filename}"
+
+                except Exception as e:
+                    logger.error(f"Failed to convert LaTeX to image: {e}")
+                    # Keep original latex element if conversion fails
+                    continue
+
+                finally:
+                    # Clean up temp file
+                    if os.path.exists(local_path):
+                        os.remove(local_path)
+
+    return problems
 
 
 @tasks.route("/print")
@@ -56,4 +121,7 @@ def math_problems():
 
     print_manager.print_problems(print_formatted_problems)
 
-    return {"status": "successful", "problems": raw_problems["problems"]}
+    # Convert LaTeX elements to images stored in MinIO
+    processed_problems = convert_latex_to_images(raw_problems["problems"])
+
+    return {"status": "successful", "problems": processed_problems}

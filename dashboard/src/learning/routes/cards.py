@@ -5,6 +5,7 @@ from sqlalchemy import select
 
 from dashboard.src.learning.learning_manager import CardManager
 from dashboard.src.learning.models.card import Card
+from dashboard.src.learning.models.topic import Topic
 
 cards_bp = Blueprint("cards", __name__)
 
@@ -51,6 +52,14 @@ def update_card(card_id):
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
+    # Extract and validate topic_ids before passing to update_card
+    topic_ids = data.pop("topic_ids", None)
+    if topic_ids is not None:
+        if not isinstance(topic_ids, list):
+            return jsonify({"error": "topic_ids must be a list"}), 400
+        if not all(isinstance(tid, int) for tid in topic_ids):
+            return jsonify({"error": "topic_ids must be a list of integers"}), 400
+
     card_manager = CardManager(request.db)
     data["reviewed_date"] = datetime.now()
     data["reviewed"] = True
@@ -58,6 +67,20 @@ def update_card(card_id):
 
     if not card:
         return jsonify({"error": "Card not found"}), 404
+
+    # Handle topic associations if topic_ids provided
+    if topic_ids is not None:
+        if topic_ids:
+            topics = request.db.query(Topic).filter(Topic.id.in_(topic_ids)).all()
+            found_ids = {t.id for t in topics}
+            missing_ids = set(topic_ids) - found_ids
+            if missing_ids:
+                return jsonify({"error": f"Topics not found: {sorted(missing_ids)}"}), 404
+            card.topics = topics
+        else:
+            # Empty list clears all topic associations
+            card.topics = []
+        request.db.commit()
 
     return jsonify(card.to_dict())
 
@@ -87,8 +110,7 @@ def get_cards():
     else:
         cards = card_manager.get_all_cards()
 
-    response = [card.to_json() for card in cards]
-    return response
+    return jsonify([card.to_dict() for card in cards])
 
 
 @cards_bp.route("/problem", methods=["GET"])

@@ -5,6 +5,22 @@ from dashboard.src.learning.learning_manager import TopicManager
 topics_bp = Blueprint("topics", __name__)
 
 
+@topics_bp.route("/topics", methods=["GET"])
+def get_topics():
+    topic_manager = TopicManager(request.db)
+    topics = topic_manager.get_all_topics()
+
+    return jsonify([
+        {
+            "id": topic.id,
+            "name": topic.name,
+            "subject_id": topic.subject_id,
+            "parent_topic_id": topic.parent_topic_id,
+        }
+        for topic in topics
+    ])
+
+
 @topics_bp.route("/topics", methods=["POST"])
 def create_topic():
     data = request.get_json()

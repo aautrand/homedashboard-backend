@@ -466,6 +466,11 @@ class ReminderManager:
         stmt = select(Reminder).where(Reminder.active == True)
         return self.db.execute(stmt).scalars().all()
 
+    def get_reminders_by_status(self, active: bool):
+        """Get reminders filtered by active status."""
+        stmt = select(Reminder).where(Reminder.active == active)
+        return self.db.execute(stmt).scalars().all()
+
     def update_reminder(self, reminder_id: int, **kwargs):
         """Update a reminder."""
         reminder = self.db.get(Reminder, reminder_id)

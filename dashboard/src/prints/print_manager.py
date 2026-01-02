@@ -255,6 +255,21 @@ class PrintManager:
         return final
 
     @staticmethod
+    def print_reminder(reminder):
+        receipt_formatter = ReceiptFormatter()
+
+        receipt_formatter.add_section(
+            MultiElementSection(
+                title=" Reminder ",
+                items=[reminder.title],
+                bullet="",
+            )
+        )
+
+        final = receipt_formatter.build()
+        return final
+
+    @staticmethod
     def print_text(text):
 
         receipt_formatter = ReceiptFormatter()

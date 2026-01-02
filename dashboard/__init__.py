@@ -28,6 +28,7 @@ def setup_config(app):
 
 def register_blueprints(app):
     from dashboard.src.ai import ai
+    from dashboard.src.audio import audio
     from dashboard.src.calendars import calendar
     from dashboard.src.learning import learning
     from dashboard.src.tasks import tasks
@@ -38,6 +39,7 @@ def register_blueprints(app):
     app.register_blueprint(calendar)
     app.register_blueprint(tasks)
     app.register_blueprint(ai)
+    app.register_blueprint(audio)
     app.register_blueprint(learning)
     app.register_blueprint(prints)
 
