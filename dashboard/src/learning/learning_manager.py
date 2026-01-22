@@ -48,6 +48,9 @@ class CardManager:
         stmt = select(Card).where(Card.reviewed == False)
         return self.db.execute(stmt).scalars().all()
 
+    def get_card(self, card_id: int):
+        return self.db.get(Card, card_id)
+
     def get_all_cards(self):
         stmt = select(Card)
         return self.db.execute(stmt).scalars().all()
@@ -121,11 +124,17 @@ class SubjectManager:
         """
         Get subjects that should be studied today based on spaced repetition.
         Returns at most max_subjects, prioritizing round-robin (oldest last_shown_date first).
+        Subjects with always_show=True are always included regardless of interval.
         """
         study_subjects = self.get_study_subjects()
         eligible = []
 
         for subject in study_subjects:
+            # Always include subjects with always_show=True
+            if subject.always_show:
+                eligible.append(subject)
+                continue
+
             # Never shown before
             if subject.last_shown_date is None:
                 eligible.append(subject)

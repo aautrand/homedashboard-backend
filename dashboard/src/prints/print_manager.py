@@ -1,17 +1,11 @@
 import json
-import random
-from datetime import date, datetime, time, timezone
+from datetime import datetime, time
 from logging import getLogger
 
-from flask import current_app, request
+from flask import current_app
 
-from dashboard.src.calendars import get_calendar_client
-from dashboard.src.learning.learning_manager import CardManager, QuizManager, ReminderManager, RoutineTaskManager, SubjectManager
-from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.receipts.formatter import ReceiptFormatter
 from dashboard.src.prints.receipts.section import MultiElementSection
-from dashboard.src.weather.clients.base import get_weather_client
-from dashboard.src.weather.clients.models.open_weather import OpenWeather
 
 logger = getLogger(__name__)
 
@@ -39,6 +33,18 @@ class PrintManager:
                 birthdays.append(json_events["summary"].split(" ")[0].replace("'s", ""))
                 events.remove(event)
         return birthdays
+
+    @staticmethod
+    def extract_birthdays_from_db(events):
+        """Extract birthdays from CalendarEvent database objects."""
+        birthdays = []
+        non_birthday_events = []
+        for event in events:
+            if "birthday" in event.summary.lower():
+                birthdays.append(event.summary.split(" ")[0].replace("'s", ""))
+            else:
+                non_birthday_events.append(event)
+        return birthdays, non_birthday_events
 
     @staticmethod
     def extract_events(events, today_date):
@@ -86,152 +92,37 @@ class PrintManager:
         return all_day_events, timed_events, calendar_events
 
     @staticmethod
-    def print_tasks():
-        receipt_formatter = ReceiptFormatter()
+    def extract_events_from_db(events, today_date):
+        """Extract and categorize events from CalendarEvent database objects."""
+        all_day_events = []
+        timed_events = []
 
-        # weather
-        weather_client = get_weather_client("open-weather")
-        current_weather = weather_client.get_current_weather(
-            current_app.config["LAT_LONG"]
-        )
-        forecast_weather = weather_client.get_forecast_weather(
-            current_app.config["LAT_LONG"]
-        )
-        weather = OpenWeather.from_current_and_forecast(
-            current_weather, forecast_weather
-        )
+        for event in events:
+            event_date = event.start_time.date()
 
-        weather_items = PrintManager.extract_weather(weather)
-        receipt_formatter.add_section(
-            MultiElementSection(
-                title="Weather",
-                items=weather_items,
-                bullet="",
+            # Skip events that don't start today
+            if event_date != today_date:
+                continue
+
+            # Categorize the event
+            if event.start_time.hour == 0 and event.start_time.minute == 0:
+                all_day_events.append(event.summary)
+            else:
+                time_str = event.start_time.strftime("%H:%M")
+                timed_events.append((time_str, event.summary))
+
+        timed_events.sort(
+            key=lambda x: (
+                x[0] == "",  # False (i.e. non-blank) comes before True
+                datetime.strptime(x[0], "%H:%M").time() if x[0] else time.min,
             )
         )
 
-        # get calendar events
-        calendar_client = get_calendar_client()
-
-        # Use naive datetime (no timezone info) for CalDAV queries
-        today = datetime.now()
-
-        start = today.replace(hour=0, minute=0, second=0, microsecond=0)
-        end = today.replace(hour=23, minute=59, second=58, microsecond=0)
-        print(today, start, end)
-
-        logger.info(f"start: {start}, end: {end}, today: {today}")
-        calendars = [current_app.config["MAIN_CALENDAR"], "Chores"]
-        logger.info(f"calendars: {calendars}")
-        event_list = calendar_client.get_today_events(calendars, start, end)
-        logger.info(f"event_list: {event_list}")
-
-        # Insert birthdays
-        birthdays = PrintManager.extract_birthdays(event_list)
-        if birthdays:
-            receipt_formatter.add_section(MultiElementSection(" Birthdays ", birthdays))
-
-        # Insert calendar events
-        today_date = today.date()
-        all_day_events, timed_events, calendar_events = PrintManager.extract_events(
-            event_list, today_date
-        )
-        if all_day_events:
-            receipt_formatter.add_section(
-                MultiElementSection(
-                    " All Day Events ",
-                    all_day_events,
-                    bullet="-",
-                )
-            )
-
-        if timed_events:
-            receipt_formatter.add_section(
-                MultiElementSection(
-                    " Calendar ",
-                    timed_events,
-                    bullet="*",
-                    formatter=lambda t: f"{t[0]} - {t[1]}",
-                )
-            )
-
-        # Insert routine tasks
-        routine_manager = RoutineTaskManager(request.db)
-        routine_tasks = routine_manager.get_tasks_for_date(today_date)
-
-        if routine_tasks:
-            # Mark interval-based tasks as shown
-            for task in routine_tasks:
-                if task.interval_days:
-                    routine_manager.mark_task_shown(task.id, today_date)
-
-            # Format tasks with checkboxes
-            routine_items = [f"[ ] {task.title}" for task in routine_tasks]
-            receipt_formatter.add_section(
-                MultiElementSection(
-                    " Routines ",
-                    routine_items,
-                    bullet="",
-                )
-            )
-
-        # Insert reminders
-        reminder_manager = ReminderManager(request.db)
-        active_reminders = reminder_manager.get_active_reminders()
-
-        if active_reminders:
-            # Mark reminders as shown
-            for reminder in active_reminders:
-                reminder_manager.mark_reminder_shown(reminder.id, today_date)
-
-            reminder_items = [reminder.title for reminder in active_reminders]
-            receipt_formatter.add_section(
-                MultiElementSection(
-                    " Reminders ",
-                    reminder_items,
-                    bullet="o ",
-                )
-            )
-
-        # Insert studies (spaced repetition)
-        subject_manager = SubjectManager(request.db)
-        study_subjects = subject_manager.get_subjects_for_study_today(today_date, max_subjects=1)
-
-        if study_subjects:
-            # Mark subjects as studied
-            for subject in study_subjects:
-                subject_manager.mark_subject_studied(subject.id, today_date)
-
-            study_items = [f"Study: {subject.name}" for subject in study_subjects]
-            receipt_formatter.add_section(
-                MultiElementSection(
-                    " Today's Study ",
-                    study_items,
-                    bullet="*",
-                )
-            )
-
-        # Insert questions
-        card_manager = CardManager(request.db)
-        non_grokked_cards = card_manager.get_non_grokked_cards()
-
-        if non_grokked_cards:
-            card_items = [card.title for card in non_grokked_cards]
-            receipt_formatter.add_section(
-                MultiElementSection(
-                    " Pop Quiz ",
-                    card_items,
-                    bullet="[] ",
-                )
-            )
-
-        # Insert tasks
-        final = receipt_formatter.build()
-        return final
+        return all_day_events, timed_events
 
     @staticmethod
     def print_problems(problems):
-        rabbit_client = get_message_broker_client()
+        rabbit_client = current_app.config["message_broker_client"]
 
         rabbit_client.send_message(
             exchange="", routing_key="image_print", body=json.dumps(problems)
@@ -262,6 +153,40 @@ class PrintManager:
             MultiElementSection(
                 title=" Reminder ",
                 items=[reminder.title],
+                bullet="",
+            )
+        )
+
+        final = receipt_formatter.build()
+        return final
+
+    @staticmethod
+    def print_event(event):
+        """
+        Build receipt data for a single calendar event.
+
+        Args:
+            event: CalendarEvent object
+
+        Returns:
+            Dictionary with formatted receipt data
+        """
+        receipt_formatter = ReceiptFormatter()
+
+        # Format the event time
+        if event.start_time.hour == 0 and event.start_time.minute == 0:
+            time_str = "All Day"
+        else:
+            time_str = event.start_time.strftime("%H:%M")
+
+        items = [
+            f"{time_str} - {event.summary}",
+        ]
+
+        receipt_formatter.add_section(
+            MultiElementSection(
+                title=" Upcoming Event ",
+                items=items,
                 bullet="",
             )
         )
@@ -364,191 +289,3 @@ class PrintManager:
             )
 
         return receipt_formatter.build()
-
-
-def print_pop_quiz(
-    db,
-    num_questions: int = None,
-    include_answers: bool = True,
-) -> dict:
-    """
-    Print a pop quiz with randomized questions.
-
-    This is the main entry point for printing pop quizzes. It can be called
-    from HTTP endpoints, voice assistants, or any other interface.
-
-    Args:
-        db: Database session
-        num_questions: Number of questions to include. If None, includes all available.
-        include_answers: Whether to print the answers after the quiz.
-
-    Returns:
-        Dictionary with:
-            - status: "ok" or "error"
-            - quiz_id: ID of the created quiz (or None if no questions)
-            - question_count: Number of questions in the quiz
-            - message: Human-readable status message
-    """
-    card_manager = CardManager(db)
-    non_grokked_cards = card_manager.get_non_grokked_cards()
-
-    if not non_grokked_cards:
-        return {
-            "status": "ok",
-            "quiz_id": None,
-            "question_count": 0,
-            "message": "No questions available for quiz",
-        }
-
-    # Randomize the order
-    randomized_cards = list(non_grokked_cards)
-    random.shuffle(randomized_cards)
-
-    # Limit to requested number of questions
-    if num_questions is not None and num_questions > 0:
-        randomized_cards = randomized_cards[:num_questions]
-
-    # Create quiz record in database
-    quiz_manager = QuizManager(db)
-    quiz = quiz_manager.create_quiz(randomized_cards)
-
-    # Build and send quiz to printer
-    rabbit_client = get_message_broker_client()
-
-    quiz_data = PrintManager.build_pop_quiz(randomized_cards, quiz_id=quiz.id)
-    rabbit_client.send_message(
-        exchange="", routing_key="text_print", body=json.dumps(quiz_data)
-    )
-
-    # Print answers if requested
-    if include_answers:
-        answers_data = PrintManager.build_pop_quiz_answers(randomized_cards)
-        rabbit_client.send_message(
-            exchange="", routing_key="text_print", body=json.dumps(answers_data)
-        )
-
-    return {
-        "status": "ok",
-        "quiz_id": quiz.id,
-        "question_count": len(randomized_cards),
-        "message": f"Printed pop quiz with {len(randomized_cards)} questions",
-    }
-
-
-def reprint_quiz(db, quiz_id: int, include_answers: bool = True, randomize: bool = True) -> dict:
-    """
-    Reprint a previously generated quiz.
-
-    Args:
-        db: Database session
-        quiz_id: ID of the quiz to reprint
-        include_answers: Whether to also print answers (default True)
-        randomize: Whether to randomize question order (default True)
-
-    Returns:
-        Dictionary with:
-            - status: "ok" or "error"
-            - quiz_id: ID of the quiz
-            - question_count: Number of questions in the quiz
-            - message: Human-readable status message
-    """
-    quiz_manager = QuizManager(db)
-    quiz = quiz_manager.get_quiz(quiz_id)
-
-    if not quiz:
-        return {
-            "status": "error",
-            "quiz_id": quiz_id,
-            "question_count": 0,
-            "message": f"Quiz #{quiz_id} not found",
-        }
-
-    # Get the cards in quiz order
-    questions = quiz_manager.get_quiz_questions(quiz_id)
-    cards = [q.card for q in questions]
-
-    if not cards:
-        return {
-            "status": "ok",
-            "quiz_id": quiz_id,
-            "question_count": 0,
-            "message": f"Quiz #{quiz_id} has no questions",
-        }
-
-    # Randomize order if requested
-    if randomize:
-        cards = list(cards)
-        random.shuffle(cards)
-
-    # Build and send quiz to printer
-    rabbit_client = get_message_broker_client()
-    quiz_data = PrintManager.build_pop_quiz(cards, quiz_id=quiz_id)
-    rabbit_client.send_message(
-        exchange="", routing_key="text_print", body=json.dumps(quiz_data)
-    )
-
-    if include_answers:
-        answers_data = PrintManager.build_pop_quiz_answers(cards)
-        rabbit_client.send_message(
-            exchange="", routing_key="text_print", body=json.dumps(answers_data)
-        )
-
-    return {
-        "status": "ok",
-        "quiz_id": quiz_id,
-        "question_count": len(cards),
-        "message": f"Reprinted quiz #{quiz_id} ({len(cards)} questions)",
-    }
-
-
-def print_quiz_answers(db, quiz_id: int) -> dict:
-    """
-    Print the answers for a specific quiz.
-
-    Args:
-        db: Database session
-        quiz_id: ID of the quiz to print answers for
-
-    Returns:
-        Dictionary with:
-            - status: "ok" or "error"
-            - quiz_id: ID of the quiz
-            - question_count: Number of questions in the quiz
-            - message: Human-readable status message
-    """
-    quiz_manager = QuizManager(db)
-    quiz = quiz_manager.get_quiz(quiz_id)
-
-    if not quiz:
-        return {
-            "status": "error",
-            "quiz_id": quiz_id,
-            "question_count": 0,
-            "message": f"Quiz #{quiz_id} not found",
-        }
-
-    # Get the cards in quiz order
-    questions = quiz_manager.get_quiz_questions(quiz_id)
-    cards = [q.card for q in questions]
-
-    if not cards:
-        return {
-            "status": "ok",
-            "quiz_id": quiz_id,
-            "question_count": 0,
-            "message": f"Quiz #{quiz_id} has no questions",
-        }
-
-    # Build and send answers to printer
-    rabbit_client = get_message_broker_client()
-    answers_data = PrintManager.build_pop_quiz_answers(cards)
-    rabbit_client.send_message(
-        exchange="", routing_key="text_print", body=json.dumps(answers_data)
-    )
-
-    return {
-        "status": "ok",
-        "quiz_id": quiz_id,
-        "question_count": len(cards),
-        "message": f"Printed answers for quiz #{quiz_id} ({len(cards)} questions)",
-    }

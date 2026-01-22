@@ -13,7 +13,14 @@ class ICalCalendarSequentialEventMapper(CalendarSequentialEventMapper):
                 vevent = event.vobject_instance.vevent
                 sum = vevent.summary.value
                 is_recurring = "recurrence-id" in vevent.contents.keys()
+                # Get the UID - for recurring events, append recurrence-id to make it unique
+                uid = vevent.uid.value
+                if is_recurring:
+                    recurrence_id = vevent.contents.get("recurrence-id", [None])[0]
+                    if recurrence_id:
+                        uid = f"{uid}_{recurrence_id.value.isoformat()}"
                 calendar_event = CalendarEvent(
+                    uid=uid,
                     calendar=event.parent.name,
                     summary=sum,
                     recurring=is_recurring,

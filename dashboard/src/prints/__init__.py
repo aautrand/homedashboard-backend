@@ -1,8 +1,6 @@
 import json
 import time
-from flask import Blueprint, request
-
-from dashboard import get_message_broker_client
+from flask import Blueprint, current_app, request
 from dashboard.src.prints.print_manager import PrintManager
 
 prints = Blueprint('print', __name__, url_prefix='/prints')
@@ -15,7 +13,7 @@ def print_text():
 
     print_manager = PrintManager()
     text = print_manager.print_text(text)
-    rabbit_client = get_message_broker_client()
+    rabbit_client = current_app.config["message_broker_client"]
     rabbit_client.send_message(
         exchange="", routing_key="text_print", body=json.dumps(text)
     )
@@ -42,7 +40,7 @@ def stream_print():
         }
     """
     data = request.get_json()
-    rabbit_client = get_message_broker_client()
+    rabbit_client = current_app.config["message_broker_client"]
     time.sleep(10)
     # Batch mode: send each message individually with delay between
     if "messages" in data:

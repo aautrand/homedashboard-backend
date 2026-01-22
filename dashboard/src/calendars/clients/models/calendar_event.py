@@ -5,6 +5,7 @@ from typing import Any, Dict
 
 @dataclass
 class CalendarEvent:
+    uid: str
     calendar: str
     summary: str
     recurring: bool

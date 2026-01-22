@@ -2,7 +2,7 @@ from logging import getLogger
 
 from flask import Blueprint, request
 
-from dashboard.src.prints import print_manager
+from dashboard.src.prints import orchestration
 
 logger = getLogger(__name__)
 
@@ -28,7 +28,7 @@ def print_pop_quiz():
     num_questions = data.get("num_questions")
     include_answers = data.get("include_answers", True)
 
-    result = print_manager.print_pop_quiz(
+    result = orchestration.print_pop_quiz(
         db=request.db,
         num_questions=num_questions,
         include_answers=include_answers,
@@ -57,7 +57,7 @@ def reprint_quiz(quiz_id: int):
     include_answers = data.get("include_answers", True)
     randomize = data.get("randomize", True)
 
-    result = print_manager.reprint_quiz(
+    result = orchestration.reprint_quiz(
         db=request.db,
         quiz_id=quiz_id,
         include_answers=include_answers,
@@ -80,7 +80,7 @@ def print_quiz_answers(quiz_id: int):
     """
     logger.info(f"Printing answers for quiz #{quiz_id}")
 
-    result = print_manager.print_quiz_answers(
+    result = orchestration.print_quiz_answers(
         db=request.db,
         quiz_id=quiz_id,
     )

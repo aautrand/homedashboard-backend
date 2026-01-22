@@ -1,9 +1,8 @@
 import json
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
 
 from dashboard.src.learning.learning_manager import ReminderManager
-from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.print_manager import PrintManager
 
 reminders_bp = Blueprint("reminders", __name__)
@@ -91,7 +90,7 @@ def print_reminder(reminder_id):
 
     reminder_data = PrintManager.print_reminder(reminder)
 
-    rabbit_client = get_message_broker_client()
+    rabbit_client = current_app.config["message_broker_client"]
     rabbit_client.send_message(
         exchange="", routing_key="text_print", body=json.dumps(reminder_data)
     )

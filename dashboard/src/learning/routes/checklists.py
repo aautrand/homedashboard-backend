@@ -1,9 +1,8 @@
 import json
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, current_app, jsonify, request
 
 from dashboard.src.learning.learning_manager import ChecklistManager
-from dashboard.src.message_broker.clients.base import get_message_broker_client
 from dashboard.src.prints.print_manager import PrintManager
 
 checklists_bp = Blueprint("checklists", __name__)
@@ -81,7 +80,7 @@ def print_checklist(checklist_id):
     print_manager = PrintManager()
     checklist_data = print_manager.print_checklist(checklist)
 
-    rabbit_client = get_message_broker_client()
+    rabbit_client = current_app.config["message_broker_client"]
     rabbit_client.send_message(
         exchange="", routing_key="text_print", body=json.dumps(checklist_data)
     )

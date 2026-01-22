@@ -4,11 +4,11 @@ import re
 import uuid
 from logging import getLogger
 
-from flask import Blueprint, request
+from flask import Blueprint, current_app, request
 
 from dashboard.src.ai.agents.math_agent import MathAgent
 from dashboard.src.ai.clients.openai_client import OpenAIClient
-from dashboard.src.message_broker.clients.base import get_message_broker_client
+from dashboard.src.prints.orchestration import print_tasks
 from dashboard.src.prints.print_manager import PrintManager
 from dashboard.src.prints.receipts.formatter import MathPrinterFormatter
 from dashboard.src.storage import get_storage_client
@@ -96,9 +96,8 @@ def convert_latex_to_images(problems: list) -> list:
 @tasks.route("/print")
 def current():
     logger.info("Printing tasks")
-    print_manager = PrintManager()
-    tasks_list = print_manager.print_tasks()
-    rabbit_client = get_message_broker_client()
+    tasks_list = print_tasks()
+    rabbit_client = current_app.config["message_broker_client"]
     rabbit_client.send_message(
         exchange="", routing_key="text_print", body=json.dumps(tasks_list)
     )

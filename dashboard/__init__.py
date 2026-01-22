@@ -45,8 +45,9 @@ def register_blueprints(app):
 
 
 def setup_message_broker(app):
-    message_broker_client = get_message_broker_client()
-    app.config["message_broker_client"] = message_broker_client
+    with app.app_context():
+        message_broker_client = get_message_broker_client()
+        app.config["message_broker_client"] = message_broker_client
 
 
 def configure_db(app):
@@ -81,6 +82,7 @@ def create_app():
     # Configuration
     setup_config(app)
     setup_logging()
+    setup_message_broker(app)
     configure_db(app)
     # Register blueprints
     register_blueprints(app)

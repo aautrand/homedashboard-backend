@@ -45,6 +45,17 @@ def create_cards_batch():
     return jsonify(created_cards), 201
 
 
+@cards_bp.route("/cards/<int:card_id>", methods=["GET"])
+def get_card(card_id):
+    card_manager = CardManager(request.db)
+    card = card_manager.get_card(card_id)
+
+    if not card:
+        return jsonify({"error": "Card not found"}), 404
+
+    return jsonify(card.to_dict())
+
+
 @cards_bp.route("/cards/<int:card_id>", methods=["PUT"])
 def update_card(card_id):
     data = request.get_json()
