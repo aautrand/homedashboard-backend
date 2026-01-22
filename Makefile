@@ -15,6 +15,9 @@ format-check:
 	isort --check --diff .
 	black --check --diff .
 
+test:
+	python -m pytest tests/ -v
+
 
 # tweak these to taste
 VERSION_FILE := version

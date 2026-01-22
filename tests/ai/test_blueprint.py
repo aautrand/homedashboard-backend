@@ -1,0 +1,294 @@
+import pytest
+from unittest.mock import MagicMock, patch
+from flask import Flask
+
+
+@pytest.fixture
+def app():
+    """Create a Flask application for testing."""
+    app = Flask(__name__)
+    app.config["TESTING"] = True
+    return app
+
+
+@pytest.fixture
+def client(app):
+    """Create a test client for the Flask application."""
+    with patch("dashboard.src.ai.ollama_client") as mock_ollama:
+        from dashboard.src.ai import ai
+
+        app.register_blueprint(ai)
+        with app.test_client() as client:
+            yield client
+
+
+class TestAIBlueprint:
+    """Tests for the AI Blueprint endpoints."""
+
+    @patch("dashboard.src.ai.ollama_client")
+    def test_message_endpoint_success(self, mock_ollama_client, app):
+        """Test /ai/message endpoint returns success response."""
+        from dashboard.src.ai import ai
+
+        mock_ollama_client.generate_response.return_value = "Hello! I can help you."
+
+        app.register_blueprint(ai)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/ai/message",
+                json={"message": "Hello"},
+                content_type="application/json",
+            )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["status"] == "Message received and processed"
+        assert data["user_message"] == "Hello"
+        assert data["llm_response"] == "Hello! I can help you."
+
+    @patch("dashboard.src.ai.ollama_client")
+    def test_message_endpoint_missing_message_field(self, mock_ollama_client, app):
+        """Test /ai/message endpoint returns 400 when message field is missing."""
+        from dashboard.src.ai import ai
+
+        app.register_blueprint(ai)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/ai/message", json={"wrong_field": "test"}, content_type="application/json"
+            )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["error"] == "Message is required"
+
+    @patch("dashboard.src.ai.ollama_client")
+    def test_message_endpoint_empty_json(self, mock_ollama_client, app):
+        """Test /ai/message endpoint returns 400 for empty JSON body."""
+        from dashboard.src.ai import ai
+
+        app.register_blueprint(ai)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/ai/message", json={}, content_type="application/json"
+            )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data["error"] == "Message is required"
+
+    @patch("dashboard.src.ai.ollama_client")
+    def test_message_endpoint_no_json_body(self, mock_ollama_client, app):
+        """Test /ai/message endpoint returns 400 for missing JSON body."""
+        from dashboard.src.ai import ai
+
+        app.register_blueprint(ai)
+
+        with app.test_client() as client:
+            response = client.post("/ai/message", content_type="application/json")
+
+        assert response.status_code == 400
+
+    @patch("dashboard.src.ai.ollama_client")
+    def test_message_endpoint_ollama_error(self, mock_ollama_client, app):
+        """Test /ai/message endpoint returns 500 on Ollama error."""
+        from dashboard.src.ai import ai
+
+        mock_ollama_client.generate_response.side_effect = Exception("Ollama service unavailable")
+
+        app.register_blueprint(ai)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/ai/message", json={"message": "Hello"}, content_type="application/json"
+            )
+
+        assert response.status_code == 500
+        data = response.get_json()
+        assert data["error"] == "Failed to process message"
+
+    @patch("dashboard.src.ai.ollama_client")
+    def test_message_endpoint_with_long_message(self, mock_ollama_client, app):
+        """Test /ai/message endpoint handles long messages."""
+        from dashboard.src.ai import ai
+
+        long_message = "Tell me about " + "science " * 500
+        mock_ollama_client.generate_response.return_value = "Here's the information..."
+
+        app.register_blueprint(ai)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/ai/message", json={"message": long_message}, content_type="application/json"
+            )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["user_message"] == long_message
+
+    @patch("dashboard.src.ai.ollama_client")
+    def test_message_endpoint_with_special_characters(self, mock_ollama_client, app):
+        """Test /ai/message endpoint handles special characters."""
+        from dashboard.src.ai import ai
+
+        special_message = "Code: print('Hello <World>') & test=\"value\""
+        mock_ollama_client.generate_response.return_value = "I see code with special chars."
+
+        app.register_blueprint(ai)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/ai/message",
+                json={"message": special_message},
+                content_type="application/json",
+            )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["user_message"] == special_message
+
+    @patch("dashboard.src.ai.ollama_client")
+    def test_message_endpoint_with_unicode(self, mock_ollama_client, app):
+        """Test /ai/message endpoint handles unicode characters."""
+        from dashboard.src.ai import ai
+
+        unicode_message = "你好世界 🌍 café résumé"
+        mock_ollama_client.generate_response.return_value = "Hello in Chinese and more!"
+
+        app.register_blueprint(ai)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/ai/message",
+                json={"message": unicode_message},
+                content_type="application/json",
+            )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["user_message"] == unicode_message
+
+    @patch("dashboard.src.ai.ollama_client")
+    def test_message_endpoint_response_format(self, mock_ollama_client, app):
+        """Test /ai/message endpoint response has correct structure."""
+        from dashboard.src.ai import ai
+
+        mock_ollama_client.generate_response.return_value = "Response"
+
+        app.register_blueprint(ai)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/ai/message", json={"message": "Test"}, content_type="application/json"
+            )
+
+        data = response.get_json()
+
+        # Verify all expected fields are present
+        assert "status" in data
+        assert "user_message" in data
+        assert "llm_response" in data
+
+        # Verify no unexpected fields
+        assert len(data) == 3
+
+    @patch("dashboard.src.ai.ollama_client")
+    def test_message_endpoint_get_method_not_allowed(self, mock_ollama_client, app):
+        """Test /ai/message endpoint rejects GET requests."""
+        from dashboard.src.ai import ai
+
+        app.register_blueprint(ai)
+
+        with app.test_client() as client:
+            response = client.get("/ai/message")
+
+        assert response.status_code == 405
+
+    @patch("dashboard.src.ai.ollama_client")
+    def test_message_endpoint_with_empty_message(self, mock_ollama_client, app):
+        """Test /ai/message endpoint handles empty message string."""
+        from dashboard.src.ai import ai
+
+        mock_ollama_client.generate_response.return_value = ""
+
+        app.register_blueprint(ai)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/ai/message", json={"message": ""}, content_type="application/json"
+            )
+
+        # Empty string is still a valid message value
+        assert response.status_code == 200
+
+    @patch("dashboard.src.ai.ollama_client")
+    def test_message_endpoint_with_whitespace_message(self, mock_ollama_client, app):
+        """Test /ai/message endpoint handles whitespace-only message."""
+        from dashboard.src.ai import ai
+
+        mock_ollama_client.generate_response.return_value = "You sent whitespace"
+
+        app.register_blueprint(ai)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/ai/message", json={"message": "   "}, content_type="application/json"
+            )
+
+        assert response.status_code == 200
+
+    @patch("dashboard.src.ai.ollama_client")
+    def test_message_endpoint_extra_fields_ignored(self, mock_ollama_client, app):
+        """Test /ai/message endpoint ignores extra fields in request."""
+        from dashboard.src.ai import ai
+
+        mock_ollama_client.generate_response.return_value = "Response"
+
+        app.register_blueprint(ai)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/ai/message",
+                json={"message": "Hello", "extra_field": "ignored", "another": 123},
+                content_type="application/json",
+            )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["user_message"] == "Hello"
+
+    @patch("dashboard.src.ai.ollama_client")
+    def test_message_endpoint_timeout_error(self, mock_ollama_client, app):
+        """Test /ai/message endpoint handles timeout errors."""
+        from dashboard.src.ai import ai
+
+        mock_ollama_client.generate_response.side_effect = Exception("Connection timed out")
+
+        app.register_blueprint(ai)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/ai/message", json={"message": "Hello"}, content_type="application/json"
+            )
+
+        assert response.status_code == 500
+        data = response.get_json()
+        assert data["error"] == "Failed to process message"
+
+
+class TestAIBlueprintRegistration:
+    """Tests for AI Blueprint registration."""
+
+    def test_blueprint_has_correct_url_prefix(self):
+        """Test AI blueprint has /ai URL prefix."""
+        from dashboard.src.ai import ai
+
+        assert ai.url_prefix == "/ai"
+
+    def test_blueprint_has_correct_name(self):
+        """Test AI blueprint has correct name."""
+        from dashboard.src.ai import ai
+
+        assert ai.name == "ai"
