@@ -74,8 +74,9 @@ def create_app():
 
     @app.route("/info")
     def info():
-        app_info = {"version": get_version(),
-                    "test": "123"}
+        app_info = {
+            "version": get_version()
+        }
 
         return app_info
 
