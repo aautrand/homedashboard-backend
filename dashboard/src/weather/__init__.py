@@ -8,7 +8,7 @@ weather = Blueprint("weather", __name__, url_prefix="/weather")
 
 @weather.route("/current")
 def current():
-    weather_client = get_weather_client("noaa")
+    weather_client = get_weather_client("wttr")
     obs = weather_client.fetch_raw_observation(current_app.config["LAT_LONG"])
     return obs
 

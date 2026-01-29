@@ -1,11 +1,12 @@
 import json
 from datetime import datetime, time
 
-from flask import Blueprint, current_app, request
+from flask import Blueprint, current_app, jsonify, request
 
 from dashboard.src.calendars.calendar_manager import CalendarEventManager
 from dashboard.src.calendars.clients.base import get_calendar_client
 from dashboard.src.calendars.helpers import get_text_calendar
+from dashboard.src.calendars.todo_manager import TodoManager
 from dashboard.src.prints.print_manager import PrintManager
 
 
@@ -166,3 +167,93 @@ def notify_upcoming_events():
         "events": notified_events,
         "message": f"Printed {len(notified_events)} upcoming event(s)",
     }
+
+
+@calendar.route("/todo", methods=["POST"])
+def create_todo():
+    data = request.get_json()
+
+    if not data or "title" not in data:
+        return jsonify({"error": "Missing required field: title"}), 400
+
+    todo_manager = TodoManager(request.db)
+    todo = todo_manager.add_todo(
+        title=data["title"],
+        active=data.get("active", True),
+    )
+
+    return jsonify(todo.to_dict()), 201
+
+
+@calendar.route("/todo", methods=["GET"])
+def get_todos():
+    todo_manager = TodoManager(request.db)
+
+    active_param = request.args.get("active")
+    if active_param is not None:
+        active_lower = active_param.lower()
+        if active_lower not in ("true", "false"):
+            return jsonify({"error": "Invalid value for 'active'. Use 'true' or 'false'"}), 400
+        is_active = active_lower == "true"
+        todos = todo_manager.get_todos_by_status(is_active)
+    else:
+        todos = todo_manager.get_all_todos()
+
+    response = [todo.to_dict() for todo in todos]
+    return jsonify(response)
+
+
+@calendar.route("/todo/<int:todo_id>", methods=["GET"])
+def get_todo(todo_id):
+    todo_manager = TodoManager(request.db)
+    todo = todo_manager.get_todo(todo_id)
+
+    if not todo:
+        return jsonify({"error": "Todo not found"}), 404
+
+    return jsonify(todo.to_dict())
+
+
+@calendar.route("/todo/<int:todo_id>", methods=["PUT"])
+def update_todo(todo_id):
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    todo_manager = TodoManager(request.db)
+    todo = todo_manager.update_todo(todo_id, **data)
+
+    if not todo:
+        return jsonify({"error": "Todo not found"}), 404
+
+    return jsonify(todo.to_dict())
+
+
+@calendar.route("/todo/<int:todo_id>", methods=["DELETE"])
+def delete_todo(todo_id):
+    todo_manager = TodoManager(request.db)
+    todo = todo_manager.delete_todo(todo_id)
+
+    if not todo:
+        return jsonify({"error": "Todo not found"}), 404
+
+    return jsonify({"message": "Todo deleted successfully"})
+
+
+@calendar.route("/todo/<int:todo_id>/print", methods=["POST"])
+def print_todo(todo_id):
+    todo_manager = TodoManager(request.db)
+    todo = todo_manager.get_todo(todo_id)
+
+    if not todo:
+        return jsonify({"error": "Todo not found"}), 404
+
+    todo_data = PrintManager.print_todo(todo)
+
+    rabbit_client = current_app.config["message_broker_client"]
+    rabbit_client.send_message(
+        exchange="", routing_key="text_print", body=json.dumps(todo_data)
+    )
+
+    return jsonify({"status": "ok"})

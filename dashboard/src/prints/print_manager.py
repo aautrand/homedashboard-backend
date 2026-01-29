@@ -161,6 +161,21 @@ class PrintManager:
         return final
 
     @staticmethod
+    def print_todo(todo):
+        receipt_formatter = ReceiptFormatter()
+
+        receipt_formatter.add_section(
+            MultiElementSection(
+                title=" To Do's ",
+                items=[todo.title],
+                bullet="[ ]",
+            )
+        )
+
+        final = receipt_formatter.build()
+        return final
+
+    @staticmethod
     def print_event(event):
         """
         Build receipt data for a single calendar event.
