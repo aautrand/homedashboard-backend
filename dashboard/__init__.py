@@ -31,9 +31,9 @@ def register_blueprints(app):
     from dashboard.src.audio import audio
     from dashboard.src.calendars import calendar
     from dashboard.src.learning import learning
+    from dashboard.src.prints import prints
     from dashboard.src.tasks import tasks
     from dashboard.src.weather import weather
-    from dashboard.src.prints import prints
 
     app.register_blueprint(weather)
     app.register_blueprint(calendar)
@@ -74,9 +74,7 @@ def create_app():
 
     @app.route("/info")
     def info():
-        app_info = {
-            "version": get_version()
-        }
+        app_info = {"version": get_version()}
 
         return app_info
 

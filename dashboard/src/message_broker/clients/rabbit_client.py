@@ -12,10 +12,13 @@ class RabbitMQClient(MessageBrokerClient):
         self.channel = self.connection.channel()
 
     def _connect(self):
-        credentials = pika.PlainCredentials(current_app.config['RABBITMQ_USER'], current_app.config['RABBITMQ_PASSWORD'])
+        credentials = pika.PlainCredentials(
+            current_app.config["RABBITMQ_USER"], current_app.config["RABBITMQ_PASSWORD"]
+        )
         connection = BlockingConnection(
-            ConnectionParameters(host=current_app.config["RABBITMQ_HOST"],
-                                 credentials=credentials)
+            ConnectionParameters(
+                host=current_app.config["RABBITMQ_HOST"], credentials=credentials
+            )
         )
         return connection
 

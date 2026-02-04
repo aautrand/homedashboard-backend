@@ -1,12 +1,14 @@
 import json
 import time
+
 from flask import Blueprint, current_app, request
+
 from dashboard.src.prints.print_manager import PrintManager
 
-prints = Blueprint('print', __name__, url_prefix='/prints')
+prints = Blueprint("print", __name__, url_prefix="/prints")
 
 
-@prints.route("/", methods=['POST'])
+@prints.route("/", methods=["POST"])
 def print_text():
     data = request.get_json()
     text = data.get("text", [])
@@ -20,7 +22,7 @@ def print_text():
     return {"status": "complete"}
 
 
-@prints.route("/stream", methods=['POST'])
+@prints.route("/stream", methods=["POST"])
 def stream_print():
     """
     Stream text to printer line-by-line without auto-cutting.

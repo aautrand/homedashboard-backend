@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 from flask import Flask
 
 
@@ -56,7 +57,9 @@ class TestAIBlueprint:
 
         with app.test_client() as client:
             response = client.post(
-                "/ai/message", json={"wrong_field": "test"}, content_type="application/json"
+                "/ai/message",
+                json={"wrong_field": "test"},
+                content_type="application/json",
             )
 
         assert response.status_code == 400
@@ -96,13 +99,17 @@ class TestAIBlueprint:
         """Test /ai/message endpoint returns 500 on Ollama error."""
         from dashboard.src.ai import ai
 
-        mock_ollama_client.generate_response.side_effect = Exception("Ollama service unavailable")
+        mock_ollama_client.generate_response.side_effect = Exception(
+            "Ollama service unavailable"
+        )
 
         app.register_blueprint(ai)
 
         with app.test_client() as client:
             response = client.post(
-                "/ai/message", json={"message": "Hello"}, content_type="application/json"
+                "/ai/message",
+                json={"message": "Hello"},
+                content_type="application/json",
             )
 
         assert response.status_code == 500
@@ -121,7 +128,9 @@ class TestAIBlueprint:
 
         with app.test_client() as client:
             response = client.post(
-                "/ai/message", json={"message": long_message}, content_type="application/json"
+                "/ai/message",
+                json={"message": long_message},
+                content_type="application/json",
             )
 
         assert response.status_code == 200
@@ -134,7 +143,9 @@ class TestAIBlueprint:
         from dashboard.src.ai import ai
 
         special_message = "Code: print('Hello <World>') & test=\"value\""
-        mock_ollama_client.generate_response.return_value = "I see code with special chars."
+        mock_ollama_client.generate_response.return_value = (
+            "I see code with special chars."
+        )
 
         app.register_blueprint(ai)
 
@@ -264,13 +275,17 @@ class TestAIBlueprint:
         """Test /ai/message endpoint handles timeout errors."""
         from dashboard.src.ai import ai
 
-        mock_ollama_client.generate_response.side_effect = Exception("Connection timed out")
+        mock_ollama_client.generate_response.side_effect = Exception(
+            "Connection timed out"
+        )
 
         app.register_blueprint(ai)
 
         with app.test_client() as client:
             response = client.post(
-                "/ai/message", json={"message": "Hello"}, content_type="application/json"
+                "/ai/message",
+                json={"message": "Hello"},
+                content_type="application/json",
             )
 
         assert response.status_code == 500

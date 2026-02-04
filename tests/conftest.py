@@ -1,6 +1,7 @@
-import pytest
-import sys
 import os
+import sys
+
+import pytest
 
 # Add the project root to the Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,16 +16,12 @@ def sample_math_problems():
             {
                 "id": 1,
                 "type": "word",
-                "elements": [
-                    {"kind": "text", "content": "Solve for x: 2x + 5 = 15"}
-                ],
+                "elements": [{"kind": "text", "content": "Solve for x: 2x + 5 = 15"}],
             },
             {
                 "id": 2,
                 "type": "formula",
-                "elements": [
-                    {"kind": "latex", "content": "x^2 + 2x + 1 = 0"}
-                ],
+                "elements": [{"kind": "latex", "content": "x^2 + 2x + 1 = 0"}],
             },
             {
                 "id": 3,

@@ -32,7 +32,7 @@ class MinIOClient(StorageClient):
             self.endpoint,
             access_key=self.access_key,
             secret_key=self.secret_key,
-            secure=self.secure
+            secure=self.secure,
         )
 
     def _ensure_bucket(self, bucket: str) -> None:
@@ -45,7 +45,9 @@ class MinIOClient(StorageClient):
             logger.error(f"Failed to create bucket {bucket}: {e}")
             raise
 
-    def upload_file(self, local_path: str, remote_path: str = None, bucket: str = None) -> str:
+    def upload_file(
+        self, local_path: str, remote_path: str = None, bucket: str = None
+    ) -> str:
         """
         Upload a file to MinIO.
 
@@ -66,7 +68,9 @@ class MinIOClient(StorageClient):
             self._ensure_bucket(bucket)
 
             self.client.fput_object(bucket, remote_path, local_path)
-            logger.info(f"Uploaded {local_path} to MinIO as {remote_path} in bucket {bucket}")
+            logger.info(
+                f"Uploaded {local_path} to MinIO as {remote_path} in bucket {bucket}"
+            )
 
             return f"{self.base_url}/{bucket}/{remote_path}"
 
@@ -74,7 +78,9 @@ class MinIOClient(StorageClient):
             logger.error(f"Failed to upload {local_path} to MinIO: {e}")
             raise
 
-    def download_file(self, remote_path: str, local_path: str, bucket: str = None) -> None:
+    def download_file(
+        self, remote_path: str, local_path: str, bucket: str = None
+    ) -> None:
         """
         Download a file from MinIO.
 

@@ -16,7 +16,10 @@ class Checklist(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     updated_date: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
     )
     title: Mapped[str] = mapped_column(Text, nullable=False)
     items: Mapped[List[str]] = mapped_column(ARRAY(Text), nullable=False, default=list)

@@ -4,6 +4,7 @@ Print orchestration functions that coordinate between learning managers and prin
 This module contains functions that need to import from both learning and prints modules.
 By keeping these separate from print_manager.py, we avoid circular import issues.
 """
+
 import json
 import random
 from datetime import datetime
@@ -42,15 +43,11 @@ def print_tasks():
 
     # weather
     weather_client = get_weather_client("open-weather")
-    current_weather = weather_client.get_current_weather(
-        current_app.config["LAT_LONG"]
-    )
+    current_weather = weather_client.get_current_weather(current_app.config["LAT_LONG"])
     forecast_weather = weather_client.get_forecast_weather(
         current_app.config["LAT_LONG"]
     )
-    weather = OpenWeather.from_current_and_forecast(
-        current_weather, forecast_weather
-    )
+    weather = OpenWeather.from_current_and_forecast(current_weather, forecast_weather)
 
     weather_items = PrintManager.extract_weather(weather)
     receipt_formatter.add_section(
@@ -148,7 +145,9 @@ def print_tasks():
 
     # Insert studies (spaced repetition)
     subject_manager = SubjectManager(request.db)
-    study_subjects = subject_manager.get_subjects_for_study_today(today_date, max_subjects=1)
+    study_subjects = subject_manager.get_subjects_for_study_today(
+        today_date, max_subjects=1
+    )
 
     if study_subjects:
         # Mark subjects as studied
@@ -252,7 +251,9 @@ def print_pop_quiz(
     }
 
 
-def reprint_quiz(db, quiz_id: int, include_answers: bool = True, randomize: bool = True) -> dict:
+def reprint_quiz(
+    db, quiz_id: int, include_answers: bool = True, randomize: bool = True
+) -> dict:
     """
     Reprint a previously generated quiz.
 

@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request
 
 from dashboard.src.learning.learning_manager import QuizManager
 
@@ -9,7 +9,9 @@ logger = getLogger(__name__)
 quizzes_bp = Blueprint("quizzes", __name__)
 
 
-@quizzes_bp.route("/quiz/<int:quiz_id>/question/<int:question_id>/answer", methods=["POST"])
+@quizzes_bp.route(
+    "/quiz/<int:quiz_id>/question/<int:question_id>/answer", methods=["POST"]
+)
 def record_answer(quiz_id: int, question_id: int):
     """
     Record an answer for a single quiz question.
@@ -43,15 +45,22 @@ def record_answer(quiz_id: int, question_id: int):
 
     answer = quiz_manager.record_answer(question_id, score)
 
-    logger.info(f"Recorded answer for quiz {quiz_id}, question {question_id}: score={score}")
+    logger.info(
+        f"Recorded answer for quiz {quiz_id}, question {question_id}: score={score}"
+    )
 
-    return jsonify({
-        "id": answer.id,
-        "quiz_question_id": answer.quiz_question_id,
-        "score": answer.score,
-        "score_label": answer.score_label,
-        "created_date": answer.created_date.isoformat(),
-    }), 201
+    return (
+        jsonify(
+            {
+                "id": answer.id,
+                "quiz_question_id": answer.quiz_question_id,
+                "score": answer.score,
+                "score_label": answer.score_label,
+                "created_date": answer.created_date.isoformat(),
+            }
+        ),
+        201,
+    )
 
 
 @quizzes_bp.route("/quiz/<int:quiz_id>/answers", methods=["POST"])
@@ -99,31 +108,55 @@ def record_answers_bulk(quiz_id: int):
     # Validate all answers before recording any
     for ans in answers_input:
         if "question_id" not in ans or "score" not in ans:
-            return jsonify({"error": "Each answer must have question_id and score"}), 400
+            return (
+                jsonify({"error": "Each answer must have question_id and score"}),
+                400,
+            )
         if ans["question_id"] not in question_ids:
-            return jsonify({"error": f"Question {ans['question_id']} not found in quiz {quiz_id}"}), 404
+            return (
+                jsonify(
+                    {
+                        "error": f"Question {ans['question_id']} not found in quiz {quiz_id}"
+                    }
+                ),
+                404,
+            )
         if ans["score"] not in (0, 1, 2):
-            return jsonify({"error": f"Invalid score {ans['score']} for question {ans['question_id']}"}), 400
+            return (
+                jsonify(
+                    {
+                        "error": f"Invalid score {ans['score']} for question {ans['question_id']}"
+                    }
+                ),
+                400,
+            )
 
     # Record all answers
     recorded = []
     for ans in answers_input:
         answer = quiz_manager.record_answer(ans["question_id"], ans["score"])
-        recorded.append({
-            "id": answer.id,
-            "quiz_question_id": answer.quiz_question_id,
-            "score": answer.score,
-            "score_label": answer.score_label,
-            "created_date": answer.created_date.isoformat(),
-        })
+        recorded.append(
+            {
+                "id": answer.id,
+                "quiz_question_id": answer.quiz_question_id,
+                "score": answer.score,
+                "score_label": answer.score_label,
+                "created_date": answer.created_date.isoformat(),
+            }
+        )
 
     logger.info(f"Recorded {len(recorded)} answers for quiz {quiz_id}")
 
-    return jsonify({
-        "quiz_id": quiz_id,
-        "answers_recorded": len(recorded),
-        "answers": recorded,
-    }), 201
+    return (
+        jsonify(
+            {
+                "quiz_id": quiz_id,
+                "answers_recorded": len(recorded),
+                "answers": recorded,
+            }
+        ),
+        201,
+    )
 
 
 @quizzes_bp.route("/quiz/<int:quiz_id>", methods=["GET"])
@@ -145,28 +178,30 @@ def get_quiz(quiz_id: int):
 
     quiz = questions[0].quiz
 
-    return jsonify({
-        "id": quiz.id,
-        "created_date": quiz.created_date.isoformat(),
-        "questions": [
-            {
-                "id": q.id,
-                "position": q.position,
-                "card": {
-                    "id": q.card.id,
-                    "title": q.card.title,
-                    "content": q.card.content,
-                },
-                "answers": [
-                    {
-                        "id": a.id,
-                        "score": a.score,
-                        "score_label": a.score_label,
-                        "created_date": a.created_date.isoformat(),
-                    }
-                    for a in q.answers
-                ],
-            }
-            for q in questions
-        ],
-    })
+    return jsonify(
+        {
+            "id": quiz.id,
+            "created_date": quiz.created_date.isoformat(),
+            "questions": [
+                {
+                    "id": q.id,
+                    "position": q.position,
+                    "card": {
+                        "id": q.card.id,
+                        "title": q.card.title,
+                        "content": q.card.content,
+                    },
+                    "answers": [
+                        {
+                            "id": a.id,
+                            "score": a.score,
+                            "score_label": a.score_label,
+                            "created_date": a.created_date.isoformat(),
+                        }
+                        for a in q.answers
+                    ],
+                }
+                for q in questions
+            ],
+        }
+    )

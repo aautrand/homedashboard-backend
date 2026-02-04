@@ -86,7 +86,10 @@ def update_card(card_id):
             found_ids = {t.id for t in topics}
             missing_ids = set(topic_ids) - found_ids
             if missing_ids:
-                return jsonify({"error": f"Topics not found: {sorted(missing_ids)}"}), 404
+                return (
+                    jsonify({"error": f"Topics not found: {sorted(missing_ids)}"}),
+                    404,
+                )
             card.topics = topics
         else:
             # Empty list clears all topic associations

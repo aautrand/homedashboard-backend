@@ -272,7 +272,9 @@ class PrintManager:
             )
 
         # Format title with date, time, and quiz ID (e.g., "Dec 17, 2025 14:30 #42")
-        title = f"  {now.strftime('%b')} {now.day}, {now.year} {now.strftime('%H:%M')}  "
+        title = (
+            f"  {now.strftime('%b')} {now.day}, {now.year} {now.strftime('%H:%M')}  "
+        )
         if quiz_id is not None:
             title = f"  {now.strftime('%b')} {now.day}, {now.year} {now.strftime('%H:%M')} #{quiz_id}  "
         return receipt_formatter.build(title=title)

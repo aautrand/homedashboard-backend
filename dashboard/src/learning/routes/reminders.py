@@ -32,7 +32,10 @@ def get_reminders():
     if active_param is not None:
         active_lower = active_param.lower()
         if active_lower not in ("true", "false"):
-            return jsonify({"error": "Invalid value for 'active'. Use 'true' or 'false'"}), 400
+            return (
+                jsonify({"error": "Invalid value for 'active'. Use 'true' or 'false'"}),
+                400,
+            )
         is_active = active_lower == "true"
         reminders = reminder_manager.get_reminders_by_status(is_active)
     else:

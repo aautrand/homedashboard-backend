@@ -16,7 +16,10 @@ def create_routine():
 
     # Validate that at least one schedule type is provided
     if not data.get("schedule_pattern") and not data.get("interval_days"):
-        return jsonify({"error": "Must provide either schedule_pattern or interval_days"}), 400
+        return (
+            jsonify({"error": "Must provide either schedule_pattern or interval_days"}),
+            400,
+        )
 
     routine_manager = RoutineTaskManager(request.db)
     routine = routine_manager.add_routine_task(

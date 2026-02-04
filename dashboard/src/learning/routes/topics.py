@@ -10,15 +10,17 @@ def get_topics():
     topic_manager = TopicManager(request.db)
     topics = topic_manager.get_all_topics()
 
-    return jsonify([
-        {
-            "id": topic.id,
-            "name": topic.name,
-            "subject_id": topic.subject_id,
-            "parent_topic_id": topic.parent_topic_id,
-        }
-        for topic in topics
-    ])
+    return jsonify(
+        [
+            {
+                "id": topic.id,
+                "name": topic.name,
+                "subject_id": topic.subject_id,
+                "parent_topic_id": topic.parent_topic_id,
+            }
+            for topic in topics
+        ]
+    )
 
 
 @topics_bp.route("/topics", methods=["POST"])

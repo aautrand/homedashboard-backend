@@ -16,7 +16,9 @@ class CalendarEvent(Base):
     calendar: Mapped[str] = mapped_column(Text, nullable=False)
     summary: Mapped[str] = mapped_column(Text, nullable=False)
     recurring: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    start_time: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
     end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     last_synced: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
@@ -28,7 +30,10 @@ class CalendarEvent(Base):
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     updated_date: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
     )
 
     def __repr__(self) -> str:

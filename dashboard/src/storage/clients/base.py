@@ -44,6 +44,7 @@ def get_storage_client(source: str = "minio") -> StorageClient:
     """Factory function to get a storage client."""
     if source == "minio":
         from .minio_client import MinIOClient
+
         return MinIOClient()
     else:
         raise ValueError(f"Unknown storage source: {source}")

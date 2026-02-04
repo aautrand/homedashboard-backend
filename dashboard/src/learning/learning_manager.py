@@ -1,12 +1,17 @@
 from datetime import date, datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from dashboard.src.learning.models.card import Card
+from dashboard.src.learning.models.card import Card, KnowledgeLevel
 from dashboard.src.learning.models.checklist import Checklist
 from dashboard.src.learning.models.problem import Problem
-from dashboard.src.learning.models.card import KnowledgeLevel
-from dashboard.src.learning.models.quiz import AnswerScore, Quiz, QuizAnswer, QuizQuestion
+from dashboard.src.learning.models.quiz import (
+    AnswerScore,
+    Quiz,
+    QuizAnswer,
+    QuizQuestion,
+)
 from dashboard.src.learning.models.reminder import Reminder
 from dashboard.src.learning.models.routine_task import RoutineTask
 from dashboard.src.learning.models.score import Score
@@ -57,7 +62,11 @@ class CardManager:
 
     def get_non_grokked_cards(self):
         """Get all cards that have not been grokked and are not up for review."""
-        stmt = select(Card).where(Card.grokked == False, Card.reviewed == True).order_by(Card.created_date.desc())
+        stmt = (
+            select(Card)
+            .where(Card.grokked == False, Card.reviewed == True)
+            .order_by(Card.created_date.desc())
+        )
         return self.db.execute(stmt).scalars().all()
 
 
@@ -102,13 +111,13 @@ class SubjectManager:
         """
         # Define intervals: (interval_days, repetition_count)
         intervals = [
-            (1, 5),   # Show 0-4:   1 day interval, 5 times
-            (2, 3),   # Show 5-7:   2 day interval, 3 times
-            (3, 5),   # Show 8-12:  3 day interval, 5 times
-            (5, 4),   # Show 13-16: 5 day interval, 4 times
-            (8, 4),   # Show 17-20: 8 day interval, 4 times
+            (1, 5),  # Show 0-4:   1 day interval, 5 times
+            (2, 3),  # Show 5-7:   2 day interval, 3 times
+            (3, 5),  # Show 8-12:  3 day interval, 5 times
+            (5, 4),  # Show 13-16: 5 day interval, 4 times
+            (8, 4),  # Show 17-20: 8 day interval, 4 times
             (13, 4),  # Show 21-24: 13 day interval, 4 times
-            (21, 999),# Show 25+:   21 day interval, indefinitely
+            (21, 999),  # Show 25+:   21 day interval, indefinitely
         ]
 
         count = 0
@@ -324,7 +333,9 @@ class RoutineTaskManager:
         return True
 
     @staticmethod
-    def _matches_cron_field(pattern: str, value: int, min_val: int, max_val: int) -> bool:
+    def _matches_cron_field(
+        pattern: str, value: int, min_val: int, max_val: int
+    ) -> bool:
         """
         Check if a value matches a cron field pattern.
         Supports: *, ranges (1-5), lists (1,3,5)

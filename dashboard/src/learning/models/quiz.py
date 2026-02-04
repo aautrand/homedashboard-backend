@@ -10,6 +10,7 @@ from dashboard.src.db import Base
 
 class AnswerScore(IntEnum):
     """Score levels for quiz answers."""
+
     INCORRECT = 0
     PARTIAL = 1
     CORRECT = 2
@@ -17,6 +18,7 @@ class AnswerScore(IntEnum):
 
 class Quiz(Base):
     """Stores a printed pop quiz with its questions in order."""
+
     __tablename__ = "quizzes"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -35,6 +37,7 @@ class Quiz(Base):
 
 class QuizQuestion(Base):
     """Links a quiz to a card with position tracking."""
+
     __tablename__ = "quiz_questions"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -58,6 +61,7 @@ class QuizQuestion(Base):
 
 class QuizAnswer(Base):
     """Stores an answer given to a quiz question."""
+
     __tablename__ = "quiz_answers"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)

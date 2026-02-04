@@ -3,7 +3,7 @@ from datetime import date, datetime, time, timedelta
 from typing import List, Optional, Tuple
 
 from flask import current_app
-from sqlalchemy import select, and_
+from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
 from dashboard.src.calendars.clients.base import get_calendar_client
@@ -253,7 +253,8 @@ class CalendarEventManager:
 
         # Filter out all-day events
         return [
-            e for e in events
+            e
+            for e in events
             if not (e.start_time.hour == 0 and e.start_time.minute == 0)
         ]
 

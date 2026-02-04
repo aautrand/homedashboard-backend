@@ -1,7 +1,8 @@
 import io
 import os
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 from flask import Flask
 
 
@@ -22,7 +23,9 @@ class TestAudioUploadEndpoint:
         from dashboard.src.audio import audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         app.register_blueprint(audio)
@@ -101,7 +104,9 @@ class TestAudioUploadEndpoint:
         from dashboard.src.audio import audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.m4a"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.m4a"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         app.register_blueprint(audio)
@@ -122,7 +127,9 @@ class TestAudioUploadEndpoint:
         from dashboard.src.audio import audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.wav"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.wav"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         app.register_blueprint(audio)
@@ -143,7 +150,9 @@ class TestAudioUploadEndpoint:
         from dashboard.src.audio import audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.ogg"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.ogg"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         app.register_blueprint(audio)
@@ -161,11 +170,14 @@ class TestAudioUploadEndpoint:
     @patch("dashboard.src.audio.get_storage_client")
     def test_upload_audio_filename_format(self, mock_get_storage_client, app):
         """Test uploaded filename has correct format: audio/YYYYMMDD_HHMMSS_uniqueid.ext"""
-        from dashboard.src.audio import audio
         import re
 
+        from dashboard.src.audio import audio
+
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         app.register_blueprint(audio)
@@ -181,15 +193,21 @@ class TestAudioUploadEndpoint:
 
         # Pattern: audio/YYYYMMDD_HHMMSS_8hexchars.ext
         pattern = r"^audio/\d{8}_\d{6}_[a-f0-9]{8}\.mp3$"
-        assert re.match(pattern, filename), f"Filename {filename} doesn't match expected pattern"
+        assert re.match(
+            pattern, filename
+        ), f"Filename {filename} doesn't match expected pattern"
 
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_storage_client_called_correctly(self, mock_get_storage_client, app):
+    def test_upload_audio_storage_client_called_correctly(
+        self, mock_get_storage_client, app
+    ):
         """Test storage client is called with correct arguments."""
         from dashboard.src.audio import audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         app.register_blueprint(audio)
@@ -247,12 +265,16 @@ class TestAudioUploadEndpoint:
         assert response.status_code == 405
 
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_response_contains_all_fields(self, mock_get_storage_client, app):
+    def test_upload_audio_response_contains_all_fields(
+        self, mock_get_storage_client, app
+    ):
         """Test success response contains exactly status, filename, and url."""
         from dashboard.src.audio import audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         app.register_blueprint(audio)
@@ -267,12 +289,16 @@ class TestAudioUploadEndpoint:
         assert set(json_data.keys()) == {"status", "filename", "url"}
 
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_with_special_characters_in_filename(self, mock_get_storage_client, app):
+    def test_upload_audio_with_special_characters_in_filename(
+        self, mock_get_storage_client, app
+    ):
         """Test upload handles filenames with special characters."""
         from dashboard.src.audio import audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         app.register_blueprint(audio)
@@ -294,7 +320,9 @@ class TestAudioUploadEndpoint:
         from dashboard.src.audio import audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         app.register_blueprint(audio)
@@ -310,18 +338,24 @@ class TestAudioUploadEndpoint:
         assert json_data["filename"].endswith(".mp3")
 
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_with_multiple_dots_in_filename(self, mock_get_storage_client, app):
+    def test_upload_audio_with_multiple_dots_in_filename(
+        self, mock_get_storage_client, app
+    ):
         """Test upload handles filenames with multiple dots."""
         from dashboard.src.audio import audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         app.register_blueprint(audio)
 
         with app.test_client() as client:
-            data = {"file": (io.BytesIO(b"fake audio content"), "my.audio.file.2024.mp3")}
+            data = {
+                "file": (io.BytesIO(b"fake audio content"), "my.audio.file.2024.mp3")
+            }
             response = client.post(
                 "/audio/upload", data=data, content_type="multipart/form-data"
             )
@@ -337,7 +371,9 @@ class TestAudioUploadEndpoint:
         from dashboard.src.audio import audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.flac"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.flac"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         app.register_blueprint(audio)
@@ -358,7 +394,9 @@ class TestAudioUploadEndpoint:
         from dashboard.src.audio import audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.aac"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.aac"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         app.register_blueprint(audio)
@@ -378,7 +416,9 @@ class TestAudioUploadEndpoint:
         """Test that the URL returned by storage client is included in response."""
         from dashboard.src.audio import audio
 
-        expected_url = "http://minio-server:9000/my-bucket/audio/20240101_120000_abc12345.mp3"
+        expected_url = (
+            "http://minio-server:9000/my-bucket/audio/20240101_120000_abc12345.mp3"
+        )
         mock_storage = MagicMock()
         mock_storage.upload_file.return_value = expected_url
         mock_get_storage_client.return_value = mock_storage
@@ -404,7 +444,9 @@ class TestAudioUploadEndpoint:
         from dashboard.src.audio import audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
         mock_exists.return_value = True
 
@@ -452,7 +494,9 @@ class TestAudioUploadEndpoint:
         from dashboard.src.audio import audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         app.register_blueprint(audio)

@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestOllamaClient:
@@ -166,7 +167,9 @@ class TestOllamaClient:
         mock_ollama.Client.return_value = mock_client_instance
 
         client = OllamaClient()
-        prompt = "Write code with 'quotes' and \"double quotes\" and special chars: $@#%"
+        prompt = (
+            "Write code with 'quotes' and \"double quotes\" and special chars: $@#%"
+        )
         response = client.generate_response(prompt)
 
         assert response == "Here's the code: print('Hello')"
@@ -177,9 +180,7 @@ class TestOllamaClient:
         from dashboard.src.ai.clients.ollama_client import OllamaClient
 
         mock_client_instance = MagicMock()
-        mock_client_instance.chat.return_value = {
-            "message": {"content": "Response"}
-        }
+        mock_client_instance.chat.return_value = {"message": {"content": "Response"}}
         mock_ollama.Client.return_value = mock_client_instance
 
         client = OllamaClient(model="codellama:13b")

@@ -9,7 +9,6 @@ from dashboard.src.calendars.helpers import get_text_calendar
 from dashboard.src.calendars.todo_manager import TodoManager
 from dashboard.src.prints.print_manager import PrintManager
 
-
 calendar = Blueprint("calendar", __name__, url_prefix="/calendar")
 
 
@@ -193,7 +192,10 @@ def get_todos():
     if active_param is not None:
         active_lower = active_param.lower()
         if active_lower not in ("true", "false"):
-            return jsonify({"error": "Invalid value for 'active'. Use 'true' or 'false'"}), 400
+            return (
+                jsonify({"error": "Invalid value for 'active'. Use 'true' or 'false'"}),
+                400,
+            )
         is_active = active_lower == "true"
         todos = todo_manager.get_todos_by_status(is_active)
     else:

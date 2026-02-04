@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestOpenAIClient:
@@ -20,10 +21,10 @@ class TestOpenAIClient:
     @patch("dashboard.src.ai.clients.openai_client.OpenAI")
     def test_init_without_api_key(self, mock_openai_class):
         """Test OpenAIClient initializes with None API key when env var missing."""
-        from dashboard.src.ai.clients.openai_client import OpenAIClient
-
         # Remove OPENAI_API_KEY if it exists
         import os
+
+        from dashboard.src.ai.clients.openai_client import OpenAIClient
 
         os.environ.pop("OPENAI_API_KEY", None)
 
@@ -171,8 +172,9 @@ class TestOpenAIClient:
     @patch("dashboard.src.ai.clients.openai_client.OpenAI")
     def test_generate_chatgpt_response_with_json_output(self, mock_openai_class):
         """Test generate_chatgpt_response returns valid JSON output."""
-        from dashboard.src.ai.clients.openai_client import OpenAIClient
         import json
+
+        from dashboard.src.ai.clients.openai_client import OpenAIClient
 
         json_response = '{"topic": "algebra", "problems": [{"id": 1, "type": "word"}]}'
         mock_response = MagicMock()

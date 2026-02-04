@@ -1,6 +1,7 @@
-import pytest
 import json
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 class TestMathAgent:
@@ -27,7 +28,9 @@ class TestMathAgent:
                     {
                         "id": 1,
                         "type": "word",
-                        "elements": [{"kind": "text", "content": "Solve for x: 2x + 5 = 15"}],
+                        "elements": [
+                            {"kind": "text", "content": "Solve for x: 2x + 5 = 15"}
+                        ],
                     }
                 ],
             }
@@ -47,7 +50,9 @@ class TestMathAgent:
 
         mock_client = MagicMock()
         # Response wrapped in markdown code block
-        mock_client.generate_chatgpt_response.return_value = '```json\n{"topic": "geometry", "problems": []}\n```'
+        mock_client.generate_chatgpt_response.return_value = (
+            '```json\n{"topic": "geometry", "problems": []}\n```'
+        )
 
         agent = MathAgent(client=mock_client)
         result = agent.generate_problems("Generate geometry problems")
@@ -61,7 +66,9 @@ class TestMathAgent:
 
         mock_client = MagicMock()
         # Response with 'json' prefix
-        mock_client.generate_chatgpt_response.return_value = 'json{"topic": "calculus", "problems": []}'
+        mock_client.generate_chatgpt_response.return_value = (
+            'json{"topic": "calculus", "problems": []}'
+        )
 
         agent = MathAgent(client=mock_client)
         result = agent.generate_problems("Generate calculus problems")
@@ -74,7 +81,9 @@ class TestMathAgent:
         from dashboard.src.ai.prompts import math_problem_generator_prompt
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = '{"topic": "test", "problems": []}'
+        mock_client.generate_chatgpt_response.return_value = (
+            '{"topic": "test", "problems": []}'
+        )
 
         agent = MathAgent(client=mock_client)
         agent.generate_problems("5 problems about fractions")
@@ -98,7 +107,9 @@ class TestMathAgent:
                 {
                     "id": 2,
                     "type": "formula",
-                    "elements": [{"kind": "latex", "content": r"\sin^2(x) + \cos^2(x) = 1"}],
+                    "elements": [
+                        {"kind": "latex", "content": r"\sin^2(x) + \cos^2(x) = 1"}
+                    ],
                 },
                 {
                     "id": 3,
@@ -128,7 +139,9 @@ class TestMathAgent:
         from dashboard.src.ai.agents.math_agent import MathAgent
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = "This is not valid JSON at all"
+        mock_client.generate_chatgpt_response.return_value = (
+            "This is not valid JSON at all"
+        )
 
         agent = MathAgent(client=mock_client)
 
@@ -140,7 +153,9 @@ class TestMathAgent:
         from dashboard.src.ai.agents.math_agent import MathAgent
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = '{"topic": "math", "problems": ['
+        mock_client.generate_chatgpt_response.return_value = (
+            '{"topic": "math", "problems": ['
+        )
 
         agent = MathAgent(client=mock_client)
 
@@ -167,7 +182,9 @@ class TestMathAgent:
         }
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = json.dumps(complex_problems)
+        mock_client.generate_chatgpt_response.return_value = json.dumps(
+            complex_problems
+        )
 
         agent = MathAgent(client=mock_client)
         result = agent.generate_problems("Complex analysis problem")
@@ -221,7 +238,9 @@ class TestMathAgent:
         }
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = json.dumps(problems_with_svg)
+        mock_client.generate_chatgpt_response.return_value = json.dumps(
+            problems_with_svg
+        )
 
         agent = MathAgent(client=mock_client)
         result = agent.generate_problems("Geometry with diagram")
@@ -234,7 +253,9 @@ class TestMathAgent:
         from dashboard.src.ai.agents.math_agent import MathAgent
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.side_effect = Exception("API connection failed")
+        mock_client.generate_chatgpt_response.side_effect = Exception(
+            "API connection failed"
+        )
 
         agent = MathAgent(client=mock_client)
 
@@ -248,7 +269,9 @@ class TestMathAgent:
         from dashboard.src.ai.agents.math_agent import MathAgent
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = '{"topic": "none", "problems": []}'
+        mock_client.generate_chatgpt_response.return_value = (
+            '{"topic": "none", "problems": []}'
+        )
 
         agent = MathAgent(client=mock_client)
         result = agent.generate_problems("No problems")
@@ -277,7 +300,9 @@ class TestMathAgent:
         }
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = json.dumps(problems_with_mathml)
+        mock_client.generate_chatgpt_response.return_value = json.dumps(
+            problems_with_mathml
+        )
 
         agent = MathAgent(client=mock_client)
         result = agent.generate_problems("MathML problem")
@@ -291,7 +316,9 @@ class TestMathAgent:
 
         mock_client = MagicMock()
         # Response with extra backticks
-        mock_client.generate_chatgpt_response.return_value = '```json\n```{"topic": "test", "problems": []}```\n```'
+        mock_client.generate_chatgpt_response.return_value = (
+            '```json\n```{"topic": "test", "problems": []}```\n```'
+        )
 
         agent = MathAgent(client=mock_client)
         result = agent.generate_problems("Test")
@@ -309,14 +336,19 @@ class TestMathAgent:
                     "id": 1,
                     "type": "formula",
                     "elements": [
-                        {"kind": "latex", "content": "\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}"}
+                        {
+                            "kind": "latex",
+                            "content": "\\int_0^\\infty e^{-x^2} dx = \\frac{\\sqrt{\\pi}}{2}",
+                        }
                     ],
                 }
             ],
         }
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = json.dumps(problems_with_latex)
+        mock_client.generate_chatgpt_response.return_value = json.dumps(
+            problems_with_latex
+        )
 
         agent = MathAgent(client=mock_client)
         result = agent.generate_problems("Integration problem")

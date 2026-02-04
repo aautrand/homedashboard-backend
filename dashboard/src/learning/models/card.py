@@ -11,11 +11,12 @@ from dashboard.src.db import Base
 
 class KnowledgeLevel(IntEnum):
     """Knowledge level for a card based on quiz performance."""
-    UNKNOWN = 0      # Never answered or no recent data
-    LEARNING = 1     # Getting incorrect/partial answers
-    FAMILIAR = 2     # Mix of partial and correct answers
-    KNOWN = 3        # Consistently correct answers
-    MASTERED = 4     # Multiple consecutive correct answers
+
+    UNKNOWN = 0  # Never answered or no recent data
+    LEARNING = 1  # Getting incorrect/partial answers
+    FAMILIAR = 2  # Mix of partial and correct answers
+    KNOWN = 3  # Consistently correct answers
+    MASTERED = 4  # Multiple consecutive correct answers
 
 
 class Card(Base):
@@ -66,7 +67,9 @@ class Card(Base):
                 result[column.name] = value
 
         # Add topics as a list of objects with id and name
-        result["topics"] = [{"id": topic.id, "name": topic.name} for topic in self.topics]
+        result["topics"] = [
+            {"id": topic.id, "name": topic.name} for topic in self.topics
+        ]
         return result
 
     def to_json(self) -> str:

@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from logging import getLogger
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify, request
 
 from dashboard.src.storage import get_storage_client
 
@@ -40,10 +40,7 @@ def upload_audio():
     temp_file = None
     try:
         # Create temp file with the same extension
-        temp_file = tempfile.NamedTemporaryFile(
-            delete=False,
-            suffix=original_ext
-        )
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=original_ext)
         file.save(temp_file.name)
         temp_file.close()
 
@@ -53,11 +50,10 @@ def upload_audio():
 
         logger.info(f"Audio file uploaded: {remote_filename}")
 
-        return jsonify({
-            "status": "success",
-            "filename": remote_filename,
-            "url": url
-        }), 201
+        return (
+            jsonify({"status": "success", "filename": remote_filename, "url": url}),
+            201,
+        )
 
     except Exception as e:
         logger.error(f"Failed to upload audio file: {e}")

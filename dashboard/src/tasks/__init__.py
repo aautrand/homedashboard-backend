@@ -64,8 +64,12 @@ def convert_latex_to_images(problems: list) -> list:
 
                 try:
                     # Convert LaTeX to PNG
-                    latex_to_png(latex_content, local_path, fontsize=12, dpi=300, pad_inches=0.05)
-                    logger.info(f"Created PNG at {local_path}, exists: {os.path.exists(local_path)}")
+                    latex_to_png(
+                        latex_content, local_path, fontsize=12, dpi=300, pad_inches=0.05
+                    )
+                    logger.info(
+                        f"Created PNG at {local_path}, exists: {os.path.exists(local_path)}"
+                    )
 
                     # Verify file was created before uploading
                     if not os.path.exists(local_path):
@@ -73,7 +77,9 @@ def convert_latex_to_images(problems: list) -> list:
                         continue
 
                     # Upload to MinIO in "problems" bucket
-                    image_url = storage_client.upload_file(local_path, filename, bucket="problems")
+                    image_url = storage_client.upload_file(
+                        local_path, filename, bucket="problems"
+                    )
                     logger.info(f"Uploaded to MinIO: {image_url}")
 
                     # Update element to be an image reference (store path, not full URL)
