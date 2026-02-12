@@ -22,11 +22,25 @@ class RabbitMQClient(MessageBrokerClient):
         )
         return connection
 
+    def _ensure_connection(self):
+        if self.connection.is_closed or self.channel.is_closed:
+            self.connection = self._connect()
+            self.channel = self.connection.channel()
+
     def publish(self, exchange, routing_key, body) -> None:
-        self.channel.queue_declare(queue=routing_key)
-        self.channel.basic_publish(
-            exchange=exchange, routing_key=routing_key, body=body
-        )
+        try:
+            self._ensure_connection()
+            self.channel.queue_declare(queue=routing_key)
+            self.channel.basic_publish(
+                exchange=exchange, routing_key=routing_key, body=body
+            )
+        except pika.exceptions.AMQPConnectionError:
+            self.connection = self._connect()
+            self.channel = self.connection.channel()
+            self.channel.queue_declare(queue=routing_key)
+            self.channel.basic_publish(
+                exchange=exchange, routing_key=routing_key, body=body
+            )
 
     def close(self) -> None:
         self.connection.close()
