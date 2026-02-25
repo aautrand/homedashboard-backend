@@ -74,11 +74,12 @@ class TestGetChecklist:
     @patch("dashboard.src.learning.routes.checklists.ChecklistManager")
     def test_found(self, mock_cls, client):
         mock_cl = MagicMock()
-        mock_cl.to_dict.return_value = {"id": 1, "title": "CL"}
+        mock_cl.to_dict.return_value = {"id": 1, "title": "CL", "notes": []}
         mock_cls.return_value.get_checklist.return_value = mock_cl
 
         resp = client.get("/learning/checklists/1")
         assert resp.status_code == 200
+        assert "notes" in resp.get_json()
 
     @patch("dashboard.src.learning.routes.checklists.ChecklistManager")
     def test_not_found(self, mock_cls, client):

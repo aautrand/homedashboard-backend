@@ -1,10 +1,11 @@
 from datetime import date, datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from dashboard.src.learning.models.card import Card, KnowledgeLevel
 from dashboard.src.learning.models.checklist import Checklist
+from dashboard.src.learning.models.checklist_note import ChecklistNote
 from dashboard.src.learning.models.problem import Problem
 from dashboard.src.learning.models.quiz import (
     AnswerScore,
@@ -287,6 +288,58 @@ class ChecklistManager:
             self.db.delete(checklist)
             self.db.commit()
         return checklist
+
+
+class ChecklistNoteManager:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def add_note(self, checklist_id: int, content: str):
+        stmt = select(func.count()).where(ChecklistNote.checklist_id == checklist_id)
+        count = self.db.execute(stmt).scalar()
+        note = ChecklistNote(checklist_id=checklist_id, content=content, position=count)
+        self.db.add(note)
+        self.db.commit()
+        return note
+
+    def get_note(self, note_id: int):
+        return self.db.get(ChecklistNote, note_id)
+
+    def get_notes_for_checklist(self, checklist_id: int):
+        stmt = (
+            select(ChecklistNote)
+            .where(ChecklistNote.checklist_id == checklist_id)
+            .order_by(ChecklistNote.position)
+        )
+        return self.db.execute(stmt).scalars().all()
+
+    def reorder_notes(self, checklist_id: int, note_ids: list[int]):
+        """Assign positions to notes based on the provided ordered list of IDs.
+        Only notes belonging to the checklist are updated."""
+        notes = {
+            note.id: note
+            for note in self.get_notes_for_checklist(checklist_id)
+        }
+        for position, note_id in enumerate(note_ids):
+            if note_id in notes:
+                notes[note_id].position = position
+        self.db.commit()
+
+    def update_note(self, note_id: int, **kwargs):
+        note = self.db.get(ChecklistNote, note_id)
+        if note:
+            for key, value in kwargs.items():
+                if hasattr(note, key):
+                    setattr(note, key, value)
+            self.db.commit()
+        return note
+
+    def delete_note(self, note_id: int):
+        note = self.db.get(ChecklistNote, note_id)
+        if note:
+            self.db.delete(note)
+            self.db.commit()
+        return note
 
 
 class RoutineTaskManager:

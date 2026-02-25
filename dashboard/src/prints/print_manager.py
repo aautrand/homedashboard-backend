@@ -142,6 +142,17 @@ class PrintManager:
             )
         )
 
+        # Add relevant notes section if any notes exist
+        if checklist.notes:
+            note_items = [note.content for note in checklist.notes]
+            receipt_formatter.add_section(
+                MultiElementSection(
+                    title=" Relevant Notes ",
+                    items=note_items,
+                    bullet="",
+                )
+            )
+
         final = receipt_formatter.build()
         return final
 

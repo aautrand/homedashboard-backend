@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 
 from sqlalchemy import DateTime, Text, func
 from sqlalchemy.dialects.postgresql import ARRAY
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from dashboard.src.db import Base
 
@@ -23,6 +23,9 @@ class Checklist(Base):
     )
     title: Mapped[str] = mapped_column(Text, nullable=False)
     items: Mapped[List[str]] = mapped_column(ARRAY(Text), nullable=False, default=list)
+    notes: Mapped[List["ChecklistNote"]] = relationship(
+        "ChecklistNote", cascade="all, delete-orphan", lazy="select"
+    )
 
     def __repr__(self) -> str:
         return (
@@ -45,7 +48,7 @@ class Checklist(Base):
                 result[column.name] = value.isoformat() if value else None
             else:
                 result[column.name] = value
-
+        result["notes"] = [note.to_dict() for note in self.notes]
         return result
 
     def to_json(self) -> str:

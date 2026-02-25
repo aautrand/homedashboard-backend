@@ -43,6 +43,10 @@ def register_blueprints(app):
     app.register_blueprint(learning)
     app.register_blueprint(prints)
 
+    from dashboard.src.audio import sock
+
+    sock.init_app(app)
+
 
 def setup_message_broker(app):
     with app.app_context():

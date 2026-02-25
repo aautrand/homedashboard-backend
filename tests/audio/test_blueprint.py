@@ -1,6 +1,7 @@
 import io
+import json
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 from flask import Flask
@@ -515,6 +516,217 @@ class TestAudioUploadEndpoint:
         assert len(filenames) == len(set(filenames))
 
 
+class TestAudioStreamEndpoint:
+    """Tests for the /audio/stream endpoint."""
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_stream_audio_success(self, mock_get_storage_client, app):
+        """Test successful streamed audio upload."""
+        from dashboard.src.audio import audio
+
+        mock_storage = MagicMock()
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
+        mock_get_storage_client.return_value = mock_storage
+
+        app.register_blueprint(audio)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/audio/stream?ext=.mp3",
+                data=b"fake audio content",
+                content_type="application/octet-stream",
+            )
+
+        assert response.status_code == 201
+        json_data = response.get_json()
+        assert json_data["status"] == "success"
+        assert json_data["filename"].startswith("audio/")
+        assert json_data["filename"].endswith(".mp3")
+        assert "url" in json_data
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_stream_audio_ext_without_dot(self, mock_get_storage_client, app):
+        """Test extension without leading dot is accepted."""
+        from dashboard.src.audio import audio
+
+        mock_storage = MagicMock()
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.wav"
+        )
+        mock_get_storage_client.return_value = mock_storage
+
+        app.register_blueprint(audio)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/audio/stream?ext=wav",
+                data=b"fake audio content",
+                content_type="application/octet-stream",
+            )
+
+        assert response.status_code == 201
+        json_data = response.get_json()
+        assert json_data["filename"].endswith(".wav")
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_stream_audio_missing_ext(self, mock_get_storage_client, app):
+        """Test returns 400 when no extension is provided."""
+        from dashboard.src.audio import audio
+
+        app.register_blueprint(audio)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/audio/stream",
+                data=b"fake audio content",
+                content_type="application/octet-stream",
+            )
+
+        assert response.status_code == 400
+        assert "extension" in response.get_json()["error"].lower()
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_stream_audio_unsupported_ext(self, mock_get_storage_client, app):
+        """Test returns 400 for unsupported extension."""
+        from dashboard.src.audio import audio
+
+        app.register_blueprint(audio)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/audio/stream?ext=.exe",
+                data=b"fake audio content",
+                content_type="application/octet-stream",
+            )
+
+        assert response.status_code == 400
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_stream_audio_empty_body(self, mock_get_storage_client, app):
+        """Test returns 400 when request body is empty."""
+        from dashboard.src.audio import audio
+
+        app.register_blueprint(audio)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/audio/stream?ext=.mp3",
+                data=b"",
+                content_type="application/octet-stream",
+            )
+
+        assert response.status_code == 400
+        assert "no audio data" in response.get_json()["error"].lower()
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_stream_audio_storage_error(self, mock_get_storage_client, app):
+        """Test returns 500 when storage upload fails."""
+        from dashboard.src.audio import audio
+
+        mock_storage = MagicMock()
+        mock_storage.upload_file.side_effect = Exception("Storage connection failed")
+        mock_get_storage_client.return_value = mock_storage
+
+        app.register_blueprint(audio)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/audio/stream?ext=.mp3",
+                data=b"fake audio content",
+                content_type="application/octet-stream",
+            )
+
+        assert response.status_code == 500
+        assert response.get_json()["error"] == "Failed to upload file"
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_stream_audio_all_extensions(self, mock_get_storage_client, app):
+        """Test all supported extensions work."""
+        from dashboard.src.audio import audio
+
+        mock_storage = MagicMock()
+        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test"
+        mock_get_storage_client.return_value = mock_storage
+
+        app.register_blueprint(audio)
+
+        for ext in [".mp3", ".m4a", ".wav", ".ogg", ".flac", ".aac"]:
+            with app.test_client() as client:
+                response = client.post(
+                    f"/audio/stream?ext={ext}",
+                    data=b"fake audio content",
+                    content_type="application/octet-stream",
+                )
+            assert response.status_code == 201, f"Failed for extension {ext}"
+
+    @patch("dashboard.src.audio.get_storage_client")
+    @patch("dashboard.src.audio.os.path.exists")
+    @patch("dashboard.src.audio.os.unlink")
+    def test_stream_audio_temp_file_cleanup(
+        self, mock_unlink, mock_exists, mock_get_storage_client, app
+    ):
+        """Test temporary file is cleaned up after streamed upload."""
+        from dashboard.src.audio import audio
+
+        mock_storage = MagicMock()
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
+        mock_get_storage_client.return_value = mock_storage
+        mock_exists.return_value = True
+
+        app.register_blueprint(audio)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/audio/stream?ext=.mp3",
+                data=b"fake audio content",
+                content_type="application/octet-stream",
+            )
+
+        assert response.status_code == 201
+        assert mock_unlink.called
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_stream_audio_get_method_not_allowed(self, mock_get_storage_client, app):
+        """Test GET request to /audio/stream returns 405."""
+        from dashboard.src.audio import audio
+
+        app.register_blueprint(audio)
+
+        with app.test_client() as client:
+            response = client.get("/audio/stream?ext=.mp3")
+
+        assert response.status_code == 405
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_stream_audio_response_contains_all_fields(
+        self, mock_get_storage_client, app
+    ):
+        """Test success response contains exactly status, filename, and url."""
+        from dashboard.src.audio import audio
+
+        mock_storage = MagicMock()
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
+        mock_get_storage_client.return_value = mock_storage
+
+        app.register_blueprint(audio)
+
+        with app.test_client() as client:
+            response = client.post(
+                "/audio/stream?ext=.mp3",
+                data=b"fake audio content",
+                content_type="application/octet-stream",
+            )
+
+        json_data = response.get_json()
+        assert set(json_data.keys()) == {"status", "filename", "url"}
+
+
 class TestAudioBlueprintRegistration:
     """Tests for Audio Blueprint registration."""
 
@@ -529,3 +741,145 @@ class TestAudioBlueprintRegistration:
         from dashboard.src.audio import audio
 
         assert audio.name == "audio"
+
+
+class TestWebSocketAudioEndpoint:
+    """Tests for the /audio/ws WebSocket endpoint."""
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_ws_audio_binary_only_defaults_to_wav(self, mock_get_storage_client):
+        """Test binary-only messages default to .wav extension."""
+        from dashboard.src.audio import ws_audio
+
+        mock_storage = MagicMock()
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.wav"
+        )
+        mock_get_storage_client.return_value = mock_storage
+
+        mock_ws = MagicMock()
+        mock_ws.receive = MagicMock(
+            side_effect=[b"chunk1", b"chunk2", None]
+        )
+
+        ws_audio(mock_ws)
+
+        mock_ws.send.assert_called_once()
+        response = json.loads(mock_ws.send.call_args[0][0])
+        assert response["status"] == "success"
+        assert response["filename"].endswith(".wav")
+        assert "url" in response
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_ws_audio_config_with_mp3_extension(self, mock_get_storage_client):
+        """Test config message with .mp3 extension."""
+        from dashboard.src.audio import ws_audio
+
+        mock_storage = MagicMock()
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
+        mock_get_storage_client.return_value = mock_storage
+
+        mock_ws = MagicMock()
+        mock_ws.receive = MagicMock(
+            side_effect=[json.dumps({"ext": ".mp3"}), b"audio data", None]
+        )
+
+        ws_audio(mock_ws)
+
+        mock_ws.send.assert_called_once()
+        response = json.loads(mock_ws.send.call_args[0][0])
+        assert response["status"] == "success"
+        assert response["filename"].endswith(".mp3")
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_ws_audio_unsupported_extension(self, mock_get_storage_client):
+        """Test unsupported extension returns error."""
+        from dashboard.src.audio import ws_audio
+
+        mock_ws = MagicMock()
+        mock_ws.receive = MagicMock(
+            side_effect=[json.dumps({"ext": ".exe"}), b"audio data", None]
+        )
+
+        ws_audio(mock_ws)
+
+        mock_ws.send.assert_called_once()
+        response = json.loads(mock_ws.send.call_args[0][0])
+        assert "error" in response
+        assert "Unsupported extension" in response["error"]
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_ws_audio_invalid_json_config(self, mock_get_storage_client):
+        """Test invalid JSON config returns error."""
+        from dashboard.src.audio import ws_audio
+
+        mock_ws = MagicMock()
+        mock_ws.receive = MagicMock(
+            side_effect=["not valid json{{{", b"audio data", None]
+        )
+
+        ws_audio(mock_ws)
+
+        mock_ws.send.assert_called_once()
+        response = json.loads(mock_ws.send.call_args[0][0])
+        assert "error" in response
+        assert "Invalid JSON" in response["error"]
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_ws_audio_no_audio_data(self, mock_get_storage_client):
+        """Test immediate close with no audio data returns error."""
+        from dashboard.src.audio import ws_audio
+
+        mock_ws = MagicMock()
+        mock_ws.receive = MagicMock(side_effect=[None])
+
+        ws_audio(mock_ws)
+
+        mock_ws.send.assert_called_once()
+        response = json.loads(mock_ws.send.call_args[0][0])
+        assert "error" in response
+        assert "No audio data" in response["error"]
+
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_ws_audio_storage_error(self, mock_get_storage_client):
+        """Test storage error returns error response."""
+        from dashboard.src.audio import ws_audio
+
+        mock_storage = MagicMock()
+        mock_storage.upload_file.side_effect = Exception("Storage failed")
+        mock_get_storage_client.return_value = mock_storage
+
+        mock_ws = MagicMock()
+        mock_ws.receive = MagicMock(side_effect=[b"audio data", None])
+
+        ws_audio(mock_ws)
+
+        mock_ws.send.assert_called_once()
+        response = json.loads(mock_ws.send.call_args[0][0])
+        assert "error" in response
+        assert "Failed to upload file" in response["error"]
+
+    @patch("dashboard.src.audio.os.unlink")
+    @patch("dashboard.src.audio.os.path.exists")
+    @patch("dashboard.src.audio.get_storage_client")
+    def test_ws_audio_temp_file_cleanup(
+        self, mock_get_storage_client, mock_exists, mock_unlink
+    ):
+        """Test temporary file is cleaned up after WebSocket upload."""
+        from dashboard.src.audio import ws_audio
+
+        mock_storage = MagicMock()
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.wav"
+        )
+        mock_get_storage_client.return_value = mock_storage
+        mock_exists.return_value = True
+
+        mock_ws = MagicMock()
+        mock_ws.receive = MagicMock(side_effect=[b"audio data", None])
+
+        ws_audio(mock_ws)
+
+        assert mock_unlink.called

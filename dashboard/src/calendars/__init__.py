@@ -127,7 +127,7 @@ def notify_upcoming_events():
     Returns:
         JSON with status and list of notified events
     """
-    minutes = request.args.get("minutes", 15, type=int)
+    minutes = request.args.get("minutes", 90, type=int)
     calendar_manager = CalendarEventManager(request.db)
 
     # First sync today's events to ensure we have the latest
