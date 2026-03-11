@@ -3,15 +3,15 @@ name: runner smoke test
 on: [push]
 
 jobs:
-  hello:
+  format-check:
     runs-on: docker
     steps:
       - name: checkout
         uses: actions/checkout@v4
-      - name: print basics
+      - name: install formatters
+        run: pip install black isort
+      - name: check formatting
         run: |
-          echo "runner is alive"
-          uname -a
-          arch
-          ls -la
+          isort --check --diff .
+          black --check --diff .
 
