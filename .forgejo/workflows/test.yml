@@ -1,0 +1,17 @@
+name: runner smoke test
+
+on: [push]
+
+jobs:
+  hello:
+    runs-on: docker
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: print basics
+        run: |
+          echo "runner is alive"
+          uname -a
+          arch
+          ls -la
+
