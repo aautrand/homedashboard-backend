@@ -9,7 +9,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v4
       - name: install formatters
-        run: pip install black isort
+        run: python3 -m pip install black isort
       - name: check formatting
         run: |
           isort --check --diff .
