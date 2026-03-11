@@ -5,7 +5,7 @@ on: [push]
 jobs:
   format-check:
     runs-on: docker
-    container: python:3.11-slim
+    container: nikolaik/python-nodejs:python3.11-nodejs20
     steps:
       - name: checkout
         uses: actions/checkout@v4
