@@ -5,13 +5,12 @@ on: [push]
 jobs:
   format-check:
     runs-on: docker
+    container: python:3.11-slim
     steps:
       - name: checkout
         uses: actions/checkout@v4
       - name: install formatters
-        run: |
-          python3 -m ensurepip --upgrade
-          python3 -m pip install black isort --break-system-packages
+        run: pip install black isort
       - name: check formatting
         run: |
           isort --check --diff .
