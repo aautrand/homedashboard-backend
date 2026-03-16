@@ -15,4 +15,3 @@ jobs:
         run: |
           isort --check --diff .
           black --check --diff .
-
