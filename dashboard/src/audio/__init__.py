@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import tempfile
@@ -8,6 +9,7 @@ from logging import getLogger
 from flask import Blueprint, jsonify, request
 from flask_sock import Sock
 
+from dashboard.src.prints.orchestration import print_voice_response
 from dashboard.src.storage import get_storage_client
 
 logger = getLogger(__name__)
@@ -17,70 +19,67 @@ sock = Sock()
 ALLOWED_EXTENSIONS = {".mp3", ".m4a", ".wav", ".ogg", ".flac", ".aac"}
 
 
+def _generate_remote_filename(original_filename: str, fallback_ext: str = ".m4a") -> str:
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_id = uuid.uuid4().hex[:8]
+    ext = os.path.splitext(original_filename)[1] if original_filename else fallback_ext
+    return f"{timestamp}_{unique_id}{ext}", ext
+
+
+def _upload_and_process(temp_path: str, remote_filename: str) -> dict:
+    """Upload audio to MinIO, transcribe via Whisper, send to LLM, and print response."""
+    storage_client = get_storage_client("minio")
+    url = storage_client.upload_file(temp_path, remote_filename, "audio")
+    logger.info(f"Audio uploaded: {remote_filename}")
+
+    print_voice_response(temp_path)
+
+    return {"status": "success", "filename": remote_filename, "url": url}
+
+
 @audio.route("/upload", methods=["POST"])
 def upload_audio():
-    """
-    Accept an audio file upload and store it in MinIO.
-
-    Expected: multipart/form-data with 'file' field containing the audio file.
-
-    Returns:
-        JSON with upload status and file URL.
-    """
-    if "file" not in request.files:
+    if "file" not in request.files or request.files["file"].filename == "":
         return jsonify({"error": "No file provided"}), 400
 
     file = request.files["file"]
+    remote_filename, ext = _generate_remote_filename(file.filename)
 
-    if file.filename == "":
-        return jsonify({"error": "No file selected"}), 400
-
-    # Generate a unique filename with timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    unique_id = uuid.uuid4().hex[:8]
-    original_ext = os.path.splitext(file.filename)[1] if file.filename else ".m4a"
-    remote_filename = f"audio/{timestamp}_{unique_id}{original_ext}"
-
-    # Save to temp file, upload to MinIO, then clean up
     temp_file = None
     try:
-        # Create temp file with the same extension
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=original_ext)
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
         file.save(temp_file.name)
         temp_file.close()
-
-        # Upload to MinIO
-        storage_client = get_storage_client("minio")
-        url = storage_client.upload_file(temp_file.name, remote_filename)
-
-        logger.info(f"Audio file uploaded: {remote_filename}")
-
-        return (
-            jsonify({"status": "success", "filename": remote_filename, "url": url}),
-            201,
-        )
-
+        return jsonify(_upload_and_process(temp_file.name, remote_filename)), 201
     except Exception as e:
-        logger.error(f"Failed to upload audio file: {e}")
-        return jsonify({"error": "Failed to upload file"}), 500
-
+        logger.error(f"Failed to process audio upload: {e}")
+        return jsonify({"error": "Failed to process file"}), 500
     finally:
-        # Clean up temp file
         if temp_file and os.path.exists(temp_file.name):
             os.unlink(temp_file.name)
 
 
+@audio.route("/transcribe", methods=["POST"])
+def transcribe_audio():
+    data = request.get_json()
+    filename = data.get("filename") if data else None
+    if not filename:
+        return jsonify({"error": "filename is required"}), 400
+
+    try:
+        audio_bytes = get_storage_client("minio").read_file(filename, "audio")
+
+        from dashboard.src.ai.clients.openai_client import OpenAIClient
+        transcription = OpenAIClient().transcribe(io.BytesIO(audio_bytes), filename=filename)
+
+        return jsonify({"filename": filename, "transcription": transcription})
+    except Exception as e:
+        logger.error(f"Failed to transcribe {filename}: {e}")
+        return jsonify({"error": "Failed to transcribe file"}), 500
+
+
 @audio.route("/stream", methods=["POST"])
 def stream_audio():
-    """
-    Accept a streamed audio file via raw request body and store it in MinIO.
-
-    The file extension must be provided via the 'ext' query parameter
-    (e.g. ?ext=.mp3). The raw audio bytes are read from the request body.
-
-    Returns:
-        JSON with upload status and file URL.
-    """
     ext = request.args.get("ext", "").lower()
     if not ext.startswith("."):
         ext = f".{ext}" if ext else ""
@@ -93,20 +92,13 @@ def stream_audio():
         return jsonify({"error": "No audio data provided"}), 400
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    unique_id = uuid.uuid4().hex[:8]
-    remote_filename = f"audio/{timestamp}_{unique_id}{ext}"
+    remote_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}{ext}"
 
     temp_file = None
     try:
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
-
-        # Stream chunks from the request body to the temp file
-        chunk_size = 8192
         bytes_written = 0
-        while True:
-            chunk = request.stream.read(chunk_size)
-            if not chunk:
-                break
+        while chunk := request.stream.read(8192):
             temp_file.write(chunk)
             bytes_written += len(chunk)
         temp_file.close()
@@ -114,20 +106,10 @@ def stream_audio():
         if bytes_written == 0:
             return jsonify({"error": "No audio data provided"}), 400
 
-        storage_client = get_storage_client("minio")
-        url = storage_client.upload_file(temp_file.name, remote_filename)
-
-        logger.info(f"Streamed audio file uploaded: {remote_filename} ({bytes_written} bytes)")
-
-        return (
-            jsonify({"status": "success", "filename": remote_filename, "url": url}),
-            201,
-        )
-
+        return jsonify(_upload_and_process(temp_file.name, remote_filename)), 201
     except Exception as e:
-        logger.error(f"Failed to upload streamed audio file: {e}")
-        return jsonify({"error": "Failed to upload file"}), 500
-
+        logger.error(f"Failed to process streamed audio: {e}")
+        return jsonify({"error": "Failed to process file"}), 500
     finally:
         if temp_file and os.path.exists(temp_file.name):
             os.unlink(temp_file.name)
@@ -154,7 +136,6 @@ def ws_audio(ws):
                 break
 
             if isinstance(data, str):
-                # First text message is config
                 if not chunks:
                     try:
                         config = json.loads(data)
@@ -167,11 +148,7 @@ def ws_audio(ws):
                         requested_ext = f".{requested_ext}"
                     if requested_ext not in ALLOWED_EXTENSIONS:
                         allowed = ", ".join(sorted(ALLOWED_EXTENSIONS))
-                        ws.send(
-                            json.dumps(
-                                {"error": f"Unsupported extension. Allowed: {allowed}"}
-                            )
-                        )
+                        ws.send(json.dumps({"error": f"Unsupported extension. Allowed: {allowed}"}))
                         return
                     ext = requested_ext
             else:
@@ -181,32 +158,23 @@ def ws_audio(ws):
             ws.send(json.dumps({"error": "No audio data received"}))
             return
 
-        # Write chunks to temp file and upload
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        unique_id = uuid.uuid4().hex[:8]
-        remote_filename = f"audio/{timestamp}_{unique_id}{ext}"
+        remote_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}{ext}"
 
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
         for chunk in chunks:
             temp_file.write(chunk)
         temp_file.close()
 
-        storage_client = get_storage_client("minio")
-        url = storage_client.upload_file(temp_file.name, remote_filename)
-
-        logger.info(f"WebSocket audio uploaded: {remote_filename}")
-
-        ws.send(
-            json.dumps({"status": "success", "filename": remote_filename, "url": url})
-        )
+        result = _upload_and_process(temp_file.name, remote_filename)
+        ws.send(json.dumps(result))
 
     except Exception as e:
         logger.error(f"WebSocket audio error: {e}")
         try:
-            ws.send(json.dumps({"error": "Failed to upload file"}))
+            ws.send(json.dumps({"error": "Failed to process file"}))
         except Exception:
             pass
-
     finally:
         if temp_file and os.path.exists(temp_file.name):
             os.unlink(temp_file.name)

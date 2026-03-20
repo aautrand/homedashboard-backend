@@ -30,6 +30,17 @@ class StorageClient(ABC):
         ...
 
     @abstractmethod
+    def read_file(self, remote_path: str, bucket: str = None) -> bytes:
+        """
+        Read a file from storage and return its contents as bytes.
+
+        Args:
+            remote_path: Path in storage
+            bucket: Optional bucket name
+        """
+        ...
+
+    @abstractmethod
     def delete_file(self, remote_path: str) -> None:
         """
         Delete a file from storage.

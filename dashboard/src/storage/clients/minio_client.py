@@ -99,6 +99,22 @@ class MinIOClient(StorageClient):
             logger.error(f"Failed to download {remote_path} from MinIO: {e}")
             raise
 
+    def read_file(self, remote_path: str, bucket: str = None) -> bytes:
+        """
+        Read a file from MinIO and return its contents as bytes.
+
+        Args:
+            remote_path: Path in MinIO
+            bucket: Optional bucket name (defaults to configured bucket)
+        """
+        bucket = bucket or self.bucket
+        try:
+            response = self.client.get_object(bucket, remote_path)
+            return response.read()
+        except S3Error as e:
+            logger.error(f"Failed to read {remote_path} from MinIO: {e}")
+            raise
+
     def delete_file(self, remote_path: str, bucket: str = None) -> None:
         """
         Delete a file from MinIO.
