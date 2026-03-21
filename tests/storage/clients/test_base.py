@@ -17,6 +17,9 @@ class TestStorageClientABC:
             def download_file(self, remote_path, local_path):
                 pass
 
+            def read_file(self, remote_path, bucket=None):
+                return b""
+
             def delete_file(self, remote_path):
                 pass
 

@@ -391,8 +391,8 @@ def print_voice_response(audio_path: str) -> dict:
         transcription = openai_client.transcribe(f, filename=filename)
     logger.info(f"Transcribed audio: {transcription!r}")
 
-    ollama_client = OllamaClient()
-    llm_response = ollama_client.generate_response(transcription)
+
+    llm_response = openai_client.generate_chatgpt_response(model="gpt-5.4-mini", instructions="Respond to the text that is sent", prompt=transcription)
     logger.info(f"LLM response: {llm_response!r}")
 
     receipt_data = PrintManager.print_text(llm_response.strip().splitlines())

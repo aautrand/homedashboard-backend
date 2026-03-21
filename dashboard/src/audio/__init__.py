@@ -19,17 +19,17 @@ sock = Sock()
 ALLOWED_EXTENSIONS = {".mp3", ".m4a", ".wav", ".ogg", ".flac", ".aac"}
 
 
-def _generate_remote_filename(original_filename: str, fallback_ext: str = ".m4a") -> str:
+def _generate_remote_filename(original_filename: str, fallback_ext: str = ".m4a") -> tuple:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     unique_id = uuid.uuid4().hex[:8]
     ext = os.path.splitext(original_filename)[1] if original_filename else fallback_ext
-    return f"{timestamp}_{unique_id}{ext}", ext
+    return f"audio/{timestamp}_{unique_id}{ext}", ext
 
 
 def _upload_and_process(temp_path: str, remote_filename: str) -> dict:
     """Upload audio to MinIO, transcribe via Whisper, send to LLM, and print response."""
     storage_client = get_storage_client("minio")
-    url = storage_client.upload_file(temp_path, remote_filename, "audio")
+    url = storage_client.upload_file(temp_path, remote_filename)
     logger.info(f"Audio uploaded: {remote_filename}")
 
     print_voice_response(temp_path)
@@ -39,10 +39,14 @@ def _upload_and_process(temp_path: str, remote_filename: str) -> dict:
 
 @audio.route("/upload", methods=["POST"])
 def upload_audio():
-    if "file" not in request.files or request.files["file"].filename == "":
+    if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
 
     file = request.files["file"]
+
+    if file.filename == "":
+        return jsonify({"error": "No file selected"}), 400
+
     remote_filename, ext = _generate_remote_filename(file.filename)
 
     temp_file = None
@@ -92,7 +96,7 @@ def stream_audio():
         return jsonify({"error": "No audio data provided"}), 400
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    remote_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}{ext}"
+    remote_filename = f"audio/{timestamp}_{uuid.uuid4().hex[:8]}{ext}"
 
     temp_file = None
     try:
@@ -159,7 +163,7 @@ def ws_audio(ws):
             return
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        remote_filename = f"{timestamp}_{uuid.uuid4().hex[:8]}{ext}"
+        remote_filename = f"audio/{timestamp}_{uuid.uuid4().hex[:8]}{ext}"
 
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
         for chunk in chunks:

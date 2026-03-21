@@ -18,8 +18,9 @@ def app():
 class TestAudioUploadEndpoint:
     """Tests for the /audio/upload endpoint."""
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_success(self, mock_get_storage_client, app):
+    def test_upload_audio_success(self, mock_get_storage_client, mock_print_voice_response, app):
         """Test successful audio file upload."""
         from dashboard.src.audio import audio
 
@@ -97,10 +98,11 @@ class TestAudioUploadEndpoint:
 
         assert response.status_code == 500
         json_data = response.get_json()
-        assert json_data["error"] == "Failed to upload file"
+        assert json_data["error"] == "Failed to process file"
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_m4a_extension(self, mock_get_storage_client, app):
+    def test_upload_audio_m4a_extension(self, mock_get_storage_client, mock_print_voice_response, app):
         """Test upload with .m4a file extension."""
         from dashboard.src.audio import audio
 
@@ -122,8 +124,9 @@ class TestAudioUploadEndpoint:
         json_data = response.get_json()
         assert json_data["filename"].endswith(".m4a")
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_wav_extension(self, mock_get_storage_client, app):
+    def test_upload_audio_wav_extension(self, mock_get_storage_client, mock_print_voice_response, app):
         """Test upload with .wav file extension."""
         from dashboard.src.audio import audio
 
@@ -145,8 +148,9 @@ class TestAudioUploadEndpoint:
         json_data = response.get_json()
         assert json_data["filename"].endswith(".wav")
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_ogg_extension(self, mock_get_storage_client, app):
+    def test_upload_audio_ogg_extension(self, mock_get_storage_client, mock_print_voice_response, app):
         """Test upload with .ogg file extension."""
         from dashboard.src.audio import audio
 
@@ -168,8 +172,9 @@ class TestAudioUploadEndpoint:
         json_data = response.get_json()
         assert json_data["filename"].endswith(".ogg")
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_filename_format(self, mock_get_storage_client, app):
+    def test_upload_audio_filename_format(self, mock_get_storage_client, mock_print_voice_response, app):
         """Test uploaded filename has correct format: audio/YYYYMMDD_HHMMSS_uniqueid.ext"""
         import re
 
@@ -198,9 +203,10 @@ class TestAudioUploadEndpoint:
             pattern, filename
         ), f"Filename {filename} doesn't match expected pattern"
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
     def test_upload_audio_storage_client_called_correctly(
-        self, mock_get_storage_client, app
+        self, mock_get_storage_client, mock_print_voice_response, app
     ):
         """Test storage client is called with correct arguments."""
         from dashboard.src.audio import audio
@@ -265,9 +271,10 @@ class TestAudioUploadEndpoint:
 
         assert response.status_code == 405
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
     def test_upload_audio_response_contains_all_fields(
-        self, mock_get_storage_client, app
+        self, mock_get_storage_client, mock_print_voice_response, app
     ):
         """Test success response contains exactly status, filename, and url."""
         from dashboard.src.audio import audio
@@ -289,9 +296,10 @@ class TestAudioUploadEndpoint:
         json_data = response.get_json()
         assert set(json_data.keys()) == {"status", "filename", "url"}
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
     def test_upload_audio_with_special_characters_in_filename(
-        self, mock_get_storage_client, app
+        self, mock_get_storage_client, mock_print_voice_response, app
     ):
         """Test upload handles filenames with special characters."""
         from dashboard.src.audio import audio
@@ -315,8 +323,9 @@ class TestAudioUploadEndpoint:
         # Generated filename should still have correct extension
         assert json_data["filename"].endswith(".mp3")
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_with_unicode_filename(self, mock_get_storage_client, app):
+    def test_upload_audio_with_unicode_filename(self, mock_get_storage_client, mock_print_voice_response, app):
         """Test upload handles unicode characters in filename."""
         from dashboard.src.audio import audio
 
@@ -338,9 +347,10 @@ class TestAudioUploadEndpoint:
         json_data = response.get_json()
         assert json_data["filename"].endswith(".mp3")
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
     def test_upload_audio_with_multiple_dots_in_filename(
-        self, mock_get_storage_client, app
+        self, mock_get_storage_client, mock_print_voice_response, app
     ):
         """Test upload handles filenames with multiple dots."""
         from dashboard.src.audio import audio
@@ -366,8 +376,9 @@ class TestAudioUploadEndpoint:
         # Should extract only the final extension
         assert json_data["filename"].endswith(".mp3")
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_flac_extension(self, mock_get_storage_client, app):
+    def test_upload_audio_flac_extension(self, mock_get_storage_client, mock_print_voice_response, app):
         """Test upload with .flac file extension."""
         from dashboard.src.audio import audio
 
@@ -389,8 +400,9 @@ class TestAudioUploadEndpoint:
         json_data = response.get_json()
         assert json_data["filename"].endswith(".flac")
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_aac_extension(self, mock_get_storage_client, app):
+    def test_upload_audio_aac_extension(self, mock_get_storage_client, mock_print_voice_response, app):
         """Test upload with .aac file extension."""
         from dashboard.src.audio import audio
 
@@ -412,8 +424,9 @@ class TestAudioUploadEndpoint:
         json_data = response.get_json()
         assert json_data["filename"].endswith(".aac")
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_url_from_storage_returned(self, mock_get_storage_client, app):
+    def test_upload_audio_url_from_storage_returned(self, mock_get_storage_client, mock_print_voice_response, app):
         """Test that the URL returned by storage client is included in response."""
         from dashboard.src.audio import audio
 
@@ -435,11 +448,12 @@ class TestAudioUploadEndpoint:
         json_data = response.get_json()
         assert json_data["url"] == expected_url
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
     @patch("dashboard.src.audio.os.path.exists")
     @patch("dashboard.src.audio.os.unlink")
     def test_upload_audio_temp_file_cleanup_on_success(
-        self, mock_unlink, mock_exists, mock_get_storage_client, app
+        self, mock_unlink, mock_exists, mock_get_storage_client, mock_print_voice_response, app
     ):
         """Test temporary file is cleaned up after successful upload."""
         from dashboard.src.audio import audio
@@ -489,8 +503,9 @@ class TestAudioUploadEndpoint:
         # Verify cleanup was still attempted
         assert mock_unlink.called
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_unique_filenames(self, mock_get_storage_client, app):
+    def test_upload_audio_unique_filenames(self, mock_get_storage_client, mock_print_voice_response, app):
         """Test that multiple uploads generate unique filenames."""
         from dashboard.src.audio import audio
 
@@ -519,8 +534,9 @@ class TestAudioUploadEndpoint:
 class TestAudioStreamEndpoint:
     """Tests for the /audio/stream endpoint."""
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_stream_audio_success(self, mock_get_storage_client, app):
+    def test_stream_audio_success(self, mock_get_storage_client, mock_print_voice_response, app):
         """Test successful streamed audio upload."""
         from dashboard.src.audio import audio
 
@@ -546,8 +562,9 @@ class TestAudioStreamEndpoint:
         assert json_data["filename"].endswith(".mp3")
         assert "url" in json_data
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_stream_audio_ext_without_dot(self, mock_get_storage_client, app):
+    def test_stream_audio_ext_without_dot(self, mock_get_storage_client, mock_print_voice_response, app):
         """Test extension without leading dot is accepted."""
         from dashboard.src.audio import audio
 
@@ -639,10 +656,11 @@ class TestAudioStreamEndpoint:
             )
 
         assert response.status_code == 500
-        assert response.get_json()["error"] == "Failed to upload file"
+        assert response.get_json()["error"] == "Failed to process file"
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_stream_audio_all_extensions(self, mock_get_storage_client, app):
+    def test_stream_audio_all_extensions(self, mock_get_storage_client, mock_print_voice_response, app):
         """Test all supported extensions work."""
         from dashboard.src.audio import audio
 
@@ -661,11 +679,12 @@ class TestAudioStreamEndpoint:
                 )
             assert response.status_code == 201, f"Failed for extension {ext}"
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
     @patch("dashboard.src.audio.os.path.exists")
     @patch("dashboard.src.audio.os.unlink")
     def test_stream_audio_temp_file_cleanup(
-        self, mock_unlink, mock_exists, mock_get_storage_client, app
+        self, mock_unlink, mock_exists, mock_get_storage_client, mock_print_voice_response, app
     ):
         """Test temporary file is cleaned up after streamed upload."""
         from dashboard.src.audio import audio
@@ -701,9 +720,10 @@ class TestAudioStreamEndpoint:
 
         assert response.status_code == 405
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
     def test_stream_audio_response_contains_all_fields(
-        self, mock_get_storage_client, app
+        self, mock_get_storage_client, mock_print_voice_response, app
     ):
         """Test success response contains exactly status, filename, and url."""
         from dashboard.src.audio import audio
@@ -746,8 +766,9 @@ class TestAudioBlueprintRegistration:
 class TestWebSocketAudioEndpoint:
     """Tests for the /audio/ws WebSocket endpoint."""
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_ws_audio_binary_only_defaults_to_wav(self, mock_get_storage_client):
+    def test_ws_audio_binary_only_defaults_to_wav(self, mock_get_storage_client, mock_print_voice_response):
         """Test binary-only messages default to .wav extension."""
         from dashboard.src.audio import ws_audio
 
@@ -770,8 +791,9 @@ class TestWebSocketAudioEndpoint:
         assert response["filename"].endswith(".wav")
         assert "url" in response
 
+    @patch("dashboard.src.audio.print_voice_response")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_ws_audio_config_with_mp3_extension(self, mock_get_storage_client):
+    def test_ws_audio_config_with_mp3_extension(self, mock_get_storage_client, mock_print_voice_response):
         """Test config message with .mp3 extension."""
         from dashboard.src.audio import ws_audio
 
@@ -859,7 +881,7 @@ class TestWebSocketAudioEndpoint:
         mock_ws.send.assert_called_once()
         response = json.loads(mock_ws.send.call_args[0][0])
         assert "error" in response
-        assert "Failed to upload file" in response["error"]
+        assert "Failed to process file" in response["error"]
 
     @patch("dashboard.src.audio.os.unlink")
     @patch("dashboard.src.audio.os.path.exists")
