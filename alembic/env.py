@@ -38,6 +38,7 @@ fileConfig(config.config_file_name)
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
+from dashboard.src.ai.models.voice_query import VoiceQuery
 from dashboard.src.db import Base
 from dashboard.src.learning.models.card import Card
 from dashboard.src.learning.models.checklist import Checklist

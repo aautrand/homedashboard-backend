@@ -255,6 +255,30 @@ class PrintManager:
         return final
 
     @staticmethod
+    def print_voice_response(transcription: str, response: str) -> dict:
+        now = datetime.now()
+        receipt_formatter = ReceiptFormatter()
+
+        receipt_formatter.add_section(
+            MultiElementSection(
+                title=" You asked ",
+                items=[transcription],
+                bullet="",
+            )
+        )
+        receipt_formatter.add_section(
+            MultiElementSection(
+                title="",
+                items=response.strip().splitlines(),
+                bullet="",
+            )
+        )
+
+        return receipt_formatter.build(
+            title=f"  {now.strftime('%b %d, %Y %H:%M')}  "
+        )
+
+    @staticmethod
     def build_pop_quiz(cards: list, quiz_id: int = None) -> dict:
         """
         Build the pop quiz receipt data from a list of cards.

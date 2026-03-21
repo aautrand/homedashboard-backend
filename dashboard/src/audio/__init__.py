@@ -9,7 +9,6 @@ from logging import getLogger
 from flask import Blueprint, jsonify, request
 from flask_sock import Sock
 
-from dashboard.src.prints.orchestration import print_voice_response
 from dashboard.src.storage import get_storage_client
 
 logger = getLogger(__name__)
@@ -26,14 +25,9 @@ def _generate_remote_filename(original_filename: str, fallback_ext: str = ".m4a"
     return f"audio/{timestamp}_{unique_id}{ext}", ext
 
 
-def _upload_and_process(temp_path: str, remote_filename: str) -> dict:
-    """Upload audio to MinIO, transcribe via Whisper, send to LLM, and print response."""
-    storage_client = get_storage_client("minio")
-    url = storage_client.upload_file(temp_path, remote_filename)
+def _upload_to_minio(temp_path: str, remote_filename: str) -> dict:
+    url = get_storage_client("minio").upload_file(temp_path, remote_filename)
     logger.info(f"Audio uploaded: {remote_filename}")
-
-    print_voice_response(temp_path)
-
     return {"status": "success", "filename": remote_filename, "url": url}
 
 
@@ -54,10 +48,10 @@ def upload_audio():
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=ext)
         file.save(temp_file.name)
         temp_file.close()
-        return jsonify(_upload_and_process(temp_file.name, remote_filename)), 201
+        return jsonify(_upload_to_minio(temp_file.name, remote_filename)), 201
     except Exception as e:
-        logger.error(f"Failed to process audio upload: {e}")
-        return jsonify({"error": "Failed to process file"}), 500
+        logger.error(f"Failed to upload audio: {e}")
+        return jsonify({"error": "Failed to upload file"}), 500
     finally:
         if temp_file and os.path.exists(temp_file.name):
             os.unlink(temp_file.name)
@@ -110,10 +104,10 @@ def stream_audio():
         if bytes_written == 0:
             return jsonify({"error": "No audio data provided"}), 400
 
-        return jsonify(_upload_and_process(temp_file.name, remote_filename)), 201
+        return jsonify(_upload_to_minio(temp_file.name, remote_filename)), 201
     except Exception as e:
-        logger.error(f"Failed to process streamed audio: {e}")
-        return jsonify({"error": "Failed to process file"}), 500
+        logger.error(f"Failed to upload streamed audio: {e}")
+        return jsonify({"error": "Failed to upload file"}), 500
     finally:
         if temp_file and os.path.exists(temp_file.name):
             os.unlink(temp_file.name)
@@ -170,13 +164,13 @@ def ws_audio(ws):
             temp_file.write(chunk)
         temp_file.close()
 
-        result = _upload_and_process(temp_file.name, remote_filename)
+        result = _upload_to_minio(temp_file.name, remote_filename)
         ws.send(json.dumps(result))
 
     except Exception as e:
         logger.error(f"WebSocket audio error: {e}")
         try:
-            ws.send(json.dumps({"error": "Failed to process file"}))
+            ws.send(json.dumps({"error": "Failed to upload file"}))
         except Exception:
             pass
     finally:

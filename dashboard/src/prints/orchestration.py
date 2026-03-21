@@ -6,15 +6,12 @@ By keeping these separate from print_manager.py, we avoid circular import issues
 """
 
 import json
-import os
 import random
 from datetime import datetime
 from logging import getLogger
 
 from flask import current_app, request
 
-from dashboard.src.ai.clients.ollama_client import OllamaClient
-from dashboard.src.ai.clients.openai_client import OpenAIClient
 from dashboard.src.calendars.calendar_manager import CalendarEventManager
 from dashboard.src.learning.learning_manager import (
     CardManager,
@@ -373,32 +370,3 @@ def print_quiz_answers(db, quiz_id: int) -> dict:
         "question_count": len(cards),
         "message": f"Printed answers for quiz #{quiz_id} ({len(cards)} questions)",
     }
-
-
-def print_voice_response(audio_path: str) -> dict:
-    """
-    Transcribe an audio file, send the transcription to the LLM, and print the response.
-
-    Args:
-        audio_path: Local path to the audio file to transcribe.
-
-    Returns:
-        Dictionary with transcription and llm_response.
-    """
-    openai_client = OpenAIClient()
-    filename = os.path.basename(audio_path)
-    with open(audio_path, "rb") as f:
-        transcription = openai_client.transcribe(f, filename=filename)
-    logger.info(f"Transcribed audio: {transcription!r}")
-
-
-    llm_response = openai_client.generate_chatgpt_response(model="gpt-5.4-mini", instructions="Respond to the text that is sent", prompt=transcription)
-    logger.info(f"LLM response: {llm_response!r}")
-
-    receipt_data = PrintManager.print_text(llm_response.strip().splitlines())
-    rabbit_client = current_app.config["message_broker_client"]
-    rabbit_client.send_message(
-        exchange="", routing_key="text_print", body=json.dumps(receipt_data)
-    )
-
-    return {"transcription": transcription, "llm_response": llm_response}
