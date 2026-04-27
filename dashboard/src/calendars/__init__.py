@@ -224,10 +224,22 @@ def update_todo(todo_id):
         return jsonify({"error": "No data provided"}), 400
 
     todo_manager = TodoManager(request.db)
+
+    # Check if this update is marking the todo as complete
+    existing_todo = todo_manager.get_todo(todo_id)
+    if not existing_todo:
+        return jsonify({"error": "Todo not found"}), 404
+
+    was_active = existing_todo.active
     todo = todo_manager.update_todo(todo_id, **data)
 
-    if not todo:
-        return jsonify({"error": "Todo not found"}), 404
+    # If the todo was just marked complete, send it to the printer
+    if was_active and data.get("active") is False:
+        todo_data = PrintManager.print_todo(todo)
+        rabbit_client = current_app.config["message_broker_client"]
+        rabbit_client.send_message(
+            exchange="", routing_key="text_print", body=json.dumps(todo_data)
+        )
 
     return jsonify(todo.to_dict())
 

@@ -438,20 +438,19 @@ class TestUpdateTodoEndpoint:
 
     @patch("dashboard.src.calendars.TodoManager")
     def test_update_todo_success(self, mock_manager_cls, client):
-        """Test updating a todo."""
+        """Test updating a todo title (no completion, no print)."""
+        mock_existing = MagicMock()
+        mock_existing.active = True
         mock_todo = MagicMock()
-        mock_todo.to_dict.return_value = {
-            "id": 1,
-            "title": "Updated",
-            "active": False,
-        }
+        mock_todo.to_dict.return_value = {"id": 1, "title": "Updated", "active": True}
         mock_manager = MagicMock()
+        mock_manager.get_todo.return_value = mock_existing
         mock_manager.update_todo.return_value = mock_todo
         mock_manager_cls.return_value = mock_manager
 
         response = client.put(
             "/calendar/todo/1",
-            data=json.dumps({"title": "Updated", "active": False}),
+            data=json.dumps({"title": "Updated"}),
             content_type="application/json",
         )
 
@@ -463,7 +462,7 @@ class TestUpdateTodoEndpoint:
     def test_update_todo_not_found(self, mock_manager_cls, client):
         """Test updating a non-existent todo returns 404."""
         mock_manager = MagicMock()
-        mock_manager.update_todo.return_value = None
+        mock_manager.get_todo.return_value = None
         mock_manager_cls.return_value = mock_manager
 
         response = client.put(
@@ -473,6 +472,81 @@ class TestUpdateTodoEndpoint:
         )
 
         assert response.status_code == 404
+
+    @patch("dashboard.src.calendars.PrintManager")
+    @patch("dashboard.src.calendars.TodoManager")
+    def test_update_todo_complete_triggers_print(
+        self, mock_manager_cls, mock_print_mgr, client, app
+    ):
+        """Test that marking a todo complete sends it to the printer."""
+        mock_existing = MagicMock()
+        mock_existing.active = True
+        mock_todo = MagicMock()
+        mock_todo.to_dict.return_value = {"id": 1, "title": "Buy milk", "active": False}
+        mock_manager = MagicMock()
+        mock_manager.get_todo.return_value = mock_existing
+        mock_manager.update_todo.return_value = mock_todo
+        mock_manager_cls.return_value = mock_manager
+        mock_print_mgr.print_todo.return_value = {"title": " To Dos ", "content": []}
+
+        response = client.put(
+            "/calendar/todo/1",
+            data=json.dumps({"active": False}),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        mock_print_mgr.print_todo.assert_called_once_with(mock_todo)
+        app.config["message_broker_client"].send_message.assert_called_once()
+
+    @patch("dashboard.src.calendars.PrintManager")
+    @patch("dashboard.src.calendars.TodoManager")
+    def test_update_todo_already_inactive_no_print(
+        self, mock_manager_cls, mock_print_mgr, client, app
+    ):
+        """Test that updating an already-inactive todo does not trigger a print."""
+        mock_existing = MagicMock()
+        mock_existing.active = False
+        mock_todo = MagicMock()
+        mock_todo.to_dict.return_value = {"id": 1, "title": "Old task", "active": False}
+        mock_manager = MagicMock()
+        mock_manager.get_todo.return_value = mock_existing
+        mock_manager.update_todo.return_value = mock_todo
+        mock_manager_cls.return_value = mock_manager
+
+        response = client.put(
+            "/calendar/todo/1",
+            data=json.dumps({"active": False}),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        mock_print_mgr.print_todo.assert_not_called()
+        app.config["message_broker_client"].send_message.assert_not_called()
+
+    @patch("dashboard.src.calendars.PrintManager")
+    @patch("dashboard.src.calendars.TodoManager")
+    def test_update_todo_reactivate_no_print(
+        self, mock_manager_cls, mock_print_mgr, client, app
+    ):
+        """Test that reactivating a todo (active=True) does not trigger a print."""
+        mock_existing = MagicMock()
+        mock_existing.active = False
+        mock_todo = MagicMock()
+        mock_todo.to_dict.return_value = {"id": 1, "title": "Task", "active": True}
+        mock_manager = MagicMock()
+        mock_manager.get_todo.return_value = mock_existing
+        mock_manager.update_todo.return_value = mock_todo
+        mock_manager_cls.return_value = mock_manager
+
+        response = client.put(
+            "/calendar/todo/1",
+            data=json.dumps({"active": True}),
+            content_type="application/json",
+        )
+
+        assert response.status_code == 200
+        mock_print_mgr.print_todo.assert_not_called()
 
     def test_update_todo_empty_body(self, client):
         """Test updating a todo with empty JSON body returns 400."""
