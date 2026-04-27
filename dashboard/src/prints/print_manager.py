@@ -177,9 +177,9 @@ class PrintManager:
 
         receipt_formatter.add_section(
             MultiElementSection(
-                title=" To Do's ",
+                title=" To Do ",
                 items=[todo.title],
-                bullet="[ ]",
+                bullet="[ ] ",
             )
         )
 

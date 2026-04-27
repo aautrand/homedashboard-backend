@@ -13,6 +13,7 @@ from logging import getLogger
 from flask import current_app, request
 
 from dashboard.src.calendars.calendar_manager import CalendarEventManager
+from dashboard.src.calendars.todo_manager import TodoManager
 from dashboard.src.learning.learning_manager import (
     CardManager,
     QuizManager,
@@ -140,6 +141,24 @@ def print_tasks():
                 " Reminders ",
                 reminder_items,
                 bullet="o ",
+            )
+        )
+
+    # Insert todos
+    todo_manager = TodoManager(request.db)
+    active_todos = todo_manager.get_active_todos()
+
+    if active_todos:
+        # Mark todos as shown
+        for todo in active_todos:
+            todo_manager.mark_todo_shown(todo.id, today_date)
+
+        todo_items = [todo.title for todo in active_todos]
+        receipt_formatter.add_section(
+            MultiElementSection(
+                " To Do ",
+                todo_items,
+                bullet="[ ] ",
             )
         )
 
