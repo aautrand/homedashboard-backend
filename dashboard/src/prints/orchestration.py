@@ -14,13 +14,10 @@ from flask import current_app, request
 
 from dashboard.src.calendars.calendar_manager import CalendarEventManager
 from dashboard.src.calendars.todo_manager import TodoManager
-from dashboard.src.learning.learning_manager import (
-    CardManager,
-    QuizManager,
-    ReminderManager,
-    RoutineTaskManager,
-    SubjectManager,
-)
+from dashboard.src.learning.learning_manager import (CardManager, QuizManager,
+                                                     ReminderManager,
+                                                     RoutineTaskManager,
+                                                     SubjectManager)
 from dashboard.src.prints.print_manager import PrintManager
 from dashboard.src.prints.receipts.formatter import ReceiptFormatter
 from dashboard.src.prints.receipts.section import MultiElementSection

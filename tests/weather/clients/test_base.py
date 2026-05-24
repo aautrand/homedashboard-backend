@@ -2,7 +2,8 @@ from unittest.mock import patch
 
 import pytest
 
-from dashboard.src.weather.clients.base import WeatherClient, get_weather_client
+from dashboard.src.weather.clients.base import (WeatherClient,
+                                                get_weather_client)
 
 
 class TestGetWeatherClient:

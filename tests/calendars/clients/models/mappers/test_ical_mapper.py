@@ -1,9 +1,8 @@
 import json
 from unittest.mock import MagicMock, PropertyMock
 
-from dashboard.src.calendars.clients.models.mappers.ical_mapper import (
-    ICalCalendarSequentialEventMapper,
-)
+from dashboard.src.calendars.clients.models.mappers.ical_mapper import \
+    ICalCalendarSequentialEventMapper
 
 
 def _make_vevent(

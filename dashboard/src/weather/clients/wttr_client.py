@@ -1,9 +1,8 @@
 import requests
 
 from dashboard.src.weather.clients.base import WeatherClient
-from dashboard.src.weather.clients.models.mappers.noaa_mapper import (
-    NOAAObservationMapper,
-)
+from dashboard.src.weather.clients.models.mappers.noaa_mapper import \
+    NOAAObservationMapper
 
 
 class WTTRWeatherClient(WeatherClient):

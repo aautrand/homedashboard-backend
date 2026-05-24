@@ -3,15 +3,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from dashboard.src.prints.receipts.formatter import (
-    MathPrinterFormatter,
-    PrinterFormatter,
-    ReceiptFormatter,
-)
-from dashboard.src.prints.receipts.section import (
-    MultiElementSection,
-    SingleElementSection,
-)
+from dashboard.src.prints.receipts.formatter import (MathPrinterFormatter,
+                                                     PrinterFormatter,
+                                                     ReceiptFormatter)
+from dashboard.src.prints.receipts.section import (MultiElementSection,
+                                                   SingleElementSection)
 
 
 class TestReceiptFormatter:

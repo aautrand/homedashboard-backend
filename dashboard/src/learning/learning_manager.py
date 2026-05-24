@@ -7,12 +7,8 @@ from dashboard.src.learning.models.card import Card, KnowledgeLevel
 from dashboard.src.learning.models.checklist import Checklist
 from dashboard.src.learning.models.checklist_note import ChecklistNote
 from dashboard.src.learning.models.problem import Problem
-from dashboard.src.learning.models.quiz import (
-    AnswerScore,
-    Quiz,
-    QuizAnswer,
-    QuizQuestion,
-)
+from dashboard.src.learning.models.quiz import (AnswerScore, Quiz, QuizAnswer,
+                                                QuizQuestion)
 from dashboard.src.learning.models.reminder import Reminder
 from dashboard.src.learning.models.routine_task import RoutineTask
 from dashboard.src.learning.models.score import Score
