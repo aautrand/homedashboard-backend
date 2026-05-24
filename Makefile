@@ -11,7 +11,6 @@ format:
 	black .
 	isort .
 
-
 format-check:
 	black --check --diff .
 	isort --check --diff .
