@@ -8,12 +8,13 @@ run:
 	docker compose up
 
 format:
-	isort .
 	black .
+	isort .
+
 
 format-check:
-	isort --check --diff .
 	black --check --diff .
+	isort --check --diff .
 
 test:
 	python -m pytest tests/ -v
