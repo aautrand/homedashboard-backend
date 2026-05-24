@@ -27,6 +27,7 @@ def client(app, mock_db):
     @app.before_request
     def inject_db():
         from flask import request
+
         request.db = mock_db
 
     return app.test_client()
@@ -69,7 +70,9 @@ class TestRecordAnswer:
 
     @patch("dashboard.src.learning.routes.quizzes.QuizManager")
     def test_question_not_in_quiz(self, mock_cls, client):
-        mock_cls.return_value.get_quiz_questions.return_value = [_make_mock_question(id=99)]
+        mock_cls.return_value.get_quiz_questions.return_value = [
+            _make_mock_question(id=99)
+        ]
 
         resp = client.post(
             "/learning/quiz/1/question/10/answer",
@@ -106,12 +109,14 @@ class TestRecordAnswersBulk:
 
         resp = client.post(
             "/learning/quiz/1/answers",
-            data=json.dumps({
-                "answers": [
-                    {"question_id": 1, "score": 2},
-                    {"question_id": 2, "score": 0},
-                ]
-            }),
+            data=json.dumps(
+                {
+                    "answers": [
+                        {"question_id": 1, "score": 2},
+                        {"question_id": 2, "score": 0},
+                    ]
+                }
+            ),
             content_type="application/json",
         )
         assert resp.status_code == 201
@@ -146,7 +151,9 @@ class TestRecordAnswersBulk:
 
     @patch("dashboard.src.learning.routes.quizzes.QuizManager")
     def test_question_not_in_quiz(self, mock_cls, client):
-        mock_cls.return_value.get_quiz_questions.return_value = [_make_mock_question(id=99)]
+        mock_cls.return_value.get_quiz_questions.return_value = [
+            _make_mock_question(id=99)
+        ]
         resp = client.post(
             "/learning/quiz/1/answers",
             data=json.dumps({"answers": [{"question_id": 1, "score": 2}]}),

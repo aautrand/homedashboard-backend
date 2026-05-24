@@ -26,6 +26,7 @@ def client(app, mock_db):
     @app.before_request
     def inject_db():
         from flask import request
+
         request.db = mock_db
 
     return app.test_client()

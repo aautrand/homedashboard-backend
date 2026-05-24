@@ -316,10 +316,7 @@ class ChecklistNoteManager:
     def reorder_notes(self, checklist_id: int, note_ids: list[int]):
         """Assign positions to notes based on the provided ordered list of IDs.
         Only notes belonging to the checklist are updated."""
-        notes = {
-            note.id: note
-            for note in self.get_notes_for_checklist(checklist_id)
-        }
+        notes = {note.id: note for note in self.get_notes_for_checklist(checklist_id)}
         for position, note_id in enumerate(note_ids):
             if note_id in notes:
                 notes[note_id].position = position

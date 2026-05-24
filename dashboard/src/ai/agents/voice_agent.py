@@ -1,4 +1,5 @@
 """Voice query pipeline: transcribe → LLM → save to DB → print."""
+
 import json
 import logging
 
@@ -41,7 +42,11 @@ def process_voice_query(audio_path: str, filename: str, db) -> dict:
     )
     logger.info("LLM response for %r: %r", filename, llm_response)
 
-    db.add(VoiceQuery(filename=filename, transcription=transcription, response=llm_response))
+    db.add(
+        VoiceQuery(
+            filename=filename, transcription=transcription, response=llm_response
+        )
+    )
 
     receipt_data = PrintManager.print_voice_response(transcription, llm_response)
     current_app.config["message_broker_client"].send_message(

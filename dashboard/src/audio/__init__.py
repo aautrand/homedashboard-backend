@@ -18,7 +18,9 @@ sock = Sock()
 ALLOWED_EXTENSIONS = {".mp3", ".m4a", ".wav", ".ogg", ".flac", ".aac"}
 
 
-def _generate_remote_filename(original_filename: str, fallback_ext: str = ".m4a") -> tuple:
+def _generate_remote_filename(
+    original_filename: str, fallback_ext: str = ".m4a"
+) -> tuple:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     unique_id = uuid.uuid4().hex[:8]
     ext = os.path.splitext(original_filename)[1] if original_filename else fallback_ext
@@ -68,7 +70,10 @@ def transcribe_audio():
         audio_bytes = get_storage_client("minio").read_file(filename, "audio")
 
         from dashboard.src.ai.clients.openai_client import OpenAIClient
-        transcription = OpenAIClient().transcribe(io.BytesIO(audio_bytes), filename=filename)
+
+        transcription = OpenAIClient().transcribe(
+            io.BytesIO(audio_bytes), filename=filename
+        )
 
         return jsonify({"filename": filename, "transcription": transcription})
     except Exception as e:
@@ -84,7 +89,10 @@ def stream_audio():
 
     if ext not in ALLOWED_EXTENSIONS:
         allowed = ", ".join(sorted(ALLOWED_EXTENSIONS))
-        return jsonify({"error": f"Missing or unsupported extension. Allowed: {allowed}"}), 400
+        return (
+            jsonify({"error": f"Missing or unsupported extension. Allowed: {allowed}"}),
+            400,
+        )
 
     if request.content_length is not None and request.content_length == 0:
         return jsonify({"error": "No audio data provided"}), 400
@@ -146,7 +154,11 @@ def ws_audio(ws):
                         requested_ext = f".{requested_ext}"
                     if requested_ext not in ALLOWED_EXTENSIONS:
                         allowed = ", ".join(sorted(ALLOWED_EXTENSIONS))
-                        ws.send(json.dumps({"error": f"Unsupported extension. Allowed: {allowed}"}))
+                        ws.send(
+                            json.dumps(
+                                {"error": f"Unsupported extension. Allowed: {allowed}"}
+                            )
+                        )
                         return
                     ext = requested_ext
             else:

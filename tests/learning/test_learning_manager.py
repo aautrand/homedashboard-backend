@@ -15,7 +15,12 @@ from dashboard.src.learning.learning_manager import (
 )
 from dashboard.src.learning.models.card import Card, KnowledgeLevel
 from dashboard.src.learning.models.checklist import Checklist
-from dashboard.src.learning.models.quiz import AnswerScore, Quiz, QuizAnswer, QuizQuestion
+from dashboard.src.learning.models.quiz import (
+    AnswerScore,
+    Quiz,
+    QuizAnswer,
+    QuizQuestion,
+)
 from dashboard.src.learning.models.reminder import Reminder
 from dashboard.src.learning.models.routine_task import RoutineTask
 from dashboard.src.learning.models.subject import Subject
@@ -206,7 +211,9 @@ class TestGetSubjectsForStudyToday:
     def mgr(self, db):
         return SubjectManager(db)
 
-    def _make_subject(self, last_shown=None, times_shown=0, always_show=False, study_active=True):
+    def _make_subject(
+        self, last_shown=None, times_shown=0, always_show=False, study_active=True
+    ):
         s = MagicMock(spec=Subject)
         s.last_shown_date = last_shown
         s.times_shown = times_shown
@@ -221,7 +228,9 @@ class TestGetSubjectsForStudyToday:
         assert result == [sub]
 
     def test_always_show_always_included(self, mgr, db):
-        sub = self._make_subject(last_shown=date(2025, 8, 15), times_shown=100, always_show=True)
+        sub = self._make_subject(
+            last_shown=date(2025, 8, 15), times_shown=100, always_show=True
+        )
         db.execute.return_value.scalars.return_value.all.return_value = [sub]
         result = mgr.get_subjects_for_study_today(date(2025, 8, 15))
         assert result == [sub]
@@ -471,40 +480,66 @@ class TestMatchesCronPattern:
     """Tests for the cron pattern matching logic."""
 
     def test_wildcard_all(self):
-        assert RoutineTaskManager.matches_cron_pattern("* * *", date(2025, 8, 15)) is True
+        assert (
+            RoutineTaskManager.matches_cron_pattern("* * *", date(2025, 8, 15)) is True
+        )
 
     def test_specific_day_of_week_match(self):
         # 2025-08-15 is Friday => day_of_week = 5
-        assert RoutineTaskManager.matches_cron_pattern("5 * *", date(2025, 8, 15)) is True
+        assert (
+            RoutineTaskManager.matches_cron_pattern("5 * *", date(2025, 8, 15)) is True
+        )
 
     def test_specific_day_of_week_no_match(self):
-        assert RoutineTaskManager.matches_cron_pattern("0 * *", date(2025, 8, 15)) is False
+        assert (
+            RoutineTaskManager.matches_cron_pattern("0 * *", date(2025, 8, 15)) is False
+        )
 
     def test_specific_day_of_month(self):
-        assert RoutineTaskManager.matches_cron_pattern("* 15 *", date(2025, 8, 15)) is True
+        assert (
+            RoutineTaskManager.matches_cron_pattern("* 15 *", date(2025, 8, 15)) is True
+        )
 
     def test_specific_day_of_month_no_match(self):
-        assert RoutineTaskManager.matches_cron_pattern("* 1 *", date(2025, 8, 15)) is False
+        assert (
+            RoutineTaskManager.matches_cron_pattern("* 1 *", date(2025, 8, 15)) is False
+        )
 
     def test_specific_month(self):
-        assert RoutineTaskManager.matches_cron_pattern("* * 8", date(2025, 8, 15)) is True
+        assert (
+            RoutineTaskManager.matches_cron_pattern("* * 8", date(2025, 8, 15)) is True
+        )
 
     def test_specific_month_no_match(self):
-        assert RoutineTaskManager.matches_cron_pattern("* * 1", date(2025, 8, 15)) is False
+        assert (
+            RoutineTaskManager.matches_cron_pattern("* * 1", date(2025, 8, 15)) is False
+        )
 
     def test_range_day_of_week(self):
         # Monday(1) through Friday(5)
-        assert RoutineTaskManager.matches_cron_pattern("1-5 * *", date(2025, 8, 15)) is True
+        assert (
+            RoutineTaskManager.matches_cron_pattern("1-5 * *", date(2025, 8, 15))
+            is True
+        )
 
     def test_range_day_of_week_no_match(self):
         # 2025-08-16 is Saturday => 6, not in 1-5
-        assert RoutineTaskManager.matches_cron_pattern("1-5 * *", date(2025, 8, 16)) is False
+        assert (
+            RoutineTaskManager.matches_cron_pattern("1-5 * *", date(2025, 8, 16))
+            is False
+        )
 
     def test_list_day_of_week(self):
-        assert RoutineTaskManager.matches_cron_pattern("1,3,5 * *", date(2025, 8, 15)) is True
+        assert (
+            RoutineTaskManager.matches_cron_pattern("1,3,5 * *", date(2025, 8, 15))
+            is True
+        )
 
     def test_list_day_of_week_no_match(self):
-        assert RoutineTaskManager.matches_cron_pattern("0,2,4 * *", date(2025, 8, 15)) is False
+        assert (
+            RoutineTaskManager.matches_cron_pattern("0,2,4 * *", date(2025, 8, 15))
+            is False
+        )
 
     def test_empty_pattern(self):
         assert RoutineTaskManager.matches_cron_pattern("", date(2025, 8, 15)) is False
@@ -513,14 +548,21 @@ class TestMatchesCronPattern:
         assert RoutineTaskManager.matches_cron_pattern(None, date(2025, 8, 15)) is False
 
     def test_invalid_format_too_few_parts(self):
-        assert RoutineTaskManager.matches_cron_pattern("* *", date(2025, 8, 15)) is False
+        assert (
+            RoutineTaskManager.matches_cron_pattern("* *", date(2025, 8, 15)) is False
+        )
 
     def test_invalid_format_too_many_parts(self):
-        assert RoutineTaskManager.matches_cron_pattern("* * * *", date(2025, 8, 15)) is False
+        assert (
+            RoutineTaskManager.matches_cron_pattern("* * * *", date(2025, 8, 15))
+            is False
+        )
 
     def test_sunday_is_zero(self):
         # 2025-08-17 is Sunday => 0
-        assert RoutineTaskManager.matches_cron_pattern("0 * *", date(2025, 8, 17)) is True
+        assert (
+            RoutineTaskManager.matches_cron_pattern("0 * *", date(2025, 8, 17)) is True
+        )
 
 
 class TestMatchesCronField:
@@ -566,7 +608,9 @@ class TestGetTasksForDate:
     def mgr(self, db):
         return RoutineTaskManager(db)
 
-    def _make_task(self, interval_days=None, schedule_pattern=None, last_shown=None, active=True):
+    def _make_task(
+        self, interval_days=None, schedule_pattern=None, last_shown=None, active=True
+    ):
         t = MagicMock(spec=RoutineTask)
         t.interval_days = interval_days
         t.schedule_pattern = schedule_pattern

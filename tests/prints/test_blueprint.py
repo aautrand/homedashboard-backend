@@ -71,14 +71,16 @@ class TestStreamPrint:
     def test_batch_messages(self, mock_sleep, client, app):
         resp = client.post(
             "/prints/stream",
-            data=json.dumps({
-                "messages": [
-                    {"text": "Line 1"},
-                    {"text": "Line 2"},
-                    {"cut": True},
-                ],
-                "delay": 0,
-            }),
+            data=json.dumps(
+                {
+                    "messages": [
+                        {"text": "Line 1"},
+                        {"text": "Line 2"},
+                        {"cut": True},
+                    ],
+                    "delay": 0,
+                }
+            ),
             content_type="application/json",
         )
         assert resp.status_code == 200
@@ -91,13 +93,15 @@ class TestStreamPrint:
     def test_batch_with_delay(self, mock_sleep, client, app):
         resp = client.post(
             "/prints/stream",
-            data=json.dumps({
-                "messages": [
-                    {"text": "Line 1"},
-                    {"text": "Line 2"},
-                ],
-                "delay": 2,
-            }),
+            data=json.dumps(
+                {
+                    "messages": [
+                        {"text": "Line 1"},
+                        {"text": "Line 2"},
+                    ],
+                    "delay": 2,
+                }
+            ),
             content_type="application/json",
         )
         assert resp.status_code == 200

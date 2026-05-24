@@ -314,13 +314,17 @@ class TestAIAudioUploadEndpoint:
 
     @patch("dashboard.src.ai.process_voice_query")
     @patch("dashboard.src.ai.get_storage_client")
-    def test_upload_success(self, mock_get_storage_client, mock_process_voice_query, app):
+    def test_upload_success(
+        self, mock_get_storage_client, mock_process_voice_query, app
+    ):
         import io
 
         from dashboard.src.ai import ai
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.m4a"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.m4a"
+        )
         mock_get_storage_client.return_value = mock_storage
         mock_process_voice_query.return_value = {
             "transcription": "hello",
@@ -333,6 +337,7 @@ class TestAIAudioUploadEndpoint:
         @app.before_request
         def inject_db():
             from flask import request
+
             request.db = mock_db
 
         with app.test_client() as client:
@@ -394,6 +399,7 @@ class TestAIAudioUploadEndpoint:
         @app.before_request
         def inject_db():
             from flask import request
+
             request.db = mock_db
 
         with app.test_client() as client:
@@ -407,13 +413,17 @@ class TestAIAudioUploadEndpoint:
 
     @patch("dashboard.src.ai.process_voice_query")
     @patch("dashboard.src.ai.get_storage_client")
-    def test_upload_voice_query_error(self, mock_get_storage_client, mock_process_voice_query, app):
+    def test_upload_voice_query_error(
+        self, mock_get_storage_client, mock_process_voice_query, app
+    ):
         import io
 
         from dashboard.src.ai import ai
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.m4a"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.m4a"
+        )
         mock_get_storage_client.return_value = mock_storage
         mock_process_voice_query.side_effect = Exception("Voice query failed")
 
@@ -423,6 +433,7 @@ class TestAIAudioUploadEndpoint:
         @app.before_request
         def inject_db():
             from flask import request
+
             request.db = mock_db
 
         with app.test_client() as client:
@@ -436,15 +447,22 @@ class TestAIAudioUploadEndpoint:
 
     @patch("dashboard.src.ai.process_voice_query")
     @patch("dashboard.src.ai.get_storage_client")
-    def test_upload_process_voice_query_receives_db(self, mock_get_storage_client, mock_process_voice_query, app):
+    def test_upload_process_voice_query_receives_db(
+        self, mock_get_storage_client, mock_process_voice_query, app
+    ):
         import io
 
         from dashboard.src.ai import ai
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.m4a"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.m4a"
+        )
         mock_get_storage_client.return_value = mock_storage
-        mock_process_voice_query.return_value = {"transcription": "hi", "llm_response": "hello"}
+        mock_process_voice_query.return_value = {
+            "transcription": "hi",
+            "llm_response": "hello",
+        }
 
         mock_db = MagicMock()
         app.register_blueprint(ai)
@@ -452,11 +470,14 @@ class TestAIAudioUploadEndpoint:
         @app.before_request
         def inject_db():
             from flask import request
+
             request.db = mock_db
 
         with app.test_client() as client:
             data = {"file": (io.BytesIO(b"fake audio"), "voice.m4a")}
-            client.post("/ai/audio/upload", data=data, content_type="multipart/form-data")
+            client.post(
+                "/ai/audio/upload", data=data, content_type="multipart/form-data"
+            )
 
         assert mock_process_voice_query.call_args[0][2] is mock_db
 

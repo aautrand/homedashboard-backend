@@ -19,9 +19,7 @@ class TestNOAAWeatherClient:
         mock_forecast_resp.json.return_value = {"properties": {"periods": []}}
 
         mock_obs_resp = MagicMock()
-        mock_obs_resp.json.return_value = {
-            "properties": {"temperature": {"value": 20}}
-        }
+        mock_obs_resp.json.return_value = {"properties": {"temperature": {"value": 20}}}
 
         mock_requests.get.side_effect = [
             mock_points_resp,

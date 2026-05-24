@@ -1,7 +1,7 @@
 import hashlib
 import json
 import os
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 

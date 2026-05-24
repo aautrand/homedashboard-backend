@@ -6,7 +6,9 @@ from dashboard.src.calendars.clients.models.mappers.ical_mapper import (
 )
 
 
-def _make_vevent(uid, summary, start_iso, end_iso, recurring=False, recurrence_id_val=None):
+def _make_vevent(
+    uid, summary, start_iso, end_iso, recurring=False, recurrence_id_val=None
+):
     """Helper to create a mock vevent object."""
     vevent = MagicMock()
     vevent.uid.value = uid
@@ -87,8 +89,12 @@ class TestICalCalendarSequentialEventMapper:
 
     def test_map_multiple_calendars(self):
         """Test mapping events from multiple calendars."""
-        vevent1 = _make_vevent("uid-1", "Event A", "2025-08-15T10:00:00", "2025-08-15T11:00:00")
-        vevent2 = _make_vevent("uid-2", "Event B", "2025-08-15T14:00:00", "2025-08-15T15:00:00")
+        vevent1 = _make_vevent(
+            "uid-1", "Event A", "2025-08-15T10:00:00", "2025-08-15T11:00:00"
+        )
+        vevent2 = _make_vevent(
+            "uid-2", "Event B", "2025-08-15T14:00:00", "2025-08-15T15:00:00"
+        )
 
         cal1_events = [_make_caldav_event(vevent1, "Home")]
         cal2_events = [_make_caldav_event(vevent2, "Chores")]
@@ -103,23 +109,31 @@ class TestICalCalendarSequentialEventMapper:
 
     def test_map_multiple_events_same_calendar(self):
         """Test mapping multiple events from the same calendar."""
-        vevent1 = _make_vevent("uid-1", "Morning", "2025-08-15T08:00:00", "2025-08-15T09:00:00")
-        vevent2 = _make_vevent("uid-2", "Afternoon", "2025-08-15T14:00:00", "2025-08-15T15:00:00")
+        vevent1 = _make_vevent(
+            "uid-1", "Morning", "2025-08-15T08:00:00", "2025-08-15T09:00:00"
+        )
+        vevent2 = _make_vevent(
+            "uid-2", "Afternoon", "2025-08-15T14:00:00", "2025-08-15T15:00:00"
+        )
 
-        result = self.mapper.map([
-            [_make_caldav_event(vevent1), _make_caldav_event(vevent2)]
-        ])
+        result = self.mapper.map(
+            [[_make_caldav_event(vevent1), _make_caldav_event(vevent2)]]
+        )
         assert len(result) == 2
 
     def test_map_empty_calendar(self):
         """Test mapping when one calendar has no events."""
-        vevent = _make_vevent("uid-1", "Event", "2025-08-15T10:00:00", "2025-08-15T11:00:00")
+        vevent = _make_vevent(
+            "uid-1", "Event", "2025-08-15T10:00:00", "2025-08-15T11:00:00"
+        )
         result = self.mapper.map([[], [_make_caldav_event(vevent)]])
         assert len(result) == 1
 
     def test_map_returns_json_strings(self):
         """Test that each element in the result is a valid JSON string."""
-        vevent = _make_vevent("uid-1", "Event", "2025-08-15T10:00:00", "2025-08-15T11:00:00")
+        vevent = _make_vevent(
+            "uid-1", "Event", "2025-08-15T10:00:00", "2025-08-15T11:00:00"
+        )
         result = self.mapper.map([[_make_caldav_event(vevent)]])
 
         for item in result:

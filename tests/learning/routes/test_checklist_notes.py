@@ -27,6 +27,7 @@ def client(app, mock_db):
     @app.before_request
     def inject_db():
         from flask import request
+
         request.db = mock_db
 
     return app.test_client()
@@ -89,7 +90,8 @@ class TestGetChecklistNotes:
     def test_success(self, mock_cl_cls, mock_note_cls, client):
         mock_cl_cls.return_value.get_checklist.return_value = MagicMock()
         mock_note_cls.return_value.get_notes_for_checklist.return_value = [
-            make_mock_note(1), make_mock_note(2)
+            make_mock_note(1),
+            make_mock_note(2),
         ]
 
         resp = client.get("/learning/checklists/1/notes")
@@ -110,7 +112,9 @@ class TestUpdateChecklistNote:
     @patch("dashboard.src.learning.routes.checklists.ChecklistManager")
     def test_success(self, mock_cl_cls, mock_note_cls, client):
         mock_cl_cls.return_value.get_checklist.return_value = MagicMock()
-        mock_note_cls.return_value.update_note.return_value = make_mock_note(content="Updated")
+        mock_note_cls.return_value.update_note.return_value = make_mock_note(
+            content="Updated"
+        )
 
         resp = client.put(
             "/learning/checklists/1/notes/1",

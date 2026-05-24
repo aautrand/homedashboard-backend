@@ -2,7 +2,10 @@ import json
 
 from flask import Blueprint, current_app, jsonify, request
 
-from dashboard.src.learning.learning_manager import ChecklistManager, ChecklistNoteManager
+from dashboard.src.learning.learning_manager import (
+    ChecklistManager,
+    ChecklistNoteManager,
+)
 from dashboard.src.prints.print_manager import PrintManager
 
 checklists_bp = Blueprint("checklists", __name__)
@@ -184,7 +187,10 @@ def reorder_checklist_notes(checklist_id):
 
     data = request.get_json()
     if not data or "order" not in data or not isinstance(data["order"], list):
-        return jsonify({"error": "Missing required field: order (list of note IDs)"}), 400
+        return (
+            jsonify({"error": "Missing required field: order (list of note IDs)"}),
+            400,
+        )
 
     note_manager = ChecklistNoteManager(request.db)
     note_manager.reorder_notes(checklist_id, data["order"])
@@ -192,7 +198,9 @@ def reorder_checklist_notes(checklist_id):
     return jsonify([note.to_dict() for note in notes])
 
 
-@checklists_bp.route("/checklists/<int:checklist_id>/notes/<int:note_id>", methods=["PUT"])
+@checklists_bp.route(
+    "/checklists/<int:checklist_id>/notes/<int:note_id>", methods=["PUT"]
+)
 def update_checklist_note(checklist_id, note_id):
     """Update a note on a checklist.
 
@@ -224,7 +232,9 @@ def update_checklist_note(checklist_id, note_id):
     return jsonify(note.to_dict())
 
 
-@checklists_bp.route("/checklists/<int:checklist_id>/notes/<int:note_id>", methods=["DELETE"])
+@checklists_bp.route(
+    "/checklists/<int:checklist_id>/notes/<int:note_id>", methods=["DELETE"]
+)
 def delete_checklist_note(checklist_id, note_id):
     """Delete a note from a checklist.
 

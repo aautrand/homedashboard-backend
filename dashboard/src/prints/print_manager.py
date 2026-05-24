@@ -274,9 +274,7 @@ class PrintManager:
             )
         )
 
-        return receipt_formatter.build(
-            title=f"  {now.strftime('%b %d, %Y %H:%M')}  "
-        )
+        return receipt_formatter.build(title=f"  {now.strftime('%b %d, %Y %H:%M')}  ")
 
     @staticmethod
     def build_pop_quiz(cards: list, quiz_id: int = None) -> dict:

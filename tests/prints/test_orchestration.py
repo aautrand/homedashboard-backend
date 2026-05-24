@@ -46,12 +46,14 @@ def _make_print_tasks_patches(
             )
         ),
         "dashboard.src.prints.orchestration.OpenWeather": MagicMock(
-            from_current_and_forecast=MagicMock(return_value=MagicMock(
-                weather=[MagicMock(description="clear")],
-                main=MagicMock(temp=20.0),
-                daily_min_temp=15.0,
-                daily_max_temp=25.0,
-            ))
+            from_current_and_forecast=MagicMock(
+                return_value=MagicMock(
+                    weather=[MagicMock(description="clear")],
+                    main=MagicMock(temp=20.0),
+                    daily_min_temp=15.0,
+                    daily_max_temp=25.0,
+                )
+            )
         ),
         "dashboard.src.prints.orchestration.CalendarEventManager": MagicMock(
             return_value=MagicMock(
@@ -67,7 +69,9 @@ def _make_print_tasks_patches(
         "dashboard.src.prints.orchestration.ReminderManager": MagicMock(
             return_value=MagicMock(
                 get_active_reminders=MagicMock(
-                    return_value=active_reminders if active_reminders is not None else [reminder]
+                    return_value=(
+                        active_reminders if active_reminders is not None else [reminder]
+                    )
                 ),
             )
         ),
@@ -80,7 +84,9 @@ def _make_print_tasks_patches(
         ),
         "dashboard.src.prints.orchestration.SubjectManager": MagicMock(
             return_value=MagicMock(
-                get_subjects_for_study_today=MagicMock(return_value=study_subjects or []),
+                get_subjects_for_study_today=MagicMock(
+                    return_value=study_subjects or []
+                ),
             )
         ),
         "dashboard.src.prints.orchestration.CardManager": MagicMock(
@@ -114,11 +120,15 @@ class TestPrintTasks:
     def _run(self, app, patches):
         with app.app_context(), app.test_request_context():
             from flask import request as flask_request
+
             flask_request.db = MagicMock()
-            with patch.multiple("dashboard.src.prints.orchestration", **{
-                k.replace("dashboard.src.prints.orchestration.", ""): v
-                for k, v in patches.items()
-            }):
+            with patch.multiple(
+                "dashboard.src.prints.orchestration",
+                **{
+                    k.replace("dashboard.src.prints.orchestration.", ""): v
+                    for k, v in patches.items()
+                },
+            ):
                 return print_tasks()
 
     def test_returns_dict(self, print_tasks_app):
@@ -170,11 +180,15 @@ class TestPrintTasks:
         patches = _make_print_tasks_patches(active_reminders=[reminder])
         with print_tasks_app.app_context(), print_tasks_app.test_request_context():
             from flask import request as flask_request
+
             flask_request.db = MagicMock()
-            with patch.multiple("dashboard.src.prints.orchestration", **{
-                k.replace("dashboard.src.prints.orchestration.", ""): v
-                for k, v in patches.items()
-            }):
+            with patch.multiple(
+                "dashboard.src.prints.orchestration",
+                **{
+                    k.replace("dashboard.src.prints.orchestration.", ""): v
+                    for k, v in patches.items()
+                },
+            ):
                 print_tasks()
                 reminder_mgr = patches[
                     "dashboard.src.prints.orchestration.ReminderManager"
@@ -190,11 +204,15 @@ class TestPrintTasks:
         patches = _make_print_tasks_patches(active_todos=[todo])
         with print_tasks_app.app_context(), print_tasks_app.test_request_context():
             from flask import request as flask_request
+
             flask_request.db = MagicMock()
-            with patch.multiple("dashboard.src.prints.orchestration", **{
-                k.replace("dashboard.src.prints.orchestration.", ""): v
-                for k, v in patches.items()
-            }):
+            with patch.multiple(
+                "dashboard.src.prints.orchestration",
+                **{
+                    k.replace("dashboard.src.prints.orchestration.", ""): v
+                    for k, v in patches.items()
+                },
+            ):
                 print_tasks()
                 todo_mgr = patches[
                     "dashboard.src.prints.orchestration.TodoManager"
@@ -236,8 +254,10 @@ class TestPrintPopQuiz:
             card2.title = "Q2"
             card2.content = "A2"
 
-            with patch("dashboard.src.prints.orchestration.CardManager") as mock_cm, \
-                 patch("dashboard.src.prints.orchestration.QuizManager") as mock_qm:
+            with (
+                patch("dashboard.src.prints.orchestration.CardManager") as mock_cm,
+                patch("dashboard.src.prints.orchestration.QuizManager") as mock_qm,
+            ):
                 mock_cm.return_value.get_non_grokked_cards.return_value = [card1, card2]
                 mock_quiz = MagicMock()
                 mock_quiz.id = 1
@@ -256,8 +276,10 @@ class TestPrintPopQuiz:
             mock_db = MagicMock()
             cards = [MagicMock(title=f"Q{i}", content=f"A{i}") for i in range(5)]
 
-            with patch("dashboard.src.prints.orchestration.CardManager") as mock_cm, \
-                 patch("dashboard.src.prints.orchestration.QuizManager") as mock_qm:
+            with (
+                patch("dashboard.src.prints.orchestration.CardManager") as mock_cm,
+                patch("dashboard.src.prints.orchestration.QuizManager") as mock_qm,
+            ):
                 mock_cm.return_value.get_non_grokked_cards.return_value = cards
                 mock_quiz = MagicMock()
                 mock_quiz.id = 2
@@ -271,8 +293,10 @@ class TestPrintPopQuiz:
             mock_db = MagicMock()
             card = MagicMock(title="Q", content="A")
 
-            with patch("dashboard.src.prints.orchestration.CardManager") as mock_cm, \
-                 patch("dashboard.src.prints.orchestration.QuizManager") as mock_qm:
+            with (
+                patch("dashboard.src.prints.orchestration.CardManager") as mock_cm,
+                patch("dashboard.src.prints.orchestration.QuizManager") as mock_qm,
+            ):
                 mock_cm.return_value.get_non_grokked_cards.return_value = [card]
                 mock_quiz = MagicMock()
                 mock_quiz.id = 3

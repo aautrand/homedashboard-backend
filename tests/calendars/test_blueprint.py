@@ -32,6 +32,7 @@ def client(app, mock_db):
     @app.before_request
     def inject_db():
         from flask import request
+
         request.db = mock_db
 
     return app.test_client()
@@ -202,7 +203,9 @@ class TestNotifyUpcomingEventsEndpoint:
 
     @patch("dashboard.src.calendars.PrintManager")
     @patch("dashboard.src.calendars.CalendarEventManager")
-    def test_notifies_upcoming_events(self, mock_manager_cls, mock_print_mgr, client, app):
+    def test_notifies_upcoming_events(
+        self, mock_manager_cls, mock_print_mgr, client, app
+    ):
         """Test notifying and printing upcoming events."""
         mock_event = MagicMock()
         mock_event.id = 1
@@ -246,11 +249,15 @@ class TestNotifyUpcomingEventsEndpoint:
         response = client.post("/calendar/events/notify-upcoming?minutes=30")
 
         assert response.status_code == 200
-        mock_manager.get_unnotified_events_starting_soon.assert_called_once_with(minutes=30)
+        mock_manager.get_unnotified_events_starting_soon.assert_called_once_with(
+            minutes=30
+        )
 
     @patch("dashboard.src.calendars.PrintManager")
     @patch("dashboard.src.calendars.CalendarEventManager")
-    def test_notifies_multiple_events(self, mock_manager_cls, mock_print_mgr, client, app):
+    def test_notifies_multiple_events(
+        self, mock_manager_cls, mock_print_mgr, client, app
+    ):
         """Test notifying multiple upcoming events."""
         events = []
         for i in range(3):

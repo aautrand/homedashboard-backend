@@ -18,6 +18,7 @@ def app():
 @pytest.fixture
 def client(app):
     from dashboard.src.audio import audio
+
     app.register_blueprint(audio)
     return app.test_client()
 
@@ -29,11 +30,15 @@ class TestAudioUploadEndpoint:
     def test_upload_audio_success(self, mock_get_storage_client, client):
         """Test successful audio file upload."""
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         data = {"file": (io.BytesIO(b"fake audio content"), "test_audio.mp3")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert response.status_code == 201
         json_data = response.get_json()
@@ -46,7 +51,9 @@ class TestAudioUploadEndpoint:
     @patch("dashboard.src.audio.get_storage_client")
     def test_upload_audio_no_file_provided(self, mock_get_storage_client, client):
         """Test upload returns 400 when no file field is provided."""
-        response = client.post("/audio/upload", data={}, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data={}, content_type="multipart/form-data"
+        )
 
         assert response.status_code == 400
         assert response.get_json()["error"] == "No file provided"
@@ -55,7 +62,9 @@ class TestAudioUploadEndpoint:
     def test_upload_audio_empty_filename(self, mock_get_storage_client, client):
         """Test upload returns 400 when filename is empty."""
         data = {"file": (io.BytesIO(b"fake audio content"), "")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert response.status_code == 400
         assert response.get_json()["error"] == "No file selected"
@@ -68,7 +77,9 @@ class TestAudioUploadEndpoint:
         mock_get_storage_client.return_value = mock_storage
 
         data = {"file": (io.BytesIO(b"fake audio content"), "test.mp3")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert response.status_code == 500
         assert response.get_json()["error"] == "Failed to upload file"
@@ -77,11 +88,15 @@ class TestAudioUploadEndpoint:
     def test_upload_audio_m4a_extension(self, mock_get_storage_client, client):
         """Test upload with .m4a file extension."""
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.m4a"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.m4a"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         data = {"file": (io.BytesIO(b"fake audio content"), "voice_memo.m4a")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert response.status_code == 201
         assert response.get_json()["filename"].endswith(".m4a")
@@ -90,11 +105,15 @@ class TestAudioUploadEndpoint:
     def test_upload_audio_wav_extension(self, mock_get_storage_client, client):
         """Test upload with .wav file extension."""
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.wav"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.wav"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         data = {"file": (io.BytesIO(b"fake audio content"), "recording.wav")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert response.status_code == 201
         assert response.get_json()["filename"].endswith(".wav")
@@ -103,11 +122,15 @@ class TestAudioUploadEndpoint:
     def test_upload_audio_ogg_extension(self, mock_get_storage_client, client):
         """Test upload with .ogg file extension."""
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.ogg"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.ogg"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         data = {"file": (io.BytesIO(b"fake audio content"), "podcast.ogg")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert response.status_code == 201
         assert response.get_json()["filename"].endswith(".ogg")
@@ -118,21 +141,31 @@ class TestAudioUploadEndpoint:
         import re
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         data = {"file": (io.BytesIO(b"fake audio content"), "test.mp3")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         filename = response.get_json()["filename"]
         pattern = r"^audio/\d{8}_\d{6}_[a-f0-9]{8}\.mp3$"
-        assert re.match(pattern, filename), f"Filename {filename} doesn't match expected pattern"
+        assert re.match(
+            pattern, filename
+        ), f"Filename {filename} doesn't match expected pattern"
 
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_storage_client_called_correctly(self, mock_get_storage_client, client):
+    def test_upload_audio_storage_client_called_correctly(
+        self, mock_get_storage_client, client
+    ):
         """Test storage client is called with correct arguments."""
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         data = {"file": (io.BytesIO(b"fake audio content"), "test.mp3")}
@@ -154,25 +187,37 @@ class TestAudioUploadEndpoint:
         assert client.delete("/audio/upload").status_code == 405
 
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_response_contains_all_fields(self, mock_get_storage_client, client):
+    def test_upload_audio_response_contains_all_fields(
+        self, mock_get_storage_client, client
+    ):
         """Test success response contains exactly status, filename, and url."""
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         data = {"file": (io.BytesIO(b"fake audio content"), "test.mp3")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert set(response.get_json().keys()) == {"status", "filename", "url"}
 
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_with_special_characters_in_filename(self, mock_get_storage_client, client):
+    def test_upload_audio_with_special_characters_in_filename(
+        self, mock_get_storage_client, client
+    ):
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         data = {"file": (io.BytesIO(b"fake audio content"), "my file (1).mp3")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert response.status_code == 201
         assert response.get_json()["filename"].endswith(".mp3")
@@ -180,23 +225,33 @@ class TestAudioUploadEndpoint:
     @patch("dashboard.src.audio.get_storage_client")
     def test_upload_audio_with_unicode_filename(self, mock_get_storage_client, client):
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         data = {"file": (io.BytesIO(b"fake audio content"), "音声ファイル.mp3")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert response.status_code == 201
         assert response.get_json()["filename"].endswith(".mp3")
 
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_with_multiple_dots_in_filename(self, mock_get_storage_client, client):
+    def test_upload_audio_with_multiple_dots_in_filename(
+        self, mock_get_storage_client, client
+    ):
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         data = {"file": (io.BytesIO(b"fake audio content"), "my.audio.file.2024.mp3")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert response.status_code == 201
         assert response.get_json()["filename"].endswith(".mp3")
@@ -204,11 +259,15 @@ class TestAudioUploadEndpoint:
     @patch("dashboard.src.audio.get_storage_client")
     def test_upload_audio_flac_extension(self, mock_get_storage_client, client):
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.flac"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.flac"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         data = {"file": (io.BytesIO(b"fake audio content"), "lossless.flac")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert response.status_code == 201
         assert response.get_json()["filename"].endswith(".flac")
@@ -216,24 +275,34 @@ class TestAudioUploadEndpoint:
     @patch("dashboard.src.audio.get_storage_client")
     def test_upload_audio_aac_extension(self, mock_get_storage_client, client):
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.aac"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.aac"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         data = {"file": (io.BytesIO(b"fake audio content"), "audio.aac")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert response.status_code == 201
         assert response.get_json()["filename"].endswith(".aac")
 
     @patch("dashboard.src.audio.get_storage_client")
-    def test_upload_audio_url_from_storage_returned(self, mock_get_storage_client, client):
-        expected_url = "http://minio-server:9000/my-bucket/audio/20240101_120000_abc12345.mp3"
+    def test_upload_audio_url_from_storage_returned(
+        self, mock_get_storage_client, client
+    ):
+        expected_url = (
+            "http://minio-server:9000/my-bucket/audio/20240101_120000_abc12345.mp3"
+        )
         mock_storage = MagicMock()
         mock_storage.upload_file.return_value = expected_url
         mock_get_storage_client.return_value = mock_storage
 
         data = {"file": (io.BytesIO(b"fake audio content"), "test.mp3")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert response.get_json()["url"] == expected_url
 
@@ -244,12 +313,16 @@ class TestAudioUploadEndpoint:
         self, mock_unlink, mock_exists, mock_get_storage_client, client
     ):
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
         mock_exists.return_value = True
 
         data = {"file": (io.BytesIO(b"fake audio content"), "test.mp3")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert response.status_code == 201
         assert mock_unlink.called
@@ -266,7 +339,9 @@ class TestAudioUploadEndpoint:
         mock_exists.return_value = True
 
         data = {"file": (io.BytesIO(b"fake audio content"), "test.mp3")}
-        response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+        response = client.post(
+            "/audio/upload", data=data, content_type="multipart/form-data"
+        )
 
         assert response.status_code == 500
         assert mock_unlink.called
@@ -274,13 +349,17 @@ class TestAudioUploadEndpoint:
     @patch("dashboard.src.audio.get_storage_client")
     def test_upload_audio_unique_filenames(self, mock_get_storage_client, client):
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         filenames = []
         for _ in range(5):
             data = {"file": (io.BytesIO(b"fake audio content"), "test.mp3")}
-            response = client.post("/audio/upload", data=data, content_type="multipart/form-data")
+            response = client.post(
+                "/audio/upload", data=data, content_type="multipart/form-data"
+            )
             filenames.append(response.get_json()["filename"])
 
         assert len(filenames) == len(set(filenames))
@@ -292,7 +371,9 @@ class TestAudioStreamEndpoint:
     @patch("dashboard.src.audio.get_storage_client")
     def test_stream_audio_success(self, mock_get_storage_client, client):
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         response = client.post(
@@ -311,7 +392,9 @@ class TestAudioStreamEndpoint:
     @patch("dashboard.src.audio.get_storage_client")
     def test_stream_audio_ext_without_dot(self, mock_get_storage_client, client):
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.wav"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.wav"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         response = client.post(
@@ -388,7 +471,9 @@ class TestAudioStreamEndpoint:
         self, mock_unlink, mock_exists, mock_get_storage_client, client
     ):
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
         mock_exists.return_value = True
 
@@ -405,9 +490,13 @@ class TestAudioStreamEndpoint:
         assert client.get("/audio/stream?ext=.mp3").status_code == 405
 
     @patch("dashboard.src.audio.get_storage_client")
-    def test_stream_audio_response_contains_all_fields(self, mock_get_storage_client, client):
+    def test_stream_audio_response_contains_all_fields(
+        self, mock_get_storage_client, client
+    ):
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         response = client.post(
@@ -422,10 +511,12 @@ class TestAudioStreamEndpoint:
 class TestAudioBlueprintRegistration:
     def test_blueprint_has_correct_url_prefix(self):
         from dashboard.src.audio import audio
+
         assert audio.url_prefix == "/audio"
 
     def test_blueprint_has_correct_name(self):
         from dashboard.src.audio import audio
+
         assert audio.name == "audio"
 
 
@@ -437,7 +528,9 @@ class TestWebSocketAudioEndpoint:
         from dashboard.src.audio import ws_audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.wav"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.wav"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         mock_ws = MagicMock()
@@ -456,7 +549,9 @@ class TestWebSocketAudioEndpoint:
         from dashboard.src.audio import ws_audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.mp3"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.mp3"
+        )
         mock_get_storage_client.return_value = mock_storage
 
         mock_ws = MagicMock()
@@ -492,7 +587,9 @@ class TestWebSocketAudioEndpoint:
         from dashboard.src.audio import ws_audio
 
         mock_ws = MagicMock()
-        mock_ws.receive = MagicMock(side_effect=["not valid json{{{", b"audio data", None])
+        mock_ws.receive = MagicMock(
+            side_effect=["not valid json{{{", b"audio data", None]
+        )
 
         ws_audio(mock_ws)
 
@@ -536,11 +633,15 @@ class TestWebSocketAudioEndpoint:
     @patch("dashboard.src.audio.os.unlink")
     @patch("dashboard.src.audio.os.path.exists")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_ws_audio_temp_file_cleanup(self, mock_get_storage_client, mock_exists, mock_unlink):
+    def test_ws_audio_temp_file_cleanup(
+        self, mock_get_storage_client, mock_exists, mock_unlink
+    ):
         from dashboard.src.audio import ws_audio
 
         mock_storage = MagicMock()
-        mock_storage.upload_file.return_value = "http://minio:9000/bucket/audio/test.wav"
+        mock_storage.upload_file.return_value = (
+            "http://minio:9000/bucket/audio/test.wav"
+        )
         mock_get_storage_client.return_value = mock_storage
         mock_exists.return_value = True
 
@@ -578,7 +679,9 @@ class TestAudioTranscribeEndpoint:
         assert json_data["transcription"] == "Hello, this is a test."
 
     def test_transcribe_missing_filename_key(self, client):
-        response = client.post("/audio/transcribe", json={}, content_type="application/json")
+        response = client.post(
+            "/audio/transcribe", json={}, content_type="application/json"
+        )
 
         assert response.status_code == 400
         assert response.get_json()["error"] == "filename is required"
@@ -605,7 +708,9 @@ class TestAudioTranscribeEndpoint:
 
     @patch("dashboard.src.ai.clients.openai_client.OpenAIClient")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_transcribe_openai_error(self, mock_get_storage_client, mock_openai_cls, client):
+    def test_transcribe_openai_error(
+        self, mock_get_storage_client, mock_openai_cls, client
+    ):
         mock_storage = MagicMock()
         mock_storage.read_file.return_value = b"fake audio bytes"
         mock_get_storage_client.return_value = mock_storage
@@ -625,7 +730,9 @@ class TestAudioTranscribeEndpoint:
 
     @patch("dashboard.src.ai.clients.openai_client.OpenAIClient")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_transcribe_storage_called_with_correct_args(self, mock_get_storage_client, mock_openai_cls, client):
+    def test_transcribe_storage_called_with_correct_args(
+        self, mock_get_storage_client, mock_openai_cls, client
+    ):
         mock_storage = MagicMock()
         mock_storage.read_file.return_value = b"bytes"
         mock_get_storage_client.return_value = mock_storage

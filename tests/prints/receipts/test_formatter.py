@@ -8,7 +8,10 @@ from dashboard.src.prints.receipts.formatter import (
     PrinterFormatter,
     ReceiptFormatter,
 )
-from dashboard.src.prints.receipts.section import MultiElementSection, SingleElementSection
+from dashboard.src.prints.receipts.section import (
+    MultiElementSection,
+    SingleElementSection,
+)
 
 
 class TestReceiptFormatter:
@@ -135,9 +138,7 @@ class TestMathPrinterFormatter:
     @patch("dashboard.src.prints.receipts.formatter.latex_to_png")
     def test_add_problems_text_element(self, mock_latex, mock_storage):
         mpf = MathPrinterFormatter()
-        problems = [
-            {"elements": [{"kind": "text", "content": "Solve for x"}]}
-        ]
+        problems = [{"elements": [{"kind": "text", "content": "Solve for x"}]}]
         mpf.add_problems(problems)
         # Should have: textln(divider), textln(content), ln(2)
         instrs = mpf.instructions["instructions"]
@@ -155,7 +156,9 @@ class TestMathPrinterFormatter:
         mpf = MathPrinterFormatter()
         mpf.add_problem_hash("abc123")
         instrs = mpf.instructions["instructions"]
-        assert instrs[0]["qr"]["content"] == "http://10.0.0.1:8050/learning/score/abc123"
+        assert (
+            instrs[0]["qr"]["content"] == "http://10.0.0.1:8050/learning/score/abc123"
+        )
 
     @patch("dashboard.src.prints.receipts.formatter.get_storage_client")
     @patch("dashboard.src.prints.receipts.formatter.latex_to_png")
@@ -163,9 +166,7 @@ class TestMathPrinterFormatter:
         mpf = MathPrinterFormatter()
         raw = {
             "topic": "Math",
-            "problems": [
-                {"elements": [{"kind": "text", "content": "2+2"}]}
-            ],
+            "problems": [{"elements": [{"kind": "text", "content": "2+2"}]}],
             "problem_hash": "hash123",
         }
         result = mpf.process(raw)

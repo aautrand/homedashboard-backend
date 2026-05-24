@@ -34,7 +34,7 @@ class TestGetStorageClient:
             get_storage_client("unknown")
 
     def test_minio_source(self):
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import MagicMock, patch
 
         with patch("dashboard.src.storage.clients.minio_client.Minio") as mock_minio:
             client = get_storage_client("minio")

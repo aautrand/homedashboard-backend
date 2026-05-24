@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from flask import Flask
 
-from dashboard.src.tasks import normalize, convert_latex_to_images, tasks
+from dashboard.src.tasks import convert_latex_to_images, normalize, tasks
 
 
 class TestNormalize:
@@ -49,9 +49,7 @@ class TestConvertLatexToImages:
         mock_storage_client.upload_file.return_value = "http://minio/problems/abc.png"
         mock_storage.return_value = mock_storage_client
 
-        problems = [
-            {"elements": [{"kind": "latex", "content": "$x^2$"}]}
-        ]
+        problems = [{"elements": [{"kind": "latex", "content": "$x^2$"}]}]
         result = convert_latex_to_images(problems)
         assert result[0]["elements"][0]["kind"] == "image"
         assert "problems/" in result[0]["elements"][0]["content"]
@@ -61,9 +59,7 @@ class TestConvertLatexToImages:
     @patch("os.path.exists")
     @patch("os.remove")
     def test_skips_non_latex(self, mock_remove, mock_exists, mock_latex, mock_storage):
-        problems = [
-            {"elements": [{"kind": "text", "content": "hello"}]}
-        ]
+        problems = [{"elements": [{"kind": "text", "content": "hello"}]}]
         result = convert_latex_to_images(problems)
         assert result[0]["elements"][0]["kind"] == "text"
         mock_latex.assert_not_called()
@@ -80,9 +76,7 @@ class TestConvertLatexToImages:
         mock_storage_client.upload_file.side_effect = Exception("upload failed")
         mock_storage.return_value = mock_storage_client
 
-        problems = [
-            {"elements": [{"kind": "latex", "content": "x^2"}]}
-        ]
+        problems = [{"elements": [{"kind": "latex", "content": "x^2"}]}]
         result = convert_latex_to_images(problems)
         # Should keep original since conversion failed
         assert result[0]["elements"][0]["kind"] == "latex"
@@ -97,9 +91,7 @@ class TestConvertLatexToImages:
         mock_exists.return_value = False
         mock_storage.return_value = MagicMock()
 
-        problems = [
-            {"elements": [{"kind": "latex", "content": "x^2"}]}
-        ]
+        problems = [{"elements": [{"kind": "latex", "content": "x^2"}]}]
         result = convert_latex_to_images(problems)
         assert result[0]["elements"][0]["kind"] == "latex"
 
@@ -124,6 +116,7 @@ def client(app, mock_db):
     @app.before_request
     def inject_db():
         from flask import request
+
         request.db = mock_db
 
     return app.test_client()

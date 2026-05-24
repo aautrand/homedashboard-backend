@@ -40,14 +40,16 @@ def _make_caldav_json(
     end_time="2025-08-15T11:00:00",
 ):
     """Helper to create a CalDAV event JSON string."""
-    return json.dumps({
-        "uid": uid,
-        "calendar": calendar,
-        "summary": summary,
-        "recurring": recurring,
-        "start_time": start_time,
-        "end_time": end_time,
-    })
+    return json.dumps(
+        {
+            "uid": uid,
+            "calendar": calendar,
+            "summary": summary,
+            "recurring": recurring,
+            "start_time": start_time,
+            "end_time": end_time,
+        }
+    )
 
 
 class TestCalendarEventManagerInit:
@@ -117,7 +119,9 @@ class TestCalendarEventManagerSync:
         assert existing.summary == "Updated Summary"
 
     @patch("dashboard.src.calendars.calendar_manager.get_calendar_client")
-    def test_sync_deletes_removed_events_in_range(self, mock_get_client, manager, mock_db):
+    def test_sync_deletes_removed_events_in_range(
+        self, mock_get_client, manager, mock_db
+    ):
         """Test that sync_events deletes events no longer in CalDAV within range."""
         mock_client = MagicMock()
         mock_client.get_today_events.return_value = []
@@ -257,7 +261,8 @@ class TestCalendarEventManagerQueries:
             id=2, summary="Meeting", start_time=datetime(2025, 8, 16, 14, 0, 0)
         )
         mock_db.execute.return_value.scalars.return_value.all.return_value = [
-            all_day, timed
+            all_day,
+            timed,
         ]
 
         result = manager.get_next_timed_event()
@@ -289,7 +294,9 @@ class TestCalendarEventManagerQueries:
             start_time=datetime(2025, 8, 15, 10, 30, 0),
             notified_at=None,
         )
-        mock_db.execute.return_value.scalars.return_value.all.return_value = [timed_event]
+        mock_db.execute.return_value.scalars.return_value.all.return_value = [
+            timed_event
+        ]
 
         result = manager.get_unnotified_events_starting_soon(minutes=15)
 

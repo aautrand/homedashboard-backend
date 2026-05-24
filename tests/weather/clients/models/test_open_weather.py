@@ -19,7 +19,9 @@ from dashboard.src.weather.clients.models.open_weather import (
 def _make_current_data(**overrides):
     data = {
         "coord": {"lon": -74.0, "lat": 40.7},
-        "weather": [{"id": 800, "main": "Clear", "description": "clear sky", "icon": "01d"}],
+        "weather": [
+            {"id": 800, "main": "Clear", "description": "clear sky", "icon": "01d"}
+        ],
         "base": "stations",
         "main": {
             "temp": 20.0,
@@ -66,7 +68,12 @@ def _make_forecast_data(**overrides):
                     "humidity": 65,
                 },
                 "weather": [
-                    {"id": 801, "main": "Clouds", "description": "few clouds", "icon": "02d"}
+                    {
+                        "id": 801,
+                        "main": "Clouds",
+                        "description": "few clouds",
+                        "icon": "02d",
+                    }
                 ],
                 "clouds": {"all": 20},
                 "wind": {"speed": 4.0, "deg": 200},
@@ -109,13 +116,27 @@ class TestWeather:
 class TestMain:
 
     def test_create(self):
-        m = Main(temp=20.0, feels_like=19.0, temp_min=18.0, temp_max=22.0, pressure=1013, humidity=60)
+        m = Main(
+            temp=20.0,
+            feels_like=19.0,
+            temp_min=18.0,
+            temp_max=22.0,
+            pressure=1013,
+            humidity=60,
+        )
         assert m.temp == 20.0
 
     def test_optional_fields(self):
         m = Main(
-            temp=20.0, feels_like=19.0, temp_min=18.0, temp_max=22.0,
-            pressure=1013, humidity=60, sea_level=1013, grnd_level=1010, temp_kf=0.5,
+            temp=20.0,
+            feels_like=19.0,
+            temp_min=18.0,
+            temp_max=22.0,
+            pressure=1013,
+            humidity=60,
+            sea_level=1013,
+            grnd_level=1010,
+            temp_kf=0.5,
         )
         assert m.sea_level == 1013
 
@@ -234,18 +255,31 @@ class TestOpenWeather:
         current = _make_current_data()
         forecast = _make_forecast_data()
         # Add another forecast entry with extreme temps
-        forecast["list"].append({
-            "dt": 1700020000,
-            "main": {
-                "temp": 25.0, "feels_like": 24.0, "temp_min": 10.0,
-                "temp_max": 30.0, "pressure": 1010, "humidity": 70,
-            },
-            "weather": [{"id": 500, "main": "Rain", "description": "light rain", "icon": "10d"}],
-            "clouds": {"all": 80},
-            "wind": {"speed": 8.0, "deg": 270},
-            "visibility": 8000,
-            "sys": {"pod": "d"},
-        })
+        forecast["list"].append(
+            {
+                "dt": 1700020000,
+                "main": {
+                    "temp": 25.0,
+                    "feels_like": 24.0,
+                    "temp_min": 10.0,
+                    "temp_max": 30.0,
+                    "pressure": 1010,
+                    "humidity": 70,
+                },
+                "weather": [
+                    {
+                        "id": 500,
+                        "main": "Rain",
+                        "description": "light rain",
+                        "icon": "10d",
+                    }
+                ],
+                "clouds": {"all": 80},
+                "wind": {"speed": 8.0, "deg": 270},
+                "visibility": 8000,
+                "sys": {"pod": "d"},
+            }
+        )
 
         ow = OpenWeather.from_current_and_forecast(current, forecast)
         assert ow.daily_min_temp == 10.0

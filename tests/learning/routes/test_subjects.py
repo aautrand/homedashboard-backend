@@ -26,6 +26,7 @@ def client(app, mock_db):
     @app.before_request
     def inject_db():
         from flask import request
+
         request.db = mock_db
 
     return app.test_client()
@@ -135,7 +136,9 @@ class TestStudyEnableDisable:
 
         resp = client.post("/learning/subjects/1/study/enable")
         assert resp.status_code == 200
-        mock_cls.return_value.update_subject.assert_called_once_with(1, study_active=True)
+        mock_cls.return_value.update_subject.assert_called_once_with(
+            1, study_active=True
+        )
 
     @patch("dashboard.src.learning.routes.subjects.SubjectManager")
     def test_disable(self, mock_cls, client):
@@ -145,7 +148,9 @@ class TestStudyEnableDisable:
 
         resp = client.post("/learning/subjects/1/study/disable")
         assert resp.status_code == 200
-        mock_cls.return_value.update_subject.assert_called_once_with(1, study_active=False)
+        mock_cls.return_value.update_subject.assert_called_once_with(
+            1, study_active=False
+        )
 
     @patch("dashboard.src.learning.routes.subjects.SubjectManager")
     def test_enable_not_found(self, mock_cls, client):

@@ -6,9 +6,10 @@ from datetime import datetime
 
 from flask import Blueprint, jsonify, request
 
+from dashboard.src.storage import get_storage_client
+
 from .agents.voice_agent import process_voice_query
 from .clients.ollama_client import OllamaClient
-from dashboard.src.storage import get_storage_client
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,12 @@ def upload_audio():
 
         result = process_voice_query(temp_file.name, remote_filename, request.db)
 
-        return jsonify({"status": "success", "filename": remote_filename, "url": url, **result}), 201
+        return (
+            jsonify(
+                {"status": "success", "filename": remote_filename, "url": url, **result}
+            ),
+            201,
+        )
     except Exception as e:
         logger.error(f"Failed to process audio upload: {e}")
         return jsonify({"error": "Failed to process audio"}), 500
