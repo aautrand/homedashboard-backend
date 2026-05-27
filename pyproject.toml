@@ -33,6 +33,9 @@ dependencies = [
 packages = [{include = "dashboard", from = "src"}]
 
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^9.0.3"
+
 [tool.isort]
 profile = "black"
 
