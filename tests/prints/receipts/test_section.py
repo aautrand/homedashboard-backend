@@ -1,8 +1,10 @@
 import pytest
 
-from dashboard.src.prints.receipts.section import (MultiElementSection,
-                                                   Section,
-                                                   SingleElementSection)
+from dashboard.src.prints.receipts.section import (
+    MultiElementSection,
+    Section,
+    SingleElementSection,
+)
 
 
 class TestSectionABC:

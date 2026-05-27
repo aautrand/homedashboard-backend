@@ -4,7 +4,9 @@ import pytest
 from flask import Flask
 
 from dashboard.src.message_broker.clients.base import (
-    MessageBrokerClient, get_message_broker_client)
+    MessageBrokerClient,
+    get_message_broker_client,
+)
 
 
 class TestMessageBrokerClientABC:

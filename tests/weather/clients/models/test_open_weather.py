@@ -2,13 +2,18 @@ import json
 
 import pytest
 
-from dashboard.src.weather.clients.models.open_weather import (City, Clouds,
-                                                               Coord,
-                                                               ForecastEntry,
-                                                               Main,
-                                                               OpenWeather,
-                                                               Rain, Sys,
-                                                               Weather, Wind)
+from dashboard.src.weather.clients.models.open_weather import (
+    City,
+    Clouds,
+    Coord,
+    ForecastEntry,
+    Main,
+    OpenWeather,
+    Rain,
+    Sys,
+    Weather,
+    Wind,
+)
 
 
 def _make_current_data(**overrides):

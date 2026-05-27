@@ -5,8 +5,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-from dashboard.src.utils.helpers import (_get, delete_files, get_hash,
-                                         get_version)
+from dashboard.src.utils.helpers import _get, delete_files, get_hash, get_version
 
 
 class TestGet:

@@ -5,9 +5,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 from flask import Flask
 
-from dashboard.src.prints.orchestration import (print_pop_quiz,
-                                                print_quiz_answers,
-                                                print_tasks, reprint_quiz)
+from dashboard.src.prints.orchestration import (
+    print_pop_quiz,
+    print_quiz_answers,
+    print_tasks,
+    reprint_quiz,
+)
 
 
 @pytest.fixture

@@ -2,8 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from dashboard.src.calendars.clients.base import (CalendarClient,
-                                                  get_calendar_client)
+from dashboard.src.calendars.clients.base import CalendarClient, get_calendar_client
 
 
 class TestGetCalendarClient:

@@ -23,8 +23,9 @@ class TestRabbitMQClient:
         mock_conn_cls.return_value = mock_connection
 
         with app.app_context():
-            from dashboard.src.message_broker.clients.rabbit_client import \
-                RabbitMQClient
+            from dashboard.src.message_broker.clients.rabbit_client import (
+                RabbitMQClient,
+            )
 
             client = RabbitMQClient()
             assert client.connection is mock_connection
@@ -36,8 +37,9 @@ class TestRabbitMQClient:
         mock_conn_cls.return_value.channel.return_value = mock_channel
 
         with app.app_context():
-            from dashboard.src.message_broker.clients.rabbit_client import \
-                RabbitMQClient
+            from dashboard.src.message_broker.clients.rabbit_client import (
+                RabbitMQClient,
+            )
 
             client = RabbitMQClient()
             client.publish("exchange", "routing_key", "body")
@@ -49,8 +51,9 @@ class TestRabbitMQClient:
     @patch("dashboard.src.message_broker.clients.rabbit_client.BlockingConnection")
     def test_close(self, mock_conn_cls, app):
         with app.app_context():
-            from dashboard.src.message_broker.clients.rabbit_client import \
-                RabbitMQClient
+            from dashboard.src.message_broker.clients.rabbit_client import (
+                RabbitMQClient,
+            )
 
             client = RabbitMQClient()
             client.close()
@@ -59,8 +62,9 @@ class TestRabbitMQClient:
     @patch("dashboard.src.message_broker.clients.rabbit_client.BlockingConnection")
     def test_context_manager(self, mock_conn_cls, app):
         with app.app_context():
-            from dashboard.src.message_broker.clients.rabbit_client import \
-                RabbitMQClient
+            from dashboard.src.message_broker.clients.rabbit_client import (
+                RabbitMQClient,
+            )
 
             with RabbitMQClient() as client:
                 assert client is not None
@@ -69,8 +73,9 @@ class TestRabbitMQClient:
     @patch("dashboard.src.message_broker.clients.rabbit_client.BlockingConnection")
     def test_is_message_broker_client(self, mock_conn_cls, app):
         with app.app_context():
-            from dashboard.src.message_broker.clients.rabbit_client import \
-                RabbitMQClient
+            from dashboard.src.message_broker.clients.rabbit_client import (
+                RabbitMQClient,
+            )
 
             client = RabbitMQClient()
             assert isinstance(client, MessageBrokerClient)

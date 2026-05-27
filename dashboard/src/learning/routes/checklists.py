@@ -2,8 +2,10 @@ import json
 
 from flask import Blueprint, current_app, jsonify, request
 
-from dashboard.src.learning.learning_manager import (ChecklistManager,
-                                                     ChecklistNoteManager)
+from dashboard.src.learning.learning_manager import (
+    ChecklistManager,
+    ChecklistNoteManager,
+)
 from dashboard.src.prints.print_manager import PrintManager
 
 checklists_bp = Blueprint("checklists", __name__)

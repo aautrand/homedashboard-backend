@@ -3,7 +3,9 @@ from typing import List
 
 from dashboard.src.calendars.clients.models.calendar_event import CalendarEvent
 from dashboard.src.calendars.clients.models.mappers.base import (
-    CalendarMapper, CalendarSequentialEventMapper)
+    CalendarMapper,
+    CalendarSequentialEventMapper,
+)
 
 
 class CalendarClient(ABC):

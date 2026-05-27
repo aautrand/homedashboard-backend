@@ -1,7 +1,6 @@
 import pytest
 
-from dashboard.src.storage.clients.base import (StorageClient,
-                                                get_storage_client)
+from dashboard.src.storage.clients.base import StorageClient, get_storage_client
 
 
 class TestStorageClientABC:

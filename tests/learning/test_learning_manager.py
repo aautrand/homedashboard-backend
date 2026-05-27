@@ -3,18 +3,24 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from dashboard.src.learning.learning_manager import (CardManager,
-                                                     ChecklistManager,
-                                                     ProblemManager,
-                                                     QuizManager,
-                                                     ReminderManager,
-                                                     RoutineTaskManager,
-                                                     SubjectManager,
-                                                     TopicManager)
+from dashboard.src.learning.learning_manager import (
+    CardManager,
+    ChecklistManager,
+    ProblemManager,
+    QuizManager,
+    ReminderManager,
+    RoutineTaskManager,
+    SubjectManager,
+    TopicManager,
+)
 from dashboard.src.learning.models.card import Card, KnowledgeLevel
 from dashboard.src.learning.models.checklist import Checklist
-from dashboard.src.learning.models.quiz import (AnswerScore, Quiz, QuizAnswer,
-                                                QuizQuestion)
+from dashboard.src.learning.models.quiz import (
+    AnswerScore,
+    Quiz,
+    QuizAnswer,
+    QuizQuestion,
+)
 from dashboard.src.learning.models.reminder import Reminder
 from dashboard.src.learning.models.routine_task import RoutineTask
 from dashboard.src.learning.models.subject import Subject
