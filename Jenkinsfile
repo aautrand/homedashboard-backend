@@ -60,11 +60,15 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh """
-                    sed -i 's|^Image=.*|Image=${NEXUS_REGISTRY}/${IMAGE}:${params.VERSION}|' ${CONTAINER_FILE}
-                    systemctl --user daemon-reload
-                    systemctl --user restart homedashboard-be
-                """
+                sshagent(['aautrand-deploy-key']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no aautrand@localhost '
+                            sed -i "s|^Image=.*|Image=${NEXUS_REGISTRY}/${IMAGE}:${params.VERSION}|" ${CONTAINER_FILE}
+                            XDG_RUNTIME_DIR=/run/user/\$(id -u) systemctl --user daemon-reload
+                            XDG_RUNTIME_DIR=/run/user/\$(id -u) systemctl --user restart homedashboard-be
+                        '
+                    """
+                }
             }
         }
     }
