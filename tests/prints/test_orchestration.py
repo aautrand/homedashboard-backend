@@ -1,4 +1,5 @@
 import json
+from contextlib import ExitStack
 from datetime import date, datetime
 from unittest.mock import MagicMock, patch
 
@@ -94,13 +95,13 @@ def _make_print_tasks_patches(
                 get_non_grokked_cards=MagicMock(return_value=non_grokked_cards or []),
             )
         ),
-        "dashboard.src.prints.orchestration.PrintManager.extract_weather": MagicMock(
+        "dashboard.src.prints.print_manager.PrintManager.extract_weather": MagicMock(
             return_value=["20C / 68F", "Low: 15C", "High: 25C", "clear"]
         ),
-        "dashboard.src.prints.orchestration.PrintManager.extract_birthdays_from_db": MagicMock(
+        "dashboard.src.prints.print_manager.PrintManager.extract_birthdays_from_db": MagicMock(
             return_value=([], [])
         ),
-        "dashboard.src.prints.orchestration.PrintManager.extract_events_from_db": MagicMock(
+        "dashboard.src.prints.print_manager.PrintManager.extract_events_from_db": MagicMock(
             return_value=([], [])
         ),
     }
@@ -122,13 +123,9 @@ class TestPrintTasks:
             from flask import request as flask_request
 
             flask_request.db = MagicMock()
-            with patch.multiple(
-                "dashboard.src.prints.orchestration",
-                **{
-                    k.replace("dashboard.src.prints.orchestration.", ""): v
-                    for k, v in patches.items()
-                },
-            ):
+            with ExitStack() as stack:
+                for target, mock_val in patches.items():
+                    stack.enter_context(patch(target, mock_val))
                 return print_tasks()
 
     def test_returns_dict(self, print_tasks_app):
@@ -182,13 +179,9 @@ class TestPrintTasks:
             from flask import request as flask_request
 
             flask_request.db = MagicMock()
-            with patch.multiple(
-                "dashboard.src.prints.orchestration",
-                **{
-                    k.replace("dashboard.src.prints.orchestration.", ""): v
-                    for k, v in patches.items()
-                },
-            ):
+            with ExitStack() as stack:
+                for target, mock_val in patches.items():
+                    stack.enter_context(patch(target, mock_val))
                 print_tasks()
                 reminder_mgr = patches[
                     "dashboard.src.prints.orchestration.ReminderManager"
@@ -206,13 +199,9 @@ class TestPrintTasks:
             from flask import request as flask_request
 
             flask_request.db = MagicMock()
-            with patch.multiple(
-                "dashboard.src.prints.orchestration",
-                **{
-                    k.replace("dashboard.src.prints.orchestration.", ""): v
-                    for k, v in patches.items()
-                },
-            ):
+            with ExitStack() as stack:
+                for target, mock_val in patches.items():
+                    stack.enter_context(patch(target, mock_val))
                 print_tasks()
                 todo_mgr = patches[
                     "dashboard.src.prints.orchestration.TodoManager"

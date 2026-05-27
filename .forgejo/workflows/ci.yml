@@ -1,17 +1,18 @@
-name: runner smoke test
+name: ci
 
-on: [push, pull_request]
+on:
+  push:
+    branches-ignore: [main]   # main only gets updates via merge from dev, no need to re-check
+  pull_request:
+    branches: [dev, main]     # run checks for PRs targeting either
 
 jobs:
   format-check:
     runs-on: docker
     container: nikolaik/python-nodejs:python3.11-nodejs20
     steps:
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: install formatters
-        run: pip install black isort
-      - name: check formatting
-        run: |
+      - uses: actions/checkout@v4
+      - run: pip install black isort
+      - run: |
           isort --check --diff .
           black --check --diff .
