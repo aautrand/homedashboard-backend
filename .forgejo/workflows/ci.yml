@@ -1,6 +1,6 @@
 name: runner smoke test
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   format-check:
