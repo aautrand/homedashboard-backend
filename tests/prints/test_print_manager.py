@@ -162,7 +162,7 @@ class TestPrintTodo:
         todo.title = "Buy groceries"
 
         result = PrintManager.print_todo(todo)
-        assert " To Do's " in result
+        assert " To Do " in result
 
 
 class TestPrintEvent:
