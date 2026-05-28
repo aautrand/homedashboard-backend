@@ -24,7 +24,7 @@ pipeline {
 
         stage('Security') {
             steps {
-                sh 'pip install bandit && python -m bandit -c bandit.yaml -r dashboard/'
+                sh 'pip3 install bandit && python3 -m bandit -c bandit.yaml -r dashboard/'
             }
         }
 
