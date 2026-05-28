@@ -34,7 +34,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'forgejo-token',
                                                    usernameVariable: 'GIT_USER',
                                                    passwordVariable: 'GIT_TOKEN')]) {
-                    sh 'git push http://${GIT_USER}:${GIT_TOKEN}@git.example.internal/aautrand/homedashboard-be.git HEAD'
+                    sh 'git push http://${GIT_USER}:${GIT_TOKEN}@git.example.internal/aautrand/homedashboard-be.git HEAD:dev'
                 }
             }
         }
