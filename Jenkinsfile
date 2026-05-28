@@ -21,11 +21,12 @@ pipeline {
             }
         }
 
-<<<<<<< Updated upstream
         stage('Security') {
             steps {
                 sh 'pip3 install bandit && python3 -m bandit -c bandit.yaml -r dashboard/'
-=======
+            }
+        }
+
         stage('Version') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'forgejo-token',
@@ -36,11 +37,10 @@ pipeline {
                         git config user.email "jenkins@home"
                         git config user.name "Jenkins"
                         git add version
-                        git commit -m "[system] Bump version to ${params.VERSION}"
+                        git commit -m "[system] Bump version to ${params.VERSION}" || true
                         git push http://\$GIT_USER:\$GIT_PASS@git.example.internal/aautrand/homedashboard-be.git HEAD:dev
                     """
                 }
->>>>>>> Stashed changes
             }
         }
 
