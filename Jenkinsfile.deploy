@@ -14,20 +14,13 @@ pipeline {
                     withCredentials([usernamePassword(credentialsId: 'nexus-credentials',
                                                       usernameVariable: 'NEXUS_USER',
                                                       passwordVariable: 'NEXUS_PASS')]) {
-                        def response = sh(
-                            script: "curl -s -u \$NEXUS_USER:\$NEXUS_PASS http://${NEXUS_REGISTRY}/v2/${IMAGE}/tags/list",
+                        def tags = sh(
+                            script: """
+                                curl -s -u \$NEXUS_USER:\$NEXUS_PASS http://${NEXUS_REGISTRY}/v2/${IMAGE}/tags/list | \
+                                python3 -c "import json,sys; d=json.load(sys.stdin); print('\\n'.join(sorted(d['tags'], key=lambda v: [int(x) for x in v.split('.')], reverse=True)))"
+                            """,
                             returnStdout: true
                         ).trim()
-
-                        def json = new groovy.json.JsonSlurper().parseText(response)
-                        def tags = json.tags.sort { a, b ->
-                            def av = a.tokenize('.').collect { it.toInteger() }
-                            def bv = b.tokenize('.').collect { it.toInteger() }
-                            for (int i = 0; i < Math.min(av.size(), bv.size()); i++) {
-                                if (av[i] != bv[i]) return bv[i] - av[i]
-                            }
-                            return bv.size() - av.size()
-                        }
 
                         def selected = input(
                             message: 'Select a version to deploy',
