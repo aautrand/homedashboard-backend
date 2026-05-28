@@ -131,6 +131,6 @@ class MinIOClient(StorageClient):
 
         except S3Error as e:
             logger.error(
-                f"Failed to delete {remote_path} from MinIO: {e}"
-            )  # nosec B608
+                f"Failed to delete {remote_path} from MinIO: {e}"  # nosec B608
+            )
             raise
