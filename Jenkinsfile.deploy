@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+
+    environment {
+        NEXUS_REGISTRY = 'localhost:8082'
+        IMAGE          = 'homedashboard-be'
+        CONTAINER_FILE = '/home/aautrand/.config/containers/systemd/homedashboard-be.container'
+    }
+
+    stages {
+        stage('Fetch Tags') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'nexus-credentials',
+                                                      usernameVariable: 'NEXUS_USER',
+                                                      passwordVariable: 'NEXUS_PASS')]) {
+                        def response = sh(
+                            script: "curl -s -u \$NEXUS_USER:\$NEXUS_PASS http://${NEXUS_REGISTRY}/v2/${IMAGE}/tags/list",
+                            returnStdout: true
+                        ).trim()
+
+                        def json = new groovy.json.JsonSlurper().parseText(response)
+                        def tags = json.tags.sort { a, b ->
+                            def av = a.tokenize('.').collect { it.toInteger() }
+                            def bv = b.tokenize('.').collect { it.toInteger() }
+                            for (int i = 0; i < Math.min(av.size(), bv.size()); i++) {
+                                if (av[i] != bv[i]) return bv[i] - av[i]
+                            }
+                            return bv.size() - av.size()
+                        }
+
+                        def selected = input(
+                            message: 'Select a version to deploy',
+                            parameters: [
+                                choice(name: 'VERSION', choices: tags, description: 'Available versions in Nexus')
+                            ]
+                        )
+                        env.SELECTED_VERSION = selected
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sshagent(['aautrand-deploy-key']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no aautrand@localhost '
+                            sed -i "s|^Image=.*|Image=${NEXUS_REGISTRY}/${IMAGE}:${env.SELECTED_VERSION}|" ${CONTAINER_FILE}
+                            XDG_RUNTIME_DIR=/run/user/\$(id -u) systemctl --user daemon-reload
+                            XDG_RUNTIME_DIR=/run/user/\$(id -u) systemctl --user restart homedashboard-be
+                        '
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "homedashboard-be ${env.SELECTED_VERSION} deployed successfully"
+        }
+        failure {
+            echo "Deployment of ${env.SELECTED_VERSION} failed"
+        }
+    }
+}
