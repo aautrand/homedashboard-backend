@@ -1,6 +1,5 @@
 import io
 import json
-import os
 from unittest.mock import MagicMock, patch
 
 import pytest

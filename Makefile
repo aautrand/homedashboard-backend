@@ -15,9 +15,22 @@ format-check:
 	black --check --diff .
 	isort --check --diff .
 
+lint:
+	ruff check .
+
 test:
 	python -m pytest tests/ -v
 
+security:
+	bandit -c bandit.yaml -r dashboard/
+
+check: format lint test security
+
+push: check
+	git push --set-upstream origin $(shell git rev-parse --abbrev-ref HEAD)
+
+lint-fix:
+	ruff check --fix .
 
 # tweak these to taste
 VERSION_FILE := version

@@ -1,7 +1,5 @@
 from datetime import datetime
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from dashboard.src.prints.receipts.formatter import (
     MathPrinterFormatter,

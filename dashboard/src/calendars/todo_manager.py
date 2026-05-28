@@ -28,7 +28,7 @@ class TodoManager:
 
     def get_active_todos(self):
         """Get all active todos."""
-        stmt = select(Todo).where(Todo.active == True)
+        stmt = select(Todo).where(Todo.active)
         return self.db.execute(stmt).scalars().all()
 
     def get_todos_by_status(self, active: bool):

@@ -228,7 +228,7 @@ class PrintManager:
         # Add checklist items as a section with checkboxes
         receipt_formatter.add_section(
             MultiElementSection(
-                title=f"",
+                title="",
                 items=text,
                 bullet="",
             )
@@ -245,7 +245,7 @@ class PrintManager:
         # Add checklist items as a section with checkboxes
         receipt_formatter.add_section(
             MultiElementSection(
-                title=f"",
+                title="",
                 items=text,
                 bullet="",
             )

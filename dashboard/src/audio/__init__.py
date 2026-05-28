@@ -183,8 +183,8 @@ def ws_audio(ws):
         logger.error(f"WebSocket audio error: {e}")
         try:
             ws.send(json.dumps({"error": "Failed to upload file"}))
-        except Exception:
-            pass
+        except Exception as send_err:
+            logger.error(f"WebSocket send error: {send_err}")
     finally:
         if temp_file and os.path.exists(temp_file.name):
             os.unlink(temp_file.name)
