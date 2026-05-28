@@ -1,6 +1,6 @@
 import json
 from datetime import date, datetime, time, timedelta
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from flask import current_app
 from sqlalchemy import and_, select

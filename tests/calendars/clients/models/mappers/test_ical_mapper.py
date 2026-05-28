@@ -1,5 +1,5 @@
 import json
-from unittest.mock import MagicMock, PropertyMock
+from unittest.mock import MagicMock
 
 from dashboard.src.calendars.clients.models.mappers.ical_mapper import (
     ICalCalendarSequentialEventMapper,

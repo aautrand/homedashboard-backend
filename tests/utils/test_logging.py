@@ -1,5 +1,4 @@
 import logging
-from unittest.mock import patch
 
 from dashboard.src.utils.logging import IgnoreIcalFilter, setup_logging
 

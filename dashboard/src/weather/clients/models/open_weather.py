@@ -1,6 +1,6 @@
 import json
 from dataclasses import asdict, dataclass
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 
 @dataclass

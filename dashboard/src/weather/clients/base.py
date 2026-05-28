@@ -1,7 +1,4 @@
-from abc import ABC, abstractmethod
-
-from dashboard.src.weather.clients.models.mappers.base import ObservationMapper
-from dashboard.src.weather.clients.models.observation import WeatherObservation
+from abc import ABC
 
 
 class WeatherClient(ABC): ...

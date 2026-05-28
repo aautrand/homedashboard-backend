@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from dashboard.src.utils.helpers import _get
 from dashboard.src.weather.clients.models.observation import WeatherObservation
@@ -13,8 +13,6 @@ class NOAAObservationMapper(ObservationMapper):
         forecast: Dict[str, Any],
         observations: Dict[str, Any],
     ) -> WeatherObservation:
-        points_props = observations.get("properties", {})
-        forecast_props = observations.get("properties", {})
         observation_props = observations.get("properties", {})
         station_url = observation_props.get("station") or observations.get("id", "")
         station_id = station_url.rstrip("/").split("/")[-1] or None

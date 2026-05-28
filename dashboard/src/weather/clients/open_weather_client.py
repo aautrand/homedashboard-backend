@@ -1,8 +1,6 @@
 import requests
 from flask import current_app
 
-from dashboard.src.weather.clients.base import WeatherClient
-
 
 class OpenWeatherClient:
     BASE_URL = "https://api.openweathermap.org"

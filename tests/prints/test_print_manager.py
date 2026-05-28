@@ -2,8 +2,6 @@ import json
 from datetime import datetime
 from unittest.mock import MagicMock
 
-import pytest
-
 from dashboard.src.prints.print_manager import PrintManager
 
 

@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -47,11 +47,11 @@ class CardManager:
         return card
 
     def get_reviewed_cards(self):
-        stmt = select(Card).where(Card.reviewed == True)
+        stmt = select(Card).where(Card.reviewed)
         return self.db.execute(stmt).scalars().all()
 
     def get_non_reviewed_cards(self):
-        stmt = select(Card).where(Card.reviewed == False)
+        stmt = select(Card).where(~Card.reviewed)
         return self.db.execute(stmt).scalars().all()
 
     def get_card(self, card_id: int):
@@ -65,7 +65,7 @@ class CardManager:
         """Get all cards that have not been grokked and are not up for review."""
         stmt = (
             select(Card)
-            .where(Card.grokked == False, Card.reviewed == True)
+            .where(~Card.grokked, Card.reviewed)
             .order_by(Card.created_date.desc())
         )
         return self.db.execute(stmt).scalars().all()
@@ -101,7 +101,7 @@ class SubjectManager:
 
     def get_study_subjects(self):
         """Get all subjects with study_active=True."""
-        stmt = select(Subject).where(Subject.study_active == True)
+        stmt = select(Subject).where(Subject.study_active)
         return self.db.execute(stmt).scalars().all()
 
     @staticmethod
@@ -447,9 +447,7 @@ class RoutineTaskManager:
     def get_active_routine_tasks(self):
         """Get all active routine tasks ordered by priority."""
         stmt = (
-            select(RoutineTask)
-            .where(RoutineTask.active == True)
-            .order_by(RoutineTask.priority)
+            select(RoutineTask).where(RoutineTask.active).order_by(RoutineTask.priority)
         )
         return self.db.execute(stmt).scalars().all()
 
@@ -533,7 +531,7 @@ class ReminderManager:
 
     def get_active_reminders(self):
         """Get all active reminders."""
-        stmt = select(Reminder).where(Reminder.active == True)
+        stmt = select(Reminder).where(Reminder.active)
         return self.db.execute(stmt).scalars().all()
 
     def get_reminders_by_status(self, active: bool):

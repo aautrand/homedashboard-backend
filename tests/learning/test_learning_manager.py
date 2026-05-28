@@ -1,5 +1,5 @@
 from datetime import date
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -62,7 +62,7 @@ class TestCardManager:
         mock_card = MagicMock(spec=Card)
         mock_card.title = "Old"
         db.get.return_value = mock_card
-        result = mgr.update_card(1, title="New")
+        mgr.update_card(1, title="New")
         assert mock_card.title == "New"
         db.commit.assert_called_once()
 
@@ -74,7 +74,7 @@ class TestCardManager:
     def test_delete_card(self, mgr, db):
         mock_card = MagicMock(spec=Card)
         db.get.return_value = mock_card
-        result = mgr.delete_card(1)
+        mgr.delete_card(1)
         db.delete.assert_called_once_with(mock_card)
         db.commit.assert_called_once()
 
@@ -143,7 +143,7 @@ class TestSubjectManager:
         assert mgr.get_subject_topics(1) == topics
 
     def test_add_subject_topics(self, mgr, db):
-        result = mgr.add_subject_topics(1, "Algebra")
+        mgr.add_subject_topics(1, "Algebra")
         db.add.assert_called_once()
         db.commit.assert_called_once()
 
@@ -341,7 +341,7 @@ class TestProblemManager:
         mock_topic.id = 5
         db.execute.return_value.scalar_one_or_none.return_value = mock_topic
         problem_data = {"topic_name": "Calculus", "subject_id": 1, "content": "Solve"}
-        result = mgr.add_problem(problem_data)
+        mgr.add_problem(problem_data)
         # Only add the problem, not a new topic
         assert db.add.call_count == 1
 

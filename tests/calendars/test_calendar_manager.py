@@ -1,5 +1,5 @@
 import json
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -131,7 +131,7 @@ class TestCalendarEventManagerSync:
         end = datetime(2025, 8, 15, 23, 59, 59)
 
         # Existing event within the sync range
-        existing = _make_db_event(
+        _make_db_event(
             uid="deleted-uid",
             start_time=datetime(2025, 8, 15, 10, 0, 0),
         )
