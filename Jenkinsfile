@@ -22,23 +22,6 @@ pipeline {
             }
         }
 
-        stage('Bump Version') {
-            steps {
-                sh "echo '${params.VERSION}' > version"
-                sh '''
-                    git config user.email "jenkins@local"
-                    git config user.name "Jenkins"
-                    git add version
-                    git commit -m "[system] Bump version to ${VERSION}"
-                '''
-                withCredentials([usernamePassword(credentialsId: 'forgejo-token',
-                                                   usernameVariable: 'GIT_USER',
-                                                   passwordVariable: 'GIT_TOKEN')]) {
-                    sh 'git push http://${GIT_USER}:${GIT_TOKEN}@git.example.internal/aautrand/homedashboard-be.git HEAD:dev'
-                }
-            }
-        }
-
         stage('Build') {
             steps {
                 sh "podman build -t ${NEXUS_REGISTRY}/${IMAGE}:${params.VERSION} ."
