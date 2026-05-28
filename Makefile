@@ -18,6 +18,9 @@ format-check:
 test:
 	python -m pytest tests/ -v
 
+security:
+	bandit -c bandit.yaml -r dashboard/
+
 
 # tweak these to taste
 VERSION_FILE := version

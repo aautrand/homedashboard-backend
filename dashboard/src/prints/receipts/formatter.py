@@ -1,4 +1,5 @@
 import os
+import tempfile
 import textwrap
 from datetime import datetime
 from typing import Dict, List
@@ -46,7 +47,7 @@ class PrinterFormatter:
         center=False,
     ):
         latex_hash = get_hash(img_source)
-        out_dir = "/tmp"
+        out_dir = tempfile.gettempdir()
         fname = os.path.join(out_dir, f"{latex_hash}.png")
         latex_to_png(img_source, fname, fontsize=9, dpi=300, pad_inches=0.05)
 

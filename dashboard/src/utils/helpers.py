@@ -1,7 +1,7 @@
 import hashlib
 import json
 import os
-import subprocess
+import subprocess  # nosec B404
 from typing import Any, Dict
 
 from matplotlib import pyplot as plt
@@ -72,7 +72,7 @@ def scp_files(
     cmd = ["scp", "-i", key_path, "-o", "IdentitiesOnly=yes", *files, target]
 
     # run and then delete
-    subprocess.run(cmd, check=True)
+    subprocess.run(cmd, check=True)  # nosec B603
     delete_files(files)
 
 
