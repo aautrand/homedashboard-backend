@@ -1,5 +1,5 @@
 from datetime import date
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -27,7 +27,7 @@ class TestTodoManager:
 
     def test_add_todo(self, manager, mock_db):
         """Test adding a new todo."""
-        result = manager.add_todo(title="Buy groceries")
+        manager.add_todo(title="Buy groceries")
 
         mock_db.add.assert_called_once()
         mock_db.commit.assert_called_once()
@@ -37,7 +37,7 @@ class TestTodoManager:
 
     def test_add_todo_inactive(self, manager, mock_db):
         """Test adding a todo with active=False."""
-        result = manager.add_todo(title="Old task", active=False)
+        manager.add_todo(title="Old task", active=False)
 
         added_todo = mock_db.add.call_args[0][0]
         assert added_todo.title == "Old task"

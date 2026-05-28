@@ -16,5 +16,5 @@ class TestWTTRWeatherClient:
 
         assert result == {"condition": "Clear +20°C 10km/h"}
         mock_requests.get.assert_called_once_with(
-            "http://wttr.in/40.7,-74.0?format=%C+%t+%W"
+            "http://wttr.in/40.7,-74.0?format=%C+%t+%W", timeout=10
         )

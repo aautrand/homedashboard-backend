@@ -1,6 +1,6 @@
 import json
 from contextlib import ExitStack
-from datetime import date, datetime
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -341,7 +341,7 @@ class TestReprintQuiz:
             with patch("dashboard.src.prints.orchestration.QuizManager") as mock_qm:
                 mock_qm.return_value.get_quiz.return_value = MagicMock()
                 mock_qm.return_value.get_quiz_questions.return_value = [mock_q]
-                result = reprint_quiz(mock_db, quiz_id=1, include_answers=False)
+                reprint_quiz(mock_db, quiz_id=1, include_answers=False)
                 rabbit = app.config["message_broker_client"]
                 assert rabbit.send_message.call_count == 1
 

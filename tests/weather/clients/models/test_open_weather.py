@@ -1,18 +1,13 @@
 import json
 
-import pytest
-
 from dashboard.src.weather.clients.models.open_weather import (
     City,
-    Clouds,
     Coord,
     ForecastEntry,
     Main,
     OpenWeather,
     Rain,
-    Sys,
     Weather,
-    Wind,
 )
 
 

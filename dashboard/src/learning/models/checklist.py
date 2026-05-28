@@ -23,7 +23,7 @@ class Checklist(Base):
     )
     title: Mapped[str] = mapped_column(Text, nullable=False)
     items: Mapped[List[str]] = mapped_column(ARRAY(Text), nullable=False, default=list)
-    notes: Mapped[List["ChecklistNote"]] = relationship(
+    notes: Mapped[List["ChecklistNote"]] = relationship(  # noqa: F821
         "ChecklistNote", cascade="all, delete-orphan", lazy="select"
     )
 

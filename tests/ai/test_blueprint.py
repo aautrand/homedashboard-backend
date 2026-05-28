@@ -15,7 +15,7 @@ def app():
 @pytest.fixture
 def client(app):
     """Create a test client for the Flask application."""
-    with patch("dashboard.src.ai.ollama_client") as mock_ollama:
+    with patch("dashboard.src.ai.ollama_client"):
         from dashboard.src.ai import ai
 
         app.register_blueprint(ai)

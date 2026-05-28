@@ -28,7 +28,7 @@ class TestOpenAIClient:
 
         os.environ.pop("OPENAI_API_KEY", None)
 
-        client = OpenAIClient()
+        OpenAIClient()
 
         mock_openai_class.assert_called_once_with(api_key=None)
 

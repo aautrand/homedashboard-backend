@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import IntEnum
 from typing import List
 
-from sqlalchemy import DateTime, ForeignKey, Integer, SmallInteger, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, SmallInteger, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from dashboard.src.db import Base
@@ -47,7 +47,7 @@ class QuizQuestion(Base):
 
     # Relationships
     quiz: Mapped["Quiz"] = relationship("Quiz", back_populates="questions")
-    card: Mapped["Card"] = relationship("Card")
+    card: Mapped["Card"] = relationship("Card")  # noqa: F821
     answers: Mapped[List["QuizAnswer"]] = relationship(
         "QuizAnswer", back_populates="quiz_question"
     )

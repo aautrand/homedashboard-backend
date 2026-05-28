@@ -85,7 +85,7 @@ class TestReprintQuiz:
     @patch("dashboard.src.learning.routes.prints.orchestration")
     def test_with_options(self, mock_orch, client):
         mock_orch.reprint_quiz.return_value = {"status": "ok"}
-        resp = client.post(
+        client.post(
             "/learning/print/quiz/1",
             data=json.dumps({"include_answers": False, "randomize": False}),
             content_type="application/json",
