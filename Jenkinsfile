@@ -22,6 +22,12 @@ pipeline {
             }
         }
 
+        stage('Security') {
+            steps {
+                sh 'pip install bandit && bandit -c bandit.yaml -r dashboard/'
+            }
+        }
+
         stage('Build') {
             steps {
                 sh "podman build -t ${NEXUS_REGISTRY}/${IMAGE}:${params.VERSION} ."
