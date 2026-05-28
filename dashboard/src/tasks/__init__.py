@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import tempfile
 import uuid
 from logging import getLogger
 
@@ -60,7 +61,7 @@ def convert_latex_to_images(problems: list) -> list:
                 # Generate unique filename
                 unique_id = uuid.uuid4().hex
                 filename = f"{unique_id}.png"
-                local_path = os.path.join("/tmp", filename)
+                local_path = os.path.join(tempfile.gettempdir(), filename)
 
                 try:
                     # Convert LaTeX to PNG

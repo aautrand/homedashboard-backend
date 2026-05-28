@@ -17,7 +17,7 @@ class OpenWeatherClient:
         self.QUERY_STRING["lon"] = lon
 
         raw_current_weather = requests.get(
-            f"{self.BASE_URL}{self.CURRENT_PATH}", params=self.QUERY_STRING
+            f"{self.BASE_URL}{self.CURRENT_PATH}", params=self.QUERY_STRING, timeout=10
         ).json()
         return raw_current_weather
 
@@ -26,7 +26,7 @@ class OpenWeatherClient:
         self.QUERY_STRING["lat"] = lat
         self.QUERY_STRING["lon"] = lon
         raw_forecast_weather = requests.get(
-            f"{self.BASE_URL}{self.FORCAST_PATH}", params=self.QUERY_STRING
+            f"{self.BASE_URL}{self.FORCAST_PATH}", params=self.QUERY_STRING, timeout=10
         ).json()
 
         return raw_forecast_weather
@@ -36,7 +36,7 @@ class OpenWeatherClient:
         self.QUERY_STRING["lat"] = lat
         self.QUERY_STRING["lon"] = lon
         raw_forecast_weather = requests.get(
-            f"{self.BASE_URL}{self.FORCAST_PATH}", params=self.QUERY_STRING
+            f"{self.BASE_URL}{self.FORCAST_PATH}", params=self.QUERY_STRING, timeout=10
         ).json()
 
         return raw_forecast_weather

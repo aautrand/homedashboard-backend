@@ -11,5 +11,7 @@ class WTTRWeatherClient(WeatherClient):
     mapper = NOAAObservationMapper()
 
     def fetch_raw_observation(self, location: str) -> dict:
-        weather = requests.get(f"{self.BASE_URL}/{location}?format=%C+%t+%W")
+        weather = requests.get(
+            f"{self.BASE_URL}/{location}?format=%C+%t+%W", timeout=10
+        )
         return {"condition": weather.text}

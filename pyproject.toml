@@ -35,6 +35,7 @@ packages = [{include = "dashboard", from = "src"}]
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=9.0.0,<10.0.0"
+bandit = "^1.9.4"
 
 [tool.isort]
 profile = "black"
