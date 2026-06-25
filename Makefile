@@ -24,28 +24,10 @@ test:
 security:
 	bandit -c bandit.yaml -r dashboard/
 
-check: format lint test security
+check: format-check lint-fix test security
 
 push: check
 	git push --set-upstream origin $(shell git rev-parse --abbrev-ref HEAD)
 
 lint-fix:
 	ruff check --fix .
-
-# tweak these to taste
-VERSION_FILE := version
-IMAGE        := localhost:5000/homedashboard-be
-
-push-image:
-	@set -euo pipefail; \
-	current=$$(cat $(VERSION_FILE)); \
-	echo "Current version: $$current"; \
-	read -p "Enter new version: " new_ver; \
-	read -p "You entered '$$new_ver'. Proceed with push? [y/N]: " confirm; \
-	if [[ "$$confirm" != [yY] ]]; then echo "Aborted."; exit 1; fi; \
-	echo $$new_ver > $(VERSION_FILE); \
-	git add $(VERSION_FILE); \
-	git commit -m "[system] Bump version to $$new_ver"; \
-	podman build -t $(IMAGE):$$new_ver .; \
-	podman push $(IMAGE):$$new_ver; \
-	scp .env ganymede:/home/aautrand/homedashboard-be/.env

@@ -40,6 +40,23 @@ fileConfig(config.config_file_name)
 # target_metadata = mymodel.Base.metadata
 from dashboard.src.db import Base
 
+# Import all models so Base.metadata is fully populated for autogenerate
+import dashboard.src.ai.models.voice_query  # noqa: F401
+import dashboard.src.calendars.models.calendar_event  # noqa: F401
+import dashboard.src.calendars.models.todo  # noqa: F401
+import dashboard.src.data.models.device_event  # noqa: F401
+import dashboard.src.learning.models.card  # noqa: F401
+import dashboard.src.learning.models.checklist  # noqa: F401
+import dashboard.src.learning.models.checklist_note  # noqa: F401
+import dashboard.src.learning.models.problem  # noqa: F401
+import dashboard.src.learning.models.quiz  # noqa: F401
+import dashboard.src.learning.models.reminder  # noqa: F401
+import dashboard.src.learning.models.routine_task  # noqa: F401
+import dashboard.src.learning.models.score  # noqa: F401
+import dashboard.src.learning.models.study  # noqa: F401
+import dashboard.src.learning.models.subject  # noqa: F401
+import dashboard.src.learning.models.topic  # noqa: F401
+
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
