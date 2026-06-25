@@ -30,6 +30,7 @@ def register_blueprints(app):
     from dashboard.src.ai import ai
     from dashboard.src.audio import audio
     from dashboard.src.calendars import calendar
+    from dashboard.src.data import data
     from dashboard.src.learning import learning
     from dashboard.src.prints import prints
     from dashboard.src.tasks import tasks
@@ -42,6 +43,7 @@ def register_blueprints(app):
     app.register_blueprint(audio)
     app.register_blueprint(learning)
     app.register_blueprint(prints)
+    app.register_blueprint(data)
 
     from dashboard.src.audio import sock
 
