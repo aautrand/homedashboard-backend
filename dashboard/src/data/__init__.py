@@ -1,4 +1,5 @@
 from logging import getLogger
+
 from flask import Blueprint, request
 
 from dashboard.src.data.data_manager import DataManager

@@ -34,12 +34,6 @@ config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
 fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-from dashboard.src.db import Base
-
 # Import all models so Base.metadata is fully populated for autogenerate
 import dashboard.src.ai.models.voice_query  # noqa: F401
 import dashboard.src.calendars.models.calendar_event  # noqa: F401
@@ -56,6 +50,12 @@ import dashboard.src.learning.models.score  # noqa: F401
 import dashboard.src.learning.models.study  # noqa: F401
 import dashboard.src.learning.models.subject  # noqa: F401
 import dashboard.src.learning.models.topic  # noqa: F401
+
+# add your model's MetaData object here
+# for 'autogenerate' support
+# from myapp import mymodel
+# target_metadata = mymodel.Base.metadata
+from dashboard.src.db import Base
 
 target_metadata = Base.metadata
 
