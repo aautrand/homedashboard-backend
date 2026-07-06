@@ -28,6 +28,7 @@ class Main:
     sea_level: Optional[int] = None
     grnd_level: Optional[int] = None
     temp_kf: Optional[float] = None
+    dew_point: Optional[float] = None
 
 
 @dataclass
