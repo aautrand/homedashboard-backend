@@ -199,6 +199,32 @@ def reorder_checklist_notes(checklist_id):
 
 
 @checklists_bp.route(
+    "/checklists/<int:checklist_id>/notes/<int:note_id>", methods=["GET"]
+)
+def get_checklist_note(checklist_id, note_id):
+    """Retrieve a single note on a checklist.
+
+    Path parameters:
+        checklist_id (int): The ID of the checklist.
+        note_id (int): The ID of the note.
+
+    Returns:
+        200: The note as JSON.
+        404: If the checklist or note is not found.
+    """
+    checklist_manager = ChecklistManager(request.db)
+    if not checklist_manager.get_checklist(checklist_id):
+        return jsonify({"error": "Checklist not found"}), 404
+
+    note_manager = ChecklistNoteManager(request.db)
+    note = note_manager.get_note(note_id)
+    if not note or note.checklist_id != checklist_id:
+        return jsonify({"error": "Note not found"}), 404
+
+    return jsonify(note.to_dict())
+
+
+@checklists_bp.route(
     "/checklists/<int:checklist_id>/notes/<int:note_id>", methods=["PUT"]
 )
 def update_checklist_note(checklist_id, note_id):
@@ -225,10 +251,11 @@ def update_checklist_note(checklist_id, note_id):
         return jsonify({"error": "No data provided"}), 400
 
     note_manager = ChecklistNoteManager(request.db)
-    note = note_manager.update_note(note_id, **data)
-    if not note:
+    note = note_manager.get_note(note_id)
+    if not note or note.checklist_id != checklist_id:
         return jsonify({"error": "Note not found"}), 404
 
+    note = note_manager.update_note(note_id, **data)
     return jsonify(note.to_dict())
 
 
