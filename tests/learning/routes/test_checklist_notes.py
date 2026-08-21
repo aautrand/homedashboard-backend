@@ -35,6 +35,8 @@ def client(app, mock_db):
 
 def make_mock_note(note_id=1, checklist_id=1, content="Some note", position=0):
     note = MagicMock()
+    note.id = note_id
+    note.checklist_id = checklist_id
     note.to_dict.return_value = {
         "id": note_id,
         "checklist_id": checklist_id,
@@ -112,6 +114,7 @@ class TestUpdateChecklistNote:
     @patch("dashboard.src.learning.routes.checklists.ChecklistManager")
     def test_success(self, mock_cl_cls, mock_note_cls, client):
         mock_cl_cls.return_value.get_checklist.return_value = MagicMock()
+        mock_note_cls.return_value.get_note.return_value = make_mock_note()
         mock_note_cls.return_value.update_note.return_value = make_mock_note(
             content="Updated"
         )
@@ -138,7 +141,7 @@ class TestUpdateChecklistNote:
     @patch("dashboard.src.learning.routes.checklists.ChecklistManager")
     def test_note_not_found(self, mock_cl_cls, mock_note_cls, client):
         mock_cl_cls.return_value.get_checklist.return_value = MagicMock()
-        mock_note_cls.return_value.update_note.return_value = None
+        mock_note_cls.return_value.get_note.return_value = None
 
         resp = client.put(
             "/learning/checklists/1/notes/999",
