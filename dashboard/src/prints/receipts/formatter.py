@@ -8,6 +8,12 @@ from dashboard.src.prints.receipts.section import Section
 from dashboard.src.storage import get_storage_client
 from dashboard.src.utils.helpers import get_hash, latex_to_png
 
+# Characters per line on the receipt paper. Anything we lay out by hand -
+# wrapping, centring - has to agree with this or it lands off-centre. Common
+# values: 32 (58mm paper), 42, 48 (80mm paper, Font A). Override per printer
+# with the RECEIPT_WIDTH environment variable.
+RECEIPT_WIDTH = int(os.getenv("RECEIPT_WIDTH", "48"))
+
 
 class ReceiptFormatter:
     def __init__(self, dt: datetime = None):
@@ -150,7 +156,7 @@ class PrinterFormatter:
         self.instructions["instructions"].append({"text": text})
 
     def _process_textln(self, text):
-        max_width = 42
+        max_width = RECEIPT_WIDTH
         # wrap on word boundaries, never cutting words
         lines = textwrap.wrap(
             text, width=max_width, break_long_words=False, replace_whitespace=False

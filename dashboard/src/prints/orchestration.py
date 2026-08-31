@@ -24,6 +24,7 @@ from dashboard.src.learning.learning_manager import (
 from dashboard.src.prints.print_manager import PrintManager
 from dashboard.src.prints.receipts.formatter import ReceiptFormatter
 from dashboard.src.prints.receipts.section import MultiElementSection
+from dashboard.src.quotes.quote_manager import QuoteManager
 from dashboard.src.weather.clients.base import get_weather_client
 from dashboard.src.weather.clients.models.open_weather import OpenWeather
 
@@ -41,6 +42,29 @@ def print_tasks():
         Dictionary with formatted receipt data ready for printing.
     """
     receipt_formatter = ReceiptFormatter()
+
+    today = datetime.now()
+    today_date = today.date()
+
+    # Quotes - added first so they print directly under the date header
+    quote_manager = QuoteManager(request.db)
+    pinned_quote = quote_manager.get_pinned_quote()
+    random_quote = quote_manager.get_random_quote()
+
+    quote_items = PrintManager.extract_quotes(random_quote, pinned_quote)
+    if quote_items:
+        # Only the random quote advances the rotation; the pinned one prints
+        # every day and would otherwise skew the least-shown ordering.
+        if random_quote:
+            quote_manager.mark_quote_shown(random_quote.id, today_date)
+
+        receipt_formatter.add_section(
+            MultiElementSection(
+                title="",
+                items=quote_items,
+                bullet="",
+            )
+        )
 
     # weather
     weather_client = get_weather_client("open-weather")
@@ -60,9 +84,6 @@ def print_tasks():
     )
 
     # Sync and get calendar events from database
-    today = datetime.now()
-    today_date = today.date()
-
     calendar_manager = CalendarEventManager(request.db)
     calendars = [current_app.config["MAIN_CALENDAR"], "Chores"]
 

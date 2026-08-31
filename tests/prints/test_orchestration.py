@@ -12,6 +12,7 @@ from dashboard.src.prints.orchestration import (
     print_tasks,
     reprint_quiz,
 )
+from dashboard.src.prints.receipts.formatter import RECEIPT_WIDTH
 
 
 @pytest.fixture
@@ -29,6 +30,8 @@ def _make_print_tasks_patches(
     db_events=None,
     non_grokked_cards=None,
     study_subjects=None,
+    random_quote=None,
+    pinned_quote=None,
 ):
     """Return a dict of patch targets with sensible defaults for print_tasks()."""
     reminder = MagicMock()
@@ -88,6 +91,12 @@ def _make_print_tasks_patches(
                 get_subjects_for_study_today=MagicMock(
                     return_value=study_subjects or []
                 ),
+            )
+        ),
+        "dashboard.src.prints.orchestration.QuoteManager": MagicMock(
+            return_value=MagicMock(
+                get_pinned_quote=MagicMock(return_value=pinned_quote),
+                get_random_quote=MagicMock(return_value=random_quote),
             )
         ),
         "dashboard.src.prints.orchestration.CardManager": MagicMock(
@@ -169,6 +178,67 @@ class TestPrintTasks:
         assert "Buy groceries" in result_str
         assert "Reminders" in result_str
         assert "To Do" in result_str
+
+    def _make_quote(self, quote_id=1, text="Be here now", author=None):
+        quote = MagicMock()
+        quote.id = quote_id
+        quote.text = text
+        quote.author = author
+        return quote
+
+    def test_includes_quotes_at_top(self, print_tasks_app):
+        patches = _make_print_tasks_patches(
+            random_quote=self._make_quote(1, "The obstacle is the way", "Aurelius"),
+            pinned_quote=self._make_quote(2, "Slow is smooth"),
+        )
+        result = self._run(print_tasks_app, patches)
+
+        keys = list(result.keys())
+        assert keys[0] == "title"
+        # The quote section is untitled and must sit directly under the date.
+        assert keys[1] == ""
+        stripped = [line.strip() for line in result[""]]
+        assert '"The obstacle is the way"' in stripped
+        assert "- Aurelius" in stripped
+        assert '"Slow is smooth"' in stripped
+
+    def test_quotes_are_centered(self, print_tasks_app):
+        patches = _make_print_tasks_patches(random_quote=self._make_quote(1, "Short"))
+        result = self._run(print_tasks_app, patches)
+
+        expected_pad = (RECEIPT_WIDTH - len('"Short"')) // 2
+        assert " " * expected_pad + '"Short"' in result[""]
+
+    def test_quotes_padded_with_blank_lines(self, print_tasks_app):
+        patches = _make_print_tasks_patches(random_quote=self._make_quote())
+        result = self._run(print_tasks_app, patches)
+
+        assert result[""][0] == ""
+        assert result[""][-1] == ""
+
+    def test_no_quote_section_when_pool_empty(self, print_tasks_app):
+        patches = _make_print_tasks_patches()
+        result = self._run(print_tasks_app, patches)
+
+        assert "" not in result
+
+    def test_marks_random_quote_shown(self, print_tasks_app):
+        patches = _make_print_tasks_patches(random_quote=self._make_quote(4))
+        self._run(print_tasks_app, patches)
+
+        quote_mgr = patches[
+            "dashboard.src.prints.orchestration.QuoteManager"
+        ].return_value
+        quote_mgr.mark_quote_shown.assert_called_once_with(4, date.today())
+
+    def test_pinned_quote_does_not_advance_rotation(self, print_tasks_app):
+        patches = _make_print_tasks_patches(pinned_quote=self._make_quote(9))
+        self._run(print_tasks_app, patches)
+
+        quote_mgr = patches[
+            "dashboard.src.prints.orchestration.QuoteManager"
+        ].return_value
+        quote_mgr.mark_quote_shown.assert_not_called()
 
     def test_marks_reminders_shown(self, print_tasks_app):
         reminder = MagicMock()
