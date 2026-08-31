@@ -50,6 +50,7 @@ import dashboard.src.learning.models.score  # noqa: F401
 import dashboard.src.learning.models.study  # noqa: F401
 import dashboard.src.learning.models.subject  # noqa: F401
 import dashboard.src.learning.models.topic  # noqa: F401
+import dashboard.src.quotes.models.quote  # noqa: F401
 
 # add your model's MetaData object here
 # for 'autogenerate' support

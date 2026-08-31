@@ -1,10 +1,11 @@
 import json
+import textwrap
 from datetime import datetime, time
 from logging import getLogger
 
 from flask import current_app
 
-from dashboard.src.prints.receipts.formatter import ReceiptFormatter
+from dashboard.src.prints.receipts.formatter import RECEIPT_WIDTH, ReceiptFormatter
 from dashboard.src.prints.receipts.section import MultiElementSection
 
 logger = getLogger(__name__)
@@ -22,6 +23,74 @@ class PrintManager:
             f"Forecast (Fahrenheit): {int((weather.daily_min_temp * 1.8) + 32)} / {int((weather.daily_max_temp * 1.8) + 32)}",
             f"Forecast Conditions:   {weather_conditions}",
         ]
+        return items
+
+    @staticmethod
+    def center_text(text, width=RECEIPT_WIDTH):
+        """Wrap text on word boundaries and centre each resulting line.
+
+        The receipt is monospace and the printer has no alignment control we
+        can reach from here, so centring is done by padding each line with
+        leading spaces. Trailing padding is dropped since it costs bytes
+        without changing where the text sits on the paper.
+        """
+        lines = []
+        for paragraph in text.splitlines() or [""]:
+            # break_long_words=False keeps words intact; a single word wider
+            # than the paper is left over-long rather than chopped in half.
+            wrapped = textwrap.wrap(paragraph, width=width, break_long_words=False)
+            lines.extend(wrapped or [""])
+
+        return [line.center(width).rstrip() for line in lines]
+
+    @staticmethod
+    def quoted(text):
+        """Wrap text in straight double quotes, unless it already carries them.
+
+        Straight ASCII quotes rather than curly ones - the printer's default
+        codepage renders them reliably.
+        """
+        text = text.strip()
+        if len(text) >= 2 and text[0] in '"\u201c' and text[-1] in '"\u201d':
+            return text
+        return f'"{text}"'
+
+    @staticmethod
+    def _quote_block(quote):
+        """Render one quote as centred lines: the quoted text, then its author."""
+        lines = PrintManager.center_text(PrintManager.quoted(quote.text))
+        if quote.author:
+            lines.extend(PrintManager.center_text(f"- {quote.author}"))
+        return lines
+
+    @staticmethod
+    def extract_quotes(random_quote=None, pinned_quote=None):
+        """Build the quote lines that head the daily receipt.
+
+        The random quote prints first, the pinned one below it. Both are
+        quoted, wrapped and centred. The pinned quote gets a wider blank
+        margin than the random one so it reads as the standing entry rather
+        than another line of the rotation. Returns [] when there is nothing to
+        show so the caller can skip the section entirely.
+        """
+        random_lines = PrintManager._quote_block(random_quote) if random_quote else []
+        pinned_lines = PrintManager._quote_block(pinned_quote) if pinned_quote else []
+
+        if not random_lines and not pinned_lines:
+            return []
+
+        items = [""]
+        items.extend(random_lines)
+
+        if pinned_lines:
+            # Two blank lines above and below, so the standing quote sits in
+            # its own space whether or not a random quote precedes it.
+            items.extend(["", ""] if random_lines else [""])
+            items.extend(pinned_lines)
+            items.extend(["", ""])
+        else:
+            items.append("")
+
         return items
 
     @staticmethod
