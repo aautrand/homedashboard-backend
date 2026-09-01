@@ -1,9 +1,24 @@
 import ollama
 
+DEFAULT_HOST = "http://localhost:11434"
+DEFAULT_MODEL = "llama3.2:latest"
+DEFAULT_TIMEOUT = 190
+
 
 class OllamaClient:
-    def __init__(self, model="llama3.2:latest"):
-        self.client = ollama.Client(host="http://localhost:11434", timeout=190)
+    def __init__(
+        self,
+        host: str = DEFAULT_HOST,
+        model: str = DEFAULT_MODEL,
+        timeout: int = DEFAULT_TIMEOUT,
+    ):
+        """
+        Args:
+            host: Base URL of the Ollama server.
+            model: Model tag to run.
+            timeout: Seconds to wait for a completion.
+        """
+        self.client = ollama.Client(host=host, timeout=timeout)
 
         self.model = model
 

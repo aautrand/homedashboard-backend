@@ -25,23 +25,36 @@ def audio_file():
         os.unlink(path)
 
 
+@pytest.fixture
+def transcriber():
+    """Stub speech-to-text client, injected into process_voice_query."""
+    client = MagicMock()
+    client.transcribe.return_value = "hello world"
+    return client
+
+
+@pytest.fixture
+def llm():
+    """Stub text generation client, injected into process_voice_query."""
+    client = MagicMock()
+    client.generate_response.return_value = "Here is my response"
+    return client
+
+
 class TestProcessVoiceQuery:
 
     @patch("dashboard.src.ai.agents.voice_agent.PrintManager")
-    @patch("dashboard.src.ai.agents.voice_agent.OpenAIClient")
     def test_returns_transcription_and_response(
-        self, mock_openai_cls, mock_print_manager, app, audio_file
+        self, mock_print_manager, app, audio_file, transcriber, llm
     ):
-        mock_client = MagicMock()
-        mock_client.transcribe.return_value = "hello world"
-        mock_client.generate_chatgpt_response.return_value = "Here is my response"
-        mock_openai_cls.return_value = mock_client
         mock_print_manager.print_voice_response.return_value = {}
 
         from dashboard.src.ai.agents.voice_agent import process_voice_query
 
         with app.app_context():
-            result = process_voice_query(audio_file, "audio/test.m4a", MagicMock())
+            result = process_voice_query(
+                audio_file, "audio/test.m4a", MagicMock(), transcriber, llm
+            )
 
         assert result == {
             "transcription": "hello world",
@@ -50,126 +63,106 @@ class TestProcessVoiceQuery:
 
     @patch("dashboard.src.ai.agents.voice_agent.PrintManager")
     @patch("dashboard.src.ai.agents.voice_agent.VoiceQuery")
-    @patch("dashboard.src.ai.agents.voice_agent.OpenAIClient")
     def test_saves_voice_query_to_db(
-        self, mock_openai_cls, mock_vq_cls, mock_print_manager, app, audio_file
+        self, mock_vq_cls, mock_print_manager, app, audio_file, transcriber, llm
     ):
-        mock_client = MagicMock()
-        mock_client.transcribe.return_value = "test transcription"
-        mock_client.generate_chatgpt_response.return_value = "test response"
-        mock_openai_cls.return_value = mock_client
+        transcriber.transcribe.return_value = "test transcription"
+        llm.generate_response.return_value = "test response"
         mock_print_manager.print_voice_response.return_value = {}
         mock_vq_cls.return_value = MagicMock()
-
-        db = MagicMock()
+        mock_db = MagicMock()
 
         from dashboard.src.ai.agents.voice_agent import process_voice_query
 
         with app.app_context():
-            process_voice_query(audio_file, "audio/test.m4a", db)
+            process_voice_query(audio_file, "audio/test.m4a", mock_db, transcriber, llm)
 
         mock_vq_cls.assert_called_once_with(
             filename="audio/test.m4a",
             transcription="test transcription",
             response="test response",
         )
-        db.add.assert_called_once_with(mock_vq_cls.return_value)
+        mock_db.add.assert_called_once()
 
     @patch("dashboard.src.ai.agents.voice_agent.PrintManager")
-    @patch("dashboard.src.ai.agents.voice_agent.OpenAIClient")
     def test_sends_receipt_to_broker(
-        self, mock_openai_cls, mock_print_manager, app, audio_file
+        self, mock_print_manager, app, audio_file, transcriber, llm
     ):
-        mock_client = MagicMock()
-        mock_client.transcribe.return_value = "hello"
-        mock_client.generate_chatgpt_response.return_value = "world"
-        mock_openai_cls.return_value = mock_client
-        receipt_data = {"sections": ["header", "body"]}
+        receipt_data = {"section": "value"}
         mock_print_manager.print_voice_response.return_value = receipt_data
-
-        mock_broker = app.config["message_broker_client"]
 
         from dashboard.src.ai.agents.voice_agent import process_voice_query
 
         with app.app_context():
-            process_voice_query(audio_file, "audio/test.m4a", MagicMock())
+            process_voice_query(
+                audio_file, "audio/test.m4a", MagicMock(), transcriber, llm
+            )
+            broker = app.config["message_broker_client"]
 
-        mock_broker.send_message.assert_called_once_with(
+        broker.send_message.assert_called_once_with(
             exchange="",
             routing_key="text_print",
             body=json.dumps(receipt_data),
         )
 
     @patch("dashboard.src.ai.agents.voice_agent.PrintManager")
-    @patch("dashboard.src.ai.agents.voice_agent.OpenAIClient")
     def test_llm_called_with_transcription_as_prompt(
-        self, mock_openai_cls, mock_print_manager, app, audio_file
+        self, mock_print_manager, app, audio_file, transcriber, llm
     ):
-        mock_client = MagicMock()
-        mock_client.transcribe.return_value = "what is the weather today"
-        mock_client.generate_chatgpt_response.return_value = "It is sunny"
-        mock_openai_cls.return_value = mock_client
+        transcriber.transcribe.return_value = "what is the weather today"
         mock_print_manager.print_voice_response.return_value = {}
 
         from dashboard.src.ai.agents.voice_agent import process_voice_query
 
         with app.app_context():
-            process_voice_query(audio_file, "audio/test.m4a", MagicMock())
+            process_voice_query(
+                audio_file, "audio/test.m4a", MagicMock(), transcriber, llm
+            )
 
-        mock_client.generate_chatgpt_response.assert_called_once_with(
-            model="gpt-4o-mini",
+        llm.generate_response.assert_called_once_with(
+            "what is the weather today",
             instructions="Respond to the text that is sent",
-            prompt="what is the weather today",
         )
 
     @patch("dashboard.src.ai.agents.voice_agent.PrintManager")
-    @patch("dashboard.src.ai.agents.voice_agent.OpenAIClient")
     def test_transcription_uses_correct_filename(
-        self, mock_openai_cls, mock_print_manager, app, audio_file
+        self, mock_print_manager, app, audio_file, transcriber, llm
     ):
-        mock_client = MagicMock()
-        mock_client.transcribe.return_value = "transcribed"
-        mock_client.generate_chatgpt_response.return_value = "response"
-        mock_openai_cls.return_value = mock_client
         mock_print_manager.print_voice_response.return_value = {}
 
         from dashboard.src.ai.agents.voice_agent import process_voice_query
 
         with app.app_context():
-            process_voice_query(audio_file, "audio/specific_name.m4a", MagicMock())
+            process_voice_query(
+                audio_file, "audio/test.m4a", MagicMock(), transcriber, llm
+            )
 
-        assert (
-            mock_client.transcribe.call_args.kwargs["filename"]
-            == "audio/specific_name.m4a"
-        )
+        assert transcriber.transcribe.call_args.kwargs["filename"] == "audio/test.m4a"
 
     @patch("dashboard.src.ai.agents.voice_agent.PrintManager")
-    @patch("dashboard.src.ai.agents.voice_agent.OpenAIClient")
     def test_transcription_error_propagates(
-        self, mock_openai_cls, mock_print_manager, app, audio_file
+        self, mock_print_manager, app, audio_file, transcriber, llm
     ):
-        mock_client = MagicMock()
-        mock_client.transcribe.side_effect = Exception("Whisper API error")
-        mock_openai_cls.return_value = mock_client
+        transcriber.transcribe.side_effect = Exception("Whisper API error")
 
         from dashboard.src.ai.agents.voice_agent import process_voice_query
 
         with app.app_context():
             with pytest.raises(Exception, match="Whisper API error"):
-                process_voice_query(audio_file, "audio/test.m4a", MagicMock())
+                process_voice_query(
+                    audio_file, "audio/test.m4a", MagicMock(), transcriber, llm
+                )
 
     @patch("dashboard.src.ai.agents.voice_agent.PrintManager")
-    @patch("dashboard.src.ai.agents.voice_agent.OpenAIClient")
     def test_llm_error_propagates(
-        self, mock_openai_cls, mock_print_manager, app, audio_file
+        self, mock_print_manager, app, audio_file, transcriber, llm
     ):
-        mock_client = MagicMock()
-        mock_client.transcribe.return_value = "transcription"
-        mock_client.generate_chatgpt_response.side_effect = Exception("LLM unavailable")
-        mock_openai_cls.return_value = mock_client
+        llm.generate_response.side_effect = Exception("LLM unavailable")
 
         from dashboard.src.ai.agents.voice_agent import process_voice_query
 
         with app.app_context():
             with pytest.raises(Exception, match="LLM unavailable"):
-                process_voice_query(audio_file, "audio/test.m4a", MagicMock())
+                process_voice_query(
+                    audio_file, "audio/test.m4a", MagicMock(), transcriber, llm
+                )

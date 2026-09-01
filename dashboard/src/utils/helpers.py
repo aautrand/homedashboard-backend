@@ -7,6 +7,14 @@ from typing import Any, Dict
 from matplotlib import pyplot as plt
 
 
+def env_flag(name: str, default: bool = True) -> bool:
+    """Read a boolean env var, treating 0/false/no/off as off."""
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() not in ("0", "false", "no", "off")
+
+
 def _get(d: Dict, *keys) -> Any:
     for k in keys:
         d = d.get(k, {})

@@ -8,7 +8,7 @@ from logging import getLogger
 from flask import Blueprint, current_app, request
 
 from dashboard.src.ai.agents.math_agent import MathAgent
-from dashboard.src.ai.clients.openai_client import OpenAIClient
+from dashboard.src.ai.clients import get_ai_client
 from dashboard.src.prints.orchestration import print_tasks
 from dashboard.src.prints.print_manager import PrintManager
 from dashboard.src.prints.receipts.formatter import MathPrinterFormatter
@@ -117,8 +117,7 @@ def math_problems():
     data = request.get_json()
     prompt = data.get("prompt", [])
 
-    openai_client = OpenAIClient()
-    math_agent = MathAgent(client=openai_client)
+    math_agent = MathAgent(client=get_ai_client("claude"))
     raw_problems = math_agent.generate_problems(prompt)
     raw_problems["problem_hash"] = get_hash(raw_problems)
 

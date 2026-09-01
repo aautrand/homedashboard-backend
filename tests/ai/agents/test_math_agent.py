@@ -21,7 +21,7 @@ class TestMathAgent:
         from dashboard.src.ai.agents.math_agent import MathAgent
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = json.dumps(
+        mock_client.generate_response.return_value = json.dumps(
             {
                 "topic": "algebra",
                 "problems": [
@@ -50,7 +50,7 @@ class TestMathAgent:
 
         mock_client = MagicMock()
         # Response wrapped in markdown code block
-        mock_client.generate_chatgpt_response.return_value = (
+        mock_client.generate_response.return_value = (
             '```json\n{"topic": "geometry", "problems": []}\n```'
         )
 
@@ -66,7 +66,7 @@ class TestMathAgent:
 
         mock_client = MagicMock()
         # Response with 'json' prefix
-        mock_client.generate_chatgpt_response.return_value = (
+        mock_client.generate_response.return_value = (
             'json{"topic": "calculus", "problems": []}'
         )
 
@@ -81,15 +81,13 @@ class TestMathAgent:
         from dashboard.src.ai.prompts import math_problem_generator_prompt
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = (
-            '{"topic": "test", "problems": []}'
-        )
+        mock_client.generate_response.return_value = '{"topic": "test", "problems": []}'
 
         agent = MathAgent(client=mock_client)
         agent.generate_problems("5 problems about fractions")
 
-        mock_client.generate_chatgpt_response.assert_called_once_with(
-            "gpt-4o", math_problem_generator_prompt, "5 problems about fractions"
+        mock_client.generate_response.assert_called_once_with(
+            "5 problems about fractions", instructions=math_problem_generator_prompt
         )
 
     def test_generate_problems_with_multiple_problems(self):
@@ -123,7 +121,7 @@ class TestMathAgent:
         }
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = json.dumps(problems_data)
+        mock_client.generate_response.return_value = json.dumps(problems_data)
 
         agent = MathAgent(client=mock_client)
         result = agent.generate_problems("3 trigonometry problems")
@@ -139,9 +137,7 @@ class TestMathAgent:
         from dashboard.src.ai.agents.math_agent import MathAgent
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = (
-            "This is not valid JSON at all"
-        )
+        mock_client.generate_response.return_value = "This is not valid JSON at all"
 
         agent = MathAgent(client=mock_client)
 
@@ -153,9 +149,7 @@ class TestMathAgent:
         from dashboard.src.ai.agents.math_agent import MathAgent
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = (
-            '{"topic": "math", "problems": ['
-        )
+        mock_client.generate_response.return_value = '{"topic": "math", "problems": ['
 
         agent = MathAgent(client=mock_client)
 
@@ -182,9 +176,7 @@ class TestMathAgent:
         }
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = json.dumps(
-            complex_problems
-        )
+        mock_client.generate_response.return_value = json.dumps(complex_problems)
 
         agent = MathAgent(client=mock_client)
         result = agent.generate_problems("Complex analysis problem")
@@ -207,7 +199,7 @@ class TestMathAgent:
         }
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = json.dumps(
+        mock_client.generate_response.return_value = json.dumps(
             problems_with_unicode, ensure_ascii=False
         )
 
@@ -238,9 +230,7 @@ class TestMathAgent:
         }
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = json.dumps(
-            problems_with_svg
-        )
+        mock_client.generate_response.return_value = json.dumps(problems_with_svg)
 
         agent = MathAgent(client=mock_client)
         result = agent.generate_problems("Geometry with diagram")
@@ -253,9 +243,7 @@ class TestMathAgent:
         from dashboard.src.ai.agents.math_agent import MathAgent
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.side_effect = Exception(
-            "API connection failed"
-        )
+        mock_client.generate_response.side_effect = Exception("API connection failed")
 
         agent = MathAgent(client=mock_client)
 
@@ -269,9 +257,7 @@ class TestMathAgent:
         from dashboard.src.ai.agents.math_agent import MathAgent
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = (
-            '{"topic": "none", "problems": []}'
-        )
+        mock_client.generate_response.return_value = '{"topic": "none", "problems": []}'
 
         agent = MathAgent(client=mock_client)
         result = agent.generate_problems("No problems")
@@ -300,9 +286,7 @@ class TestMathAgent:
         }
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = json.dumps(
-            problems_with_mathml
-        )
+        mock_client.generate_response.return_value = json.dumps(problems_with_mathml)
 
         agent = MathAgent(client=mock_client)
         result = agent.generate_problems("MathML problem")
@@ -316,7 +300,7 @@ class TestMathAgent:
 
         mock_client = MagicMock()
         # Response with extra backticks
-        mock_client.generate_chatgpt_response.return_value = (
+        mock_client.generate_response.return_value = (
             '```json\n```{"topic": "test", "problems": []}```\n```'
         )
 
@@ -346,9 +330,7 @@ class TestMathAgent:
         }
 
         mock_client = MagicMock()
-        mock_client.generate_chatgpt_response.return_value = json.dumps(
-            problems_with_latex
-        )
+        mock_client.generate_response.return_value = json.dumps(problems_with_latex)
 
         agent = MathAgent(client=mock_client)
         result = agent.generate_problems("Integration problem")
