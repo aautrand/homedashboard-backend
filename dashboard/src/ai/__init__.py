@@ -7,14 +7,14 @@ from datetime import datetime
 from flask import Blueprint, jsonify, request
 
 from dashboard.src.storage import get_storage_client
+from dashboard.src.utils.decorators import requires_service
 
 from .agents.voice_agent import process_voice_query
-from .clients.ollama_client import OllamaClient
+from .clients import get_ai_client
 
 logger = logging.getLogger(__name__)
 
 ai = Blueprint("ai", __name__, url_prefix="/ai")
-ollama_client = OllamaClient()
 
 
 @ai.route("/message", methods=["POST"])
@@ -27,7 +27,7 @@ def message():
     user_message = data["message"]
 
     try:
-        llm_response = ollama_client.generate_response(user_message)
+        llm_response = get_ai_client("ollama").generate_response(user_message)
     except Exception as e:
         logger.error(f"Error processing message: {e}")
         return jsonify({"error": "Failed to process message"}), 500
@@ -42,6 +42,7 @@ def message():
 
 
 @ai.route("/audio/upload", methods=["POST"])
+@requires_service("WHISPER_ENABLED", "Voice query processing")
 def upload_audio():
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
@@ -64,7 +65,13 @@ def upload_audio():
 
         url = get_storage_client("minio").upload_file(temp_file.name, remote_filename)
 
-        result = process_voice_query(temp_file.name, remote_filename, request.db)
+        result = process_voice_query(
+            temp_file.name,
+            remote_filename,
+            request.db,
+            transcriber=get_ai_client("whisper"),
+            llm=get_ai_client("claude"),
+        )
 
         return (
             jsonify(

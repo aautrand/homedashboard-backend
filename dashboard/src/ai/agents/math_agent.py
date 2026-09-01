@@ -9,8 +9,8 @@ class MathAgent:
 
     def generate_problems(self, prompt):
         raw_problems = (
-            self.client.generate_chatgpt_response(
-                "gpt-4o", math_problem_generator_prompt, prompt
+            self.client.generate_response(
+                prompt, instructions=math_problem_generator_prompt
             )
             .replace("json", "")
             .replace("```", "")

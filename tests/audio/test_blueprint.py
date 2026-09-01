@@ -655,16 +655,18 @@ class TestWebSocketAudioEndpoint:
 class TestAudioTranscribeEndpoint:
     """Tests for the /audio/transcribe endpoint."""
 
-    @patch("dashboard.src.ai.clients.openai_client.OpenAIClient")
+    @patch("dashboard.src.ai.clients.get_ai_client")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_transcribe_success(self, mock_get_storage_client, mock_openai_cls, client):
+    def test_transcribe_success(
+        self, mock_get_storage_client, mock_get_ai_client, client
+    ):
         mock_storage = MagicMock()
         mock_storage.read_file.return_value = b"fake audio bytes"
         mock_get_storage_client.return_value = mock_storage
 
         mock_client = MagicMock()
         mock_client.transcribe.return_value = "Hello, this is a test."
-        mock_openai_cls.return_value = mock_client
+        mock_get_ai_client.return_value = mock_client
 
         response = client.post(
             "/audio/transcribe",
@@ -705,18 +707,18 @@ class TestAudioTranscribeEndpoint:
         assert response.status_code == 500
         assert response.get_json()["error"] == "Failed to transcribe file"
 
-    @patch("dashboard.src.ai.clients.openai_client.OpenAIClient")
+    @patch("dashboard.src.ai.clients.get_ai_client")
     @patch("dashboard.src.audio.get_storage_client")
-    def test_transcribe_openai_error(
-        self, mock_get_storage_client, mock_openai_cls, client
+    def test_transcribe_whisper_error(
+        self, mock_get_storage_client, mock_get_ai_client, client
     ):
         mock_storage = MagicMock()
         mock_storage.read_file.return_value = b"fake audio bytes"
         mock_get_storage_client.return_value = mock_storage
 
         mock_client = MagicMock()
-        mock_client.transcribe.side_effect = Exception("OpenAI API error")
-        mock_openai_cls.return_value = mock_client
+        mock_client.transcribe.side_effect = Exception("Whisper error")
+        mock_get_ai_client.return_value = mock_client
 
         response = client.post(
             "/audio/transcribe",
@@ -727,10 +729,10 @@ class TestAudioTranscribeEndpoint:
         assert response.status_code == 500
         assert response.get_json()["error"] == "Failed to transcribe file"
 
-    @patch("dashboard.src.ai.clients.openai_client.OpenAIClient")
+    @patch("dashboard.src.ai.clients.get_ai_client")
     @patch("dashboard.src.audio.get_storage_client")
     def test_transcribe_storage_called_with_correct_args(
-        self, mock_get_storage_client, mock_openai_cls, client
+        self, mock_get_storage_client, mock_get_ai_client, client
     ):
         mock_storage = MagicMock()
         mock_storage.read_file.return_value = b"bytes"
@@ -738,7 +740,7 @@ class TestAudioTranscribeEndpoint:
 
         mock_client = MagicMock()
         mock_client.transcribe.return_value = "transcribed"
-        mock_openai_cls.return_value = mock_client
+        mock_get_ai_client.return_value = mock_client
 
         client.post(
             "/audio/transcribe",
