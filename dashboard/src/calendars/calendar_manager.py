@@ -106,14 +106,45 @@ class CalendarEventManager:
         Returns:
             Sync statistics dictionary
         """
+        return self.sync_date(datetime.now().date(), calendars)
+
+    def sync_date(self, target_date: date, calendars: List[str] = None) -> dict:
+        """
+        Sync events for a single day.
+
+        Args:
+            target_date: The day to sync.
+            calendars: List of calendar names. If None, uses default calendars.
+
+        Returns:
+            Sync statistics dictionary
+        """
         if calendars is None:
             calendars = [current_app.config["MAIN_CALENDAR"], "Chores"]
 
-        today = datetime.now()
-        start = today.replace(hour=0, minute=0, second=0, microsecond=0)
-        end = today.replace(hour=23, minute=59, second=59, microsecond=0)
+        start = datetime.combine(target_date, time(hour=0, minute=0, second=0))
+        end = datetime.combine(target_date, time(hour=23, minute=59, second=59))
 
         return self.sync_events(calendars, start, end)
+
+    def get_synced_events_for_date(
+        self, target_date: date, calendars: List[str] = None
+    ) -> List[CalendarEvent]:
+        """
+        Pull a day's events from CalDAV, then return them from the database.
+
+        Use this when the answer has to be current (e.g. a voice query about
+        tomorrow), since stored events are only as fresh as the last sync.
+
+        Args:
+            target_date: The day to fetch.
+            calendars: List of calendar names. If None, uses default calendars.
+
+        Returns:
+            List of CalendarEvent objects
+        """
+        self.sync_date(target_date, calendars)
+        return self.get_events_for_date(target_date)
 
     def get_events_for_date(self, target_date: date) -> List[CalendarEvent]:
         """

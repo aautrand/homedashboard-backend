@@ -488,3 +488,40 @@ class TestCalendarEventManagerPrivateHelpers:
         assert db_event.summary == "Updated"
         assert db_event.calendar == "Work"
         assert db_event.recurring is True
+
+
+class TestSyncDate:
+    @pytest.fixture
+    def manager(self):
+        return CalendarEventManager(MagicMock())
+
+    def test_syncs_the_whole_day(self, manager):
+        with patch.object(manager, "sync_events", return_value={}) as sync_events:
+            manager.sync_date(date(2026, 10, 7), ["Home"])
+
+        sync_events.assert_called_once_with(
+            ["Home"],
+            datetime(2026, 10, 7, 0, 0, 0),
+            datetime(2026, 10, 7, 23, 59, 59),
+        )
+
+    def test_get_synced_events_syncs_before_reading(self, manager):
+        day = date(2026, 10, 7)
+        calls = []
+
+        with (
+            patch.object(
+                manager, "sync_date", side_effect=lambda *a: calls.append("sync")
+            ) as sync_date,
+            patch.object(
+                manager,
+                "get_events_for_date",
+                side_effect=lambda *a: calls.append("read") or ["event"],
+            ) as get_events,
+        ):
+            events = manager.get_synced_events_for_date(day, ["Home"])
+
+        assert events == ["event"]
+        assert calls == ["sync", "read"]
+        sync_date.assert_called_once_with(day, ["Home"])
+        get_events.assert_called_once_with(day)

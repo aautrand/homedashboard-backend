@@ -2,10 +2,10 @@ import os
 
 from flask import Flask, request
 
-from dashboard.src.ai.clients import ollama_client, whisper_client
+from dashboard.src.ai.clients import ollama_client, openai_transcription_client
 from dashboard.src.db import create_session
 from dashboard.src.message_broker.clients.base import get_message_broker_client
-from dashboard.src.utils.helpers import env_flag, get_version
+from dashboard.src.utils.helpers import get_version
 from dashboard.src.utils.logging import setup_logging
 
 
@@ -22,9 +22,12 @@ def setup_config(app):
         "ANTHROPIC_KEY"
     )
     app.config["ANTHROPIC_WORKSPACE_ID"] = os.getenv("ANTHROPIC_WORKSPACE_ID")
-    app.config["WHISPER_URL"] = os.getenv("WHISPER_URL", whisper_client.DEFAULT_URL)
+    app.config["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+    app.config["OPENAI_STT_MODEL"] = os.getenv(
+        "OPENAI_STT_MODEL", openai_transcription_client.DEFAULT_MODEL
+    )
     app.config["OLLAMA_HOST"] = os.getenv("OLLAMA_HOST", ollama_client.DEFAULT_HOST)
-    app.config["WHISPER_ENABLED"] = env_flag("WHISPER_ENABLED", default=True)
+    app.config["MINIO_EVENT_TOKEN"] = os.getenv("MINIO_EVENT_TOKEN")
     app.config["DB_HOST"] = os.getenv("DB_HOST")
     app.config["DB_PORT"] = os.getenv("DB_PORT")
     app.config["DB_USER"] = os.getenv("DB_USER")

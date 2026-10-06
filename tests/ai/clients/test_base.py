@@ -8,8 +8,9 @@ def app():
     app.config["TESTING"] = True
     app.config["ANTHROPIC_API_KEY"] = "test-key"
     app.config["ANTHROPIC_WORKSPACE_ID"] = "wrkspc_01test"
-    app.config["WHISPER_URL"] = "http://whisper:8080/inference"
     app.config["OLLAMA_HOST"] = "http://ollama:11434"
+    app.config["OPENAI_API_KEY"] = "sk-test"
+    app.config["OPENAI_STT_MODEL"] = "gpt-4o-mini-transcribe"
     return app
 
 
@@ -34,14 +35,15 @@ class TestGetAIClient:
         with app.app_context():
             assert isinstance(get_ai_client(), ClaudeClient)
 
-    def test_whisper_wired_from_config(self, app):
-        """Test the Whisper client receives its url from app config."""
+    def test_openai_wired_from_config(self, app):
+        """Test the OpenAI transcription client receives key and model."""
         from dashboard.src.ai.clients import get_ai_client
 
         with app.app_context():
-            client = get_ai_client("whisper")
+            client = get_ai_client("openai")
 
-        assert client.url == "http://whisper:8080/inference"
+        assert client.api_key == "sk-test"
+        assert client.model == "gpt-4o-mini-transcribe"
 
     def test_ollama_wired_from_config(self, app):
         """Test the Ollama client is built against the configured host."""

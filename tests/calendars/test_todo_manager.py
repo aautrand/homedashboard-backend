@@ -176,3 +176,31 @@ class TestTodoManager:
 
         assert result is None
         mock_db.commit.assert_not_called()
+
+    def test_complete_todo(self, manager, mock_db):
+        """Test completing an open todo deactivates it."""
+        mock_todo = MagicMock(spec=Todo)
+        mock_todo.active = True
+        mock_db.get.return_value = mock_todo
+
+        result = manager.complete_todo(1)
+
+        assert mock_todo.active is False
+        mock_db.commit.assert_called_once()
+        assert result is mock_todo
+
+    def test_complete_todo_already_done(self, manager, mock_db):
+        """Test completing a done todo changes nothing."""
+        mock_todo = MagicMock(spec=Todo)
+        mock_todo.active = False
+        mock_db.get.return_value = mock_todo
+
+        assert manager.complete_todo(1) is mock_todo
+        mock_db.commit.assert_not_called()
+
+    def test_complete_todo_not_found(self, manager, mock_db):
+        """Test completing a missing todo returns None."""
+        mock_db.get.return_value = None
+
+        assert manager.complete_todo(999) is None
+        mock_db.commit.assert_not_called()
