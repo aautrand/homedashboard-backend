@@ -123,6 +123,13 @@ class TestProcessVoiceQuery:
 
         printer.print_voice_response.assert_not_called()
 
+    def test_does_not_print_twice_after_printing_ingredients(self, run, agent, printer):
+        agent.used_tools = {"search_recipes", "print_recipe_ingredients"}
+
+        run()
+
+        printer.print_voice_response.assert_not_called()
+
     def test_does_not_print_when_user_asked_not_to(
         self, run, agent, printer, voice_queries
     ):

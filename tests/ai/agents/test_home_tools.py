@@ -36,6 +36,9 @@ class TestToolSet:
             "add_quote",
             "pin_quote",
             "create_flashcard",
+            "search_recipes",
+            "get_recipe",
+            "print_recipe_ingredients",
             "print_text",
             "skip_reply_print",
         }
@@ -168,3 +171,55 @@ class TestFlashcardAndPrintTools:
 
         assert result == "Your reply will not be printed."
         assert services.method_calls == []
+
+
+class TestRecipeTools:
+    def test_search_recipes(self, tools, services):
+        services.recipes.search_recipes.return_value = [make(id=7, name="Lasagna")]
+
+        result = json.loads(tools["search_recipes"].invoke({"query": "lasagna"}))
+
+        services.recipes.search_recipes.assert_called_once_with("lasagna")
+        assert result == [{"id": 7, "name": "Lasagna"}]
+
+    def test_search_recipes_without_query_lists_all(self, tools, services):
+        services.recipes.search_recipes.return_value = []
+
+        tools["search_recipes"].invoke({})
+
+        services.recipes.search_recipes.assert_called_once_with(None)
+
+    def test_get_recipe(self, tools, services):
+        from dashboard.src.recipes.models import Ingredient, Recipe, Step
+
+        services.recipes.get_recipe.return_value = Recipe(
+            id=7,
+            name="Lasagna",
+            servings=6,
+            steps=[Step(instruction="Bake", ingredients=[Ingredient(food="pasta")])],
+        )
+
+        result = json.loads(tools["get_recipe"].invoke({"recipe_id": 7}))
+
+        assert result["ingredients"] == ["pasta"]
+        assert result["steps"] == ["Bake"]
+
+    def test_get_recipe_not_found(self, tools, services):
+        services.recipes.get_recipe.return_value = None
+
+        assert tools["get_recipe"].invoke({"recipe_id": 9}) == "No recipe with ID 9."
+
+    def test_print_recipe_ingredients(self, tools, services):
+        services.recipes.print_ingredients.return_value = make(
+            name="Lasagna", ingredients=[1, 2, 3]
+        )
+
+        result = tools["print_recipe_ingredients"].invoke({"recipe_id": 7})
+
+        services.recipes.print_ingredients.assert_called_once_with(7)
+        assert result == "Printed 3 ingredients for Lasagna."
+
+    def test_printing_tools_are_real_tools(self, tools):
+        from dashboard.src.ai.agents.home_tools import PRINTING_TOOLS
+
+        assert PRINTING_TOOLS <= set(tools)

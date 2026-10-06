@@ -256,6 +256,29 @@ class PrintManager:
         return final
 
     @staticmethod
+    def print_ingredients(recipe):
+        """Receipt for a recipe's ingredients: one checkbox per ingredient.
+
+        Ingredient group headers ("For the sauce") print without a checkbox.
+        """
+        receipt_formatter = ReceiptFormatter()
+
+        receipt_formatter.add_section(
+            MultiElementSection(
+                title=f" {recipe.name} ",
+                items=recipe.ingredients,
+                bullet="",
+                formatter=lambda ingredient: (
+                    f"-- {ingredient.display()} --"
+                    if ingredient.is_header
+                    else f"[ ] {ingredient.display()}"
+                ),
+            )
+        )
+
+        return receipt_formatter.build()
+
+    @staticmethod
     def print_event(event):
         """
         Build receipt data for a single calendar event.
