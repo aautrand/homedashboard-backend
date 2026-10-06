@@ -11,6 +11,7 @@ from dashboard.src.calendars.todo_manager import TodoManager
 from dashboard.src.learning.learning_manager import CardManager
 from dashboard.src.prints.printer import ReceiptPrinter, get_receipt_printer
 from dashboard.src.quotes.quote_manager import QuoteManager
+from dashboard.src.recipes.recipe_service import RecipeService, get_recipe_service
 from dashboard.src.weather.weather_service import WeatherService, get_weather_service
 
 
@@ -21,6 +22,7 @@ class HomeServices:
     weather: WeatherService
     quotes: QuoteManager
     cards: CardManager
+    recipes: RecipeService
     printer: ReceiptPrinter
 
 
@@ -32,5 +34,6 @@ def build_home_services(db) -> HomeServices:
         weather=get_weather_service(),
         quotes=QuoteManager(db),
         cards=CardManager(db),
+        recipes=get_recipe_service(),
         printer=get_receipt_printer(),
     )

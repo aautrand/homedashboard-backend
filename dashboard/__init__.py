@@ -5,6 +5,7 @@ from flask import Flask, request
 from dashboard.src.ai.clients import ollama_client, openai_transcription_client
 from dashboard.src.db import create_session
 from dashboard.src.message_broker.clients.base import get_message_broker_client
+from dashboard.src.recipes.clients import tandoor_client
 from dashboard.src.utils.helpers import get_version
 from dashboard.src.utils.logging import setup_logging
 
@@ -28,6 +29,8 @@ def setup_config(app):
     )
     app.config["OLLAMA_HOST"] = os.getenv("OLLAMA_HOST", ollama_client.DEFAULT_HOST)
     app.config["MINIO_EVENT_TOKEN"] = os.getenv("MINIO_EVENT_TOKEN")
+    app.config["TANDOOR_URL"] = os.getenv("TANDOOR_URL", tandoor_client.DEFAULT_URL)
+    app.config["TANDOOR_API_TOKEN"] = os.getenv("TANDOOR_API_TOKEN")
     # IANA name, e.g. "America/Denver"; unset falls back to server time (UTC).
     app.config["TIMEZONE"] = os.getenv("TIMEZONE")
     app.config["DB_HOST"] = os.getenv("DB_HOST")
@@ -46,6 +49,7 @@ def register_blueprints(app):
     from dashboard.src.learning import learning
     from dashboard.src.prints import prints
     from dashboard.src.quotes import quotes
+    from dashboard.src.recipes import recipes
     from dashboard.src.tasks import tasks
     from dashboard.src.weather import weather
 
@@ -58,6 +62,7 @@ def register_blueprints(app):
     app.register_blueprint(prints)
     app.register_blueprint(data)
     app.register_blueprint(quotes)
+    app.register_blueprint(recipes)
 
     from dashboard.src.audio import sock
 

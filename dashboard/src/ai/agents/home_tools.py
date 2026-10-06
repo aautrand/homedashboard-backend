@@ -14,6 +14,10 @@ from langchain_core.tools import BaseTool, tool
 
 from dashboard.src.ai.agents.home_services import HomeServices
 
+# Tools that put something on paper themselves. The voice pipeline skips the
+# automatic reply receipt after any of these, so one request prints once.
+PRINTING_TOOLS = frozenset({"print_text", "print_recipe_ingredients"})
+
 
 def _to_json(value) -> str:
     return json.dumps(value, default=str)
@@ -113,6 +117,45 @@ def build_home_tools(services: HomeServices) -> list[BaseTool]:
         return _to_json({"id": card.id, "title": card.title})
 
     @tool
+    def search_recipes(query: Optional[str] = None) -> str:
+        """Find recipes in the user's recipe collection by name.
+
+        Leave `query` empty to list every recipe. Use this to find a recipe's
+        ID before getting or printing it.
+        """
+        recipes = services.recipes.search_recipes(query)
+        return _to_json([{"id": recipe.id, "name": recipe.name} for recipe in recipes])
+
+    @tool
+    def get_recipe(recipe_id: int) -> str:
+        """Get one recipe by ID: servings, times, ingredients and steps."""
+        recipe = services.recipes.get_recipe(recipe_id)
+        if not recipe:
+            return f"No recipe with ID {recipe_id}."
+        return _to_json(
+            {
+                "id": recipe.id,
+                "name": recipe.name,
+                "servings": recipe.servings,
+                "working_minutes": recipe.working_time,
+                "waiting_minutes": recipe.waiting_time,
+                "ingredients": [i.display() for i in recipe.ingredients],
+                "steps": [step.instruction for step in recipe.steps],
+            }
+        )
+
+    @tool
+    def print_recipe_ingredients(recipe_id: int) -> str:
+        """Print a recipe's ingredient list as a checklist on the receipt printer.
+
+        Only call this when the user asks to print ingredients.
+        """
+        recipe = services.recipes.print_ingredients(recipe_id)
+        if not recipe:
+            return f"No recipe with ID {recipe_id}."
+        return f"Printed {len(recipe.ingredients)} ingredients for {recipe.name}."
+
+    @tool
     def print_text(text: str) -> str:
         """Print text on the receipt printer (48 characters wide).
 
@@ -143,6 +186,9 @@ def build_home_tools(services: HomeServices) -> list[BaseTool]:
         add_quote,
         pin_quote,
         create_flashcard,
+        search_recipes,
+        get_recipe,
+        print_recipe_ingredients,
         print_text,
         skip_reply_print,
     ]

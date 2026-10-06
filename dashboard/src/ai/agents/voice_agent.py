@@ -3,7 +3,7 @@
 Built as a LangGraph graph so each step is a node with its own dependency,
 and a silent recording ends the run before the agent is called. Only the
 agent's reply is printed, never the transcription. If the agent already
-printed through its print_text tool, the reply is not printed a second time;
+printed through one of its PRINTING_TOOLS, the reply is not printed again;
 if the user asked not to print (skip_reply_print tool), nothing is printed.
 """
 
@@ -12,6 +12,8 @@ from datetime import datetime, tzinfo
 from typing import BinaryIO, TypedDict
 
 from langgraph.graph import END, START, StateGraph
+
+from dashboard.src.ai.agents.home_tools import PRINTING_TOOLS
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +62,7 @@ def build_voice_graph(transcriber, agent, voice_queries, printer, tz: tzinfo = N
         return {}
 
     def print_response(state: VoiceState) -> dict:
-        if "print_text" in agent.used_tools:
+        if agent.used_tools & PRINTING_TOOLS:
             logger.info("Agent already printed for %r", state["filename"])
             return {}
         if "skip_reply_print" in agent.used_tools:

@@ -402,3 +402,27 @@ class TestCenterText:
 
         assert all(len(line) <= 10 for line in result)
         assert " ".join(line.strip() for line in result) == "one two three four five"
+
+
+class TestPrintIngredients:
+    def test_checklist_with_plain_headers(self):
+        from dashboard.src.prints.print_manager import PrintManager
+        from dashboard.src.recipes.models import Ingredient, Recipe, Step
+
+        recipe = Recipe(
+            id=1,
+            name="Lasagna",
+            steps=[
+                Step(
+                    instruction="",
+                    ingredients=[
+                        Ingredient(food="For the sauce", is_header=True),
+                        Ingredient(food="tomatoes", amount=800, unit="g"),
+                    ],
+                )
+            ],
+        )
+
+        receipt = PrintManager.print_ingredients(recipe)
+
+        assert receipt[" Lasagna "] == ["-- For the sauce --", "[ ] 800 g tomatoes"]
