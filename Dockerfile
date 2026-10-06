@@ -35,5 +35,7 @@ ENV FLASK_RUN_PORT=8050
 # Expose the default Flask port
 EXPOSE 8050
 
-# Use Gunicorn for production‐grade serving
-CMD ["gunicorn", "--bind", "0.0.0.0:8050", "app:app"]
+# Use Gunicorn for production‐grade serving.
+# The 30s default timeout kills voice requests mid-flight: transcription plus
+# an agent run with several tool calls can take well over a minute.
+CMD ["gunicorn", "--bind", "0.0.0.0:8050", "--timeout", "180", "app:app"]
