@@ -121,6 +121,18 @@ def build_home_tools(services: HomeServices) -> list[BaseTool]:
         services.printer.print_text(text)
         return "Printed."
 
+    @tool
+    def skip_reply_print() -> str:
+        """Stop your reply to this request from being printed.
+
+        Call this when the user says not to print ("don't print anything",
+        "no printout"). Your reply is still returned to the device, just not
+        printed.
+        """
+        # No backend call: the voice pipeline owns reply printing and checks
+        # for this tool in the agent's used_tools, as it does for print_text.
+        return "Your reply will not be printed."
+
     return [
         list_todos,
         add_todo,
@@ -132,4 +144,5 @@ def build_home_tools(services: HomeServices) -> list[BaseTool]:
         pin_quote,
         create_flashcard,
         print_text,
+        skip_reply_print,
     ]

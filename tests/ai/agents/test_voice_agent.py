@@ -123,6 +123,17 @@ class TestProcessVoiceQuery:
 
         printer.print_voice_response.assert_not_called()
 
+    def test_does_not_print_when_user_asked_not_to(
+        self, run, agent, printer, voice_queries
+    ):
+        agent.used_tools = {"add_todo", "skip_reply_print"}
+
+        result = run()
+
+        printer.print_voice_response.assert_not_called()
+        assert result["llm_response"] == "Here is my response"
+        voice_queries.add_voice_query.assert_called_once()
+
     def test_printer_failure_does_not_fail_request(self, run, printer, voice_queries):
         printer.print_voice_response.side_effect = Exception("broker down")
 

@@ -3,7 +3,8 @@
 Built as a LangGraph graph so each step is a node with its own dependency,
 and a silent recording ends the run before the agent is called. Only the
 agent's reply is printed, never the transcription. If the agent already
-printed through its print_text tool, the reply is not printed a second time.
+printed through its print_text tool, the reply is not printed a second time;
+if the user asked not to print (skip_reply_print tool), nothing is printed.
 """
 
 import logging
@@ -61,6 +62,9 @@ def build_voice_graph(transcriber, agent, voice_queries, printer, tz: tzinfo = N
     def print_response(state: VoiceState) -> dict:
         if "print_text" in agent.used_tools:
             logger.info("Agent already printed for %r", state["filename"])
+            return {}
+        if "skip_reply_print" in agent.used_tools:
+            logger.info("User asked not to print for %r", state["filename"])
             return {}
         # The exchange is already saved; failing to queue the print (broker
         # unreachable) should not fail it. Publishing succeeds whether or not a

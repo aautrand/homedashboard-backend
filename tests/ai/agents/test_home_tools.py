@@ -37,6 +37,7 @@ class TestToolSet:
             "pin_quote",
             "create_flashcard",
             "print_text",
+            "skip_reply_print",
         }
 
     def test_every_tool_has_a_description(self, tools):
@@ -161,3 +162,9 @@ class TestFlashcardAndPrintTools:
         assert tools["print_text"].invoke({"text": "hello"}) == "Printed."
 
         services.printer.print_text.assert_called_once_with("hello")
+
+    def test_skip_reply_print_touches_no_service(self, tools, services):
+        result = tools["skip_reply_print"].invoke({})
+
+        assert result == "Your reply will not be printed."
+        assert services.method_calls == []
