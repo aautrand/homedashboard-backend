@@ -2,7 +2,7 @@ import random
 from datetime import date
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from dashboard.src.quotes.models.quote import Quote
@@ -41,6 +41,16 @@ class QuoteManager:
         stmt = (
             select(Quote)
             .where(Quote.active == active)
+            .order_by(Quote.created_date.desc())
+        )
+        return list(self.db.execute(stmt).scalars().all())
+
+    def search_quotes(self, query: str) -> list[Quote]:
+        """Find quotes whose text or author contains `query`, ignoring case."""
+        pattern = f"%{query}%"
+        stmt = (
+            select(Quote)
+            .where(or_(Quote.text.ilike(pattern), Quote.author.ilike(pattern)))
             .order_by(Quote.created_date.desc())
         )
         return list(self.db.execute(stmt).scalars().all())

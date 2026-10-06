@@ -277,3 +277,24 @@ class TestCyclePinned:
         set_scalars(mock_db, [])
 
         assert manager.cycle_pinned_quote() is None
+
+
+class TestSearchQuotes:
+    def test_returns_matches(self, manager, mock_db):
+        quote = make_quote(text="Waste no more time", author="Marcus Aurelius")
+        set_scalars(mock_db, [quote])
+
+        assert manager.search_quotes("marcus") == [quote]
+
+    def test_matches_text_or_author_ignoring_case(self, manager, mock_db):
+        set_scalars(mock_db, [])
+
+        manager.search_quotes("seneca")
+
+        sql = str(
+            mock_db.execute.call_args[0][0].compile(
+                compile_kwargs={"literal_binds": True}
+            )
+        ).lower()
+        assert "lower(quotes.text) like lower('%seneca%')" in sql
+        assert "lower(quotes.author) like lower('%seneca%')" in sql

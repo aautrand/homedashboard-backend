@@ -46,6 +46,18 @@ class TodoManager:
             self.db.commit()
         return todo
 
+    def complete_todo(self, todo_id: int):
+        """Mark a todo as done. Completing an already-done todo is a no-op.
+
+        Returns:
+            The todo, or None if no todo has that ID.
+        """
+        todo = self.db.get(Todo, todo_id)
+        if todo and todo.active:
+            todo.active = False
+            self.db.commit()
+        return todo
+
     def delete_todo(self, todo_id: int):
         """Delete a todo."""
         todo = self.db.get(Todo, todo_id)

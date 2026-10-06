@@ -1,54 +1,88 @@
-"""Voice query pipeline: transcribe → LLM → save to DB → print."""
+"""Voice query pipeline: transcribe → agent → save to DB.
 
-import json
+Built as a LangGraph graph so each step is a node with its own dependency,
+and a silent recording ends the run before the agent is called. Nothing is
+printed here; the agent prints only when asked to (its print_text tool).
+"""
+
 import logging
+from typing import BinaryIO, TypedDict
 
-from flask import current_app
-
-from dashboard.src.ai.models.voice_query import VoiceQuery
-from dashboard.src.prints.print_manager import PrintManager
+from langgraph.graph import END, START, StateGraph
 
 logger = logging.getLogger(__name__)
 
 
-def process_voice_query(audio_path: str, filename: str, db, transcriber, llm) -> dict:
-    """
-    Run the full voice query pipeline for an already-saved audio file.
+class VoiceState(TypedDict, total=False):
+    audio: BinaryIO
+    filename: str
+    transcription: str
+    response: str
 
-    1. Transcribes audio via self-hosted Whisper
-    2. Gets a response from the LLM
-    3. Persists filename, transcription, and response to the DB
-    4. Prints the response with date/time and transcription header
+
+def build_voice_graph(transcriber, agent, voice_queries):
+    """
+    Args:
+        transcriber: Speech-to-text client exposing transcribe().
+        agent: Exposes respond(text) -> str (see HomeAgent).
+        voice_queries: VoiceQueryManager for persisting the exchange.
+    """
+
+    def transcribe(state: VoiceState) -> dict:
+        transcription = transcriber.transcribe(
+            state["audio"], filename=state["filename"]
+        )
+        logger.info("Transcribed %r: %r", state["filename"], transcription)
+        return {"transcription": transcription}
+
+    def has_speech(state: VoiceState) -> str:
+        if state["transcription"].strip():
+            return "respond"
+        logger.info("No speech in %r, skipping agent", state["filename"])
+        return END
+
+    def respond(state: VoiceState) -> dict:
+        response = agent.respond(state["transcription"])
+        logger.info("Agent response for %r: %r", state["filename"], response)
+        return {"response": response}
+
+    def persist(state: VoiceState) -> dict:
+        voice_queries.add_voice_query(
+            filename=state["filename"],
+            transcription=state["transcription"],
+            response=state["response"],
+        )
+        return {}
+
+    graph = StateGraph(VoiceState)
+    graph.add_node("transcribe", transcribe)
+    graph.add_node("respond", respond)
+    graph.add_node("persist", persist)
+    graph.add_edge(START, "transcribe")
+    graph.add_conditional_edges("transcribe", has_speech, ["respond", END])
+    graph.add_edge("respond", "persist")
+    graph.add_edge("persist", END)
+    return graph.compile()
+
+
+def process_voice_query(
+    audio: BinaryIO, filename: str, transcriber, agent, voice_queries
+) -> dict:
+    """
+    Run the full voice query pipeline for one recording.
 
     Args:
-        audio_path: Local path to the audio file.
+        audio: Readable audio file object.
         filename: Remote filename (stored in MinIO) used as the DB reference.
-        db: SQLAlchemy session (request.db).
-        transcriber: Speech-to-text client exposing transcribe().
-        llm: Text generation client exposing generate_response().
+        transcriber, agent, voice_queries: See build_voice_graph().
 
     Returns:
-        Dict with transcription and llm_response.
+        Dict with transcription and llm_response ("" when nothing was said).
     """
-    with open(audio_path, "rb") as f:
-        transcription = transcriber.transcribe(f, filename=filename)
-    logger.info("Transcribed %r: %r", filename, transcription)
-
-    llm_response = llm.generate_response(
-        transcription,
-        instructions="Respond to the text that is sent",
+    result = build_voice_graph(transcriber, agent, voice_queries).invoke(
+        {"audio": audio, "filename": filename}
     )
-    logger.info("LLM response for %r: %r", filename, llm_response)
-
-    db.add(
-        VoiceQuery(
-            filename=filename, transcription=transcription, response=llm_response
-        )
-    )
-
-    receipt_data = PrintManager.print_voice_response(transcription, llm_response)
-    current_app.config["message_broker_client"].send_message(
-        exchange="", routing_key="text_print", body=json.dumps(receipt_data)
-    )
-
-    return {"transcription": transcription, "llm_response": llm_response}
+    return {
+        "transcription": result["transcription"],
+        "llm_response": result.get("response", ""),
+    }

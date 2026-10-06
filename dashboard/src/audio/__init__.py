@@ -10,7 +10,6 @@ from flask import Blueprint, jsonify, request
 from flask_sock import Sock
 
 from dashboard.src.storage import get_storage_client
-from dashboard.src.utils.decorators import requires_service
 
 logger = getLogger(__name__)
 audio = Blueprint("audio", __name__, url_prefix="/audio")
@@ -61,7 +60,6 @@ def upload_audio():
 
 
 @audio.route("/transcribe", methods=["POST"])
-@requires_service("WHISPER_ENABLED", "Transcription")
 def transcribe_audio():
     data = request.get_json()
     filename = data.get("filename") if data else None
@@ -73,7 +71,7 @@ def transcribe_audio():
 
         from dashboard.src.ai.clients import get_ai_client
 
-        transcription = get_ai_client("whisper").transcribe(
+        transcription = get_ai_client("openai").transcribe(
             io.BytesIO(audio_bytes), filename=filename
         )
 

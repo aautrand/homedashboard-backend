@@ -320,11 +320,17 @@ class TestAIBlueprintRegistration:
 class TestAIAudioUploadEndpoint:
     """Tests for the /ai/audio/upload endpoint."""
 
+    @patch("dashboard.src.ai.get_home_agent")
     @patch("dashboard.src.ai.get_ai_client")
     @patch("dashboard.src.ai.process_voice_query")
     @patch("dashboard.src.ai.get_storage_client")
     def test_upload_success(
-        self, mock_get_storage_client, mock_process_voice_query, mock_get_ai_client, app
+        self,
+        mock_get_storage_client,
+        mock_process_voice_query,
+        mock_get_ai_client,
+        mock_get_home_agent,
+        app,
     ):
         import io
 
@@ -420,11 +426,17 @@ class TestAIAudioUploadEndpoint:
         assert response.status_code == 500
         assert response.get_json()["error"] == "Failed to process audio"
 
+    @patch("dashboard.src.ai.get_home_agent")
     @patch("dashboard.src.ai.get_ai_client")
     @patch("dashboard.src.ai.process_voice_query")
     @patch("dashboard.src.ai.get_storage_client")
     def test_upload_voice_query_error(
-        self, mock_get_storage_client, mock_process_voice_query, mock_get_ai_client, app
+        self,
+        mock_get_storage_client,
+        mock_process_voice_query,
+        mock_get_ai_client,
+        mock_get_home_agent,
+        app,
     ):
         import io
 
@@ -455,11 +467,17 @@ class TestAIAudioUploadEndpoint:
         assert response.status_code == 500
         assert response.get_json()["error"] == "Failed to process audio"
 
+    @patch("dashboard.src.ai.get_home_agent")
     @patch("dashboard.src.ai.get_ai_client")
     @patch("dashboard.src.ai.process_voice_query")
     @patch("dashboard.src.ai.get_storage_client")
-    def test_upload_process_voice_query_receives_db(
-        self, mock_get_storage_client, mock_process_voice_query, mock_get_ai_client, app
+    def test_upload_wires_pipeline_to_request_db(
+        self,
+        mock_get_storage_client,
+        mock_process_voice_query,
+        mock_get_ai_client,
+        mock_get_home_agent,
+        app,
     ):
         import io
 
@@ -490,7 +508,11 @@ class TestAIAudioUploadEndpoint:
                 "/ai/audio/upload", data=data, content_type="multipart/form-data"
             )
 
-        assert mock_process_voice_query.call_args[0][2] is mock_db
+        mock_get_home_agent.assert_called_once_with(mock_db)
+        kwargs = mock_process_voice_query.call_args.kwargs
+        assert kwargs["agent"] is mock_get_home_agent.return_value
+        assert kwargs["voice_queries"].db is mock_db
+        assert "printer" not in kwargs
 
     def test_upload_get_not_allowed(self, app):
         from dashboard.src.ai import ai
@@ -501,3 +523,139 @@ class TestAIAudioUploadEndpoint:
             response = client.get("/ai/audio/upload")
 
         assert response.status_code == 405
+
+
+@pytest.fixture
+def db_app(app):
+    """App with the AI blueprint and a mock DB session injected per request."""
+    from dashboard.src.ai import ai
+
+    app.db = MagicMock()
+    app.register_blueprint(ai)
+
+    @app.before_request
+    def inject_db():
+        from flask import request
+
+        request.db = app.db
+
+    return app
+
+
+class TestAgentEndpoint:
+    @patch("dashboard.src.ai.get_home_agent")
+    def test_returns_agent_response(self, mock_get_home_agent, db_app):
+        mock_get_home_agent.return_value.respond.return_value = "Added."
+
+        with db_app.test_client() as client:
+            response = client.post("/ai/agent", json={"message": "add milk"})
+
+        assert response.status_code == 200
+        assert response.get_json() == {"message": "add milk", "response": "Added."}
+        mock_get_home_agent.assert_called_once_with(db_app.db)
+        mock_get_home_agent.return_value.respond.assert_called_once_with("add milk")
+
+    def test_missing_message(self, db_app):
+        with db_app.test_client() as client:
+            response = client.post("/ai/agent", json={})
+
+        assert response.status_code == 400
+
+    @patch("dashboard.src.ai.get_home_agent")
+    def test_agent_error(self, mock_get_home_agent, db_app):
+        mock_get_home_agent.return_value.respond.side_effect = Exception("boom")
+
+        with db_app.test_client() as client:
+            response = client.post("/ai/agent", json={"message": "hi"})
+
+        assert response.status_code == 500
+
+
+def minio_event(key="audio%2F20261006_clip.wav", bucket="audio"):
+    return {
+        "EventName": "s3:ObjectCreated:Put",
+        "Records": [{"s3": {"bucket": {"name": bucket}, "object": {"key": key}}}],
+    }
+
+
+AUTH = {"Authorization": "Bearer secret"}
+
+
+class TestAudioEventsEndpoint:
+    @pytest.fixture
+    def events_app(self, db_app):
+        db_app.config["MINIO_EVENT_TOKEN"] = "secret"
+        return db_app
+
+    @patch("dashboard.src.ai._run_voice_query")
+    @patch("dashboard.src.ai.VoiceQueryManager")
+    @patch("dashboard.src.ai.get_storage_client")
+    def test_processes_new_recording(
+        self, mock_get_storage, mock_vq_cls, mock_run, events_app
+    ):
+        mock_get_storage.return_value.read_file.return_value = b"wav bytes"
+        mock_vq_cls.return_value.is_processed.return_value = False
+        mock_run.return_value = {"transcription": "hi", "llm_response": "hello"}
+
+        with events_app.test_client() as client:
+            response = client.post("/ai/audio/events", json=minio_event(), headers=AUTH)
+
+        assert response.status_code == 200
+        assert response.get_json()["processed"] == [
+            {
+                "filename": "audio/20261006_clip.wav",
+                "transcription": "hi",
+                "llm_response": "hello",
+            }
+        ]
+        mock_get_storage.return_value.read_file.assert_called_once_with(
+            "audio/20261006_clip.wav", "audio"
+        )
+        audio, filename = mock_run.call_args[0]
+        assert audio.read() == b"wav bytes"
+        assert filename == "audio/20261006_clip.wav"
+
+    @patch("dashboard.src.ai._run_voice_query")
+    @patch("dashboard.src.ai.VoiceQueryManager")
+    @patch("dashboard.src.ai.get_storage_client")
+    def test_skips_duplicate_delivery(
+        self, mock_get_storage, mock_vq_cls, mock_run, events_app
+    ):
+        mock_vq_cls.return_value.is_processed.return_value = True
+
+        with events_app.test_client() as client:
+            response = client.post("/ai/audio/events", json=minio_event(), headers=AUTH)
+
+        assert response.status_code == 200
+        assert response.get_json()["processed"] == []
+        mock_run.assert_not_called()
+
+    @patch("dashboard.src.ai._run_voice_query")
+    @patch("dashboard.src.ai.VoiceQueryManager")
+    @patch("dashboard.src.ai.get_storage_client")
+    def test_processing_error_returns_500(
+        self, mock_get_storage, mock_vq_cls, mock_run, events_app
+    ):
+        mock_vq_cls.return_value.is_processed.return_value = False
+        mock_run.side_effect = Exception("whisper down")
+
+        with events_app.test_client() as client:
+            response = client.post("/ai/audio/events", json=minio_event(), headers=AUTH)
+
+        assert response.status_code == 500
+
+    def test_rejects_wrong_token(self, events_app):
+        with events_app.test_client() as client:
+            response = client.post(
+                "/ai/audio/events",
+                json=minio_event(),
+                headers={"Authorization": "Bearer nope"},
+            )
+
+        assert response.status_code == 401
+
+    def test_rejects_when_token_not_configured(self, db_app):
+        with db_app.test_client() as client:
+            response = client.post("/ai/audio/events", json=minio_event(), headers=AUTH)
+
+        assert response.status_code == 401
