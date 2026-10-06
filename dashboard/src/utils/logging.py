@@ -14,6 +14,9 @@ def setup_logging():
     dictConfig(
         {
             "version": 1,
+            # Module-level loggers (e.g. dashboard.src.ai) exist before this
+            # runs; the default True would silently disable them.
+            "disable_existing_loggers": False,
             "formatters": {
                 "detailed": {
                     "format": (

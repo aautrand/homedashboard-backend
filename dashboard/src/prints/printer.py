@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 
 from flask import current_app
 
@@ -30,6 +31,10 @@ class ReceiptPrinter:
     def print_text(self, text: str) -> None:
         """Print free-form text, one receipt line per line of text."""
         self.print_receipt(PrintManager.print_text(text.strip().splitlines()))
+
+    def print_voice_response(self, response: str, now: datetime) -> None:
+        """Print the assistant's reply to a voice request, stamped with `now`."""
+        self.print_receipt(PrintManager.print_voice_response(response, now))
 
 
 def get_receipt_printer() -> ReceiptPrinter:

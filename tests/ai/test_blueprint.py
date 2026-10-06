@@ -320,6 +320,7 @@ class TestAIBlueprintRegistration:
 class TestAIAudioUploadEndpoint:
     """Tests for the /ai/audio/upload endpoint."""
 
+    @patch("dashboard.src.ai.get_receipt_printer")
     @patch("dashboard.src.ai.get_home_agent")
     @patch("dashboard.src.ai.get_ai_client")
     @patch("dashboard.src.ai.process_voice_query")
@@ -330,6 +331,7 @@ class TestAIAudioUploadEndpoint:
         mock_process_voice_query,
         mock_get_ai_client,
         mock_get_home_agent,
+        mock_get_receipt_printer,
         app,
     ):
         import io
@@ -426,6 +428,7 @@ class TestAIAudioUploadEndpoint:
         assert response.status_code == 500
         assert response.get_json()["error"] == "Failed to process audio"
 
+    @patch("dashboard.src.ai.get_receipt_printer")
     @patch("dashboard.src.ai.get_home_agent")
     @patch("dashboard.src.ai.get_ai_client")
     @patch("dashboard.src.ai.process_voice_query")
@@ -436,6 +439,7 @@ class TestAIAudioUploadEndpoint:
         mock_process_voice_query,
         mock_get_ai_client,
         mock_get_home_agent,
+        mock_get_receipt_printer,
         app,
     ):
         import io
@@ -467,6 +471,7 @@ class TestAIAudioUploadEndpoint:
         assert response.status_code == 500
         assert response.get_json()["error"] == "Failed to process audio"
 
+    @patch("dashboard.src.ai.get_receipt_printer")
     @patch("dashboard.src.ai.get_home_agent")
     @patch("dashboard.src.ai.get_ai_client")
     @patch("dashboard.src.ai.process_voice_query")
@@ -477,6 +482,7 @@ class TestAIAudioUploadEndpoint:
         mock_process_voice_query,
         mock_get_ai_client,
         mock_get_home_agent,
+        mock_get_receipt_printer,
         app,
     ):
         import io
@@ -512,7 +518,7 @@ class TestAIAudioUploadEndpoint:
         kwargs = mock_process_voice_query.call_args.kwargs
         assert kwargs["agent"] is mock_get_home_agent.return_value
         assert kwargs["voice_queries"].db is mock_db
-        assert "printer" not in kwargs
+        assert kwargs["printer"] is mock_get_receipt_printer.return_value
 
     def test_upload_get_not_allowed(self, app):
         from dashboard.src.ai import ai

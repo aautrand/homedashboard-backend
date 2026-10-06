@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 from flask import Flask
@@ -26,6 +27,21 @@ class TestReceiptPrinter:
         mock_print_manager.print_text.assert_called_once_with(["first", "second"])
         broker.send_message.assert_called_once_with(
             exchange="", routing_key="text_print", body=json.dumps({"lines": 2})
+        )
+
+    @patch("dashboard.src.prints.printer.PrintManager")
+    def test_print_voice_response_sends_receipt(self, mock_print_manager):
+        broker = MagicMock()
+        now = datetime(2026, 10, 6, 12, 18)
+        mock_print_manager.print_voice_response.return_value = {"reply": 1}
+
+        ReceiptPrinter(broker).print_voice_response("It's noon.", now)
+
+        mock_print_manager.print_voice_response.assert_called_once_with(
+            "It's noon.", now
+        )
+        broker.send_message.assert_called_once_with(
+            exchange="", routing_key="text_print", body=json.dumps({"reply": 1})
         )
 
     def test_factory_uses_app_broker(self):

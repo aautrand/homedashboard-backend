@@ -324,17 +324,13 @@ class PrintManager:
         return final
 
     @staticmethod
-    def print_voice_response(transcription: str, response: str) -> dict:
-        now = datetime.now()
+    def print_voice_response(response: str, now: datetime) -> dict:
+        """Receipt for a voice reply: a timestamp title and the reply only.
+
+        The transcription is left off on purpose; the user knows what they said.
+        """
         receipt_formatter = ReceiptFormatter()
 
-        receipt_formatter.add_section(
-            MultiElementSection(
-                title=" You asked ",
-                items=[transcription],
-                bullet="",
-            )
-        )
         receipt_formatter.add_section(
             MultiElementSection(
                 title="",

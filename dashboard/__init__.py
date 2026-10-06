@@ -28,6 +28,8 @@ def setup_config(app):
     )
     app.config["OLLAMA_HOST"] = os.getenv("OLLAMA_HOST", ollama_client.DEFAULT_HOST)
     app.config["MINIO_EVENT_TOKEN"] = os.getenv("MINIO_EVENT_TOKEN")
+    # IANA name, e.g. "America/Denver"; unset falls back to server time (UTC).
+    app.config["TIMEZONE"] = os.getenv("TIMEZONE")
     app.config["DB_HOST"] = os.getenv("DB_HOST")
     app.config["DB_PORT"] = os.getenv("DB_PORT")
     app.config["DB_USER"] = os.getenv("DB_USER")
