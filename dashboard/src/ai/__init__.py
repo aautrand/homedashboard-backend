@@ -9,9 +9,10 @@ from urllib.parse import unquote_plus
 
 from flask import Blueprint, current_app, jsonify, request
 
+from dashboard.src.prints.printer import get_receipt_printer
 from dashboard.src.storage import get_storage_client
 
-from .agents.home_agent import get_home_agent
+from .agents.home_agent import get_home_agent, get_local_timezone
 from .agents.voice_agent import process_voice_query
 from .clients import get_ai_client
 from .voice_query_manager import VoiceQueryManager
@@ -53,6 +54,8 @@ def _run_voice_query(audio, filename: str) -> dict:
         transcriber=get_ai_client("openai"),
         agent=get_home_agent(request.db),
         voice_queries=VoiceQueryManager(request.db),
+        printer=get_receipt_printer(),
+        tz=get_local_timezone(),
     )
 
 

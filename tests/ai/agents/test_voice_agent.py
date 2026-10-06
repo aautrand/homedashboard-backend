@@ -22,6 +22,7 @@ def agent():
     """Stub home agent, injected into process_voice_query."""
     home_agent = MagicMock()
     home_agent.respond.return_value = "Here is my response"
+    home_agent.used_tools = set()
     return home_agent
 
 
@@ -31,7 +32,12 @@ def voice_queries():
 
 
 @pytest.fixture
-def run(audio, transcriber, agent, voice_queries):
+def printer():
+    return MagicMock()
+
+
+@pytest.fixture
+def run(audio, transcriber, agent, voice_queries, printer):
     from dashboard.src.ai.agents.voice_agent import process_voice_query
 
     def _run():
@@ -41,6 +47,7 @@ def run(audio, transcriber, agent, voice_queries):
             transcriber=transcriber,
             agent=agent,
             voice_queries=voice_queries,
+            printer=printer,
         )
 
     return _run
@@ -75,7 +82,9 @@ class TestProcessVoiceQuery:
             response="Here is my response",
         )
 
-    def test_silent_recording_skips_agent(self, run, transcriber, agent, voice_queries):
+    def test_silent_recording_skips_agent(
+        self, run, transcriber, agent, voice_queries, printer
+    ):
         transcriber.transcribe.return_value = "   "
 
         result = run()
@@ -83,6 +92,7 @@ class TestProcessVoiceQuery:
         assert result == {"transcription": "   ", "llm_response": ""}
         agent.respond.assert_not_called()
         voice_queries.add_voice_query.assert_not_called()
+        printer.print_voice_response.assert_not_called()
 
     def test_transcription_error_propagates(self, run, transcriber):
         transcriber.transcribe.side_effect = Exception("Whisper API error")
@@ -97,3 +107,32 @@ class TestProcessVoiceQuery:
             run()
 
         voice_queries.add_voice_query.assert_not_called()
+
+    def test_prints_response_not_transcription(self, run, printer):
+        run()
+
+        printer.print_voice_response.assert_called_once()
+        printed = printer.print_voice_response.call_args.args
+        assert printed[0] == "Here is my response"
+        assert "hello world" not in str(printed)
+
+    def test_does_not_print_twice_when_agent_printed(self, run, agent, printer):
+        agent.used_tools = {"list_todos", "print_text"}
+
+        run()
+
+        printer.print_voice_response.assert_not_called()
+
+    def test_printer_failure_does_not_fail_request(self, run, printer, voice_queries):
+        printer.print_voice_response.side_effect = Exception("broker down")
+
+        assert run()["llm_response"] == "Here is my response"
+        voice_queries.add_voice_query.assert_called_once()
+
+    def test_agent_error_does_not_print(self, run, agent, printer):
+        agent.respond.side_effect = Exception("LLM unavailable")
+
+        with pytest.raises(Exception):
+            run()
+
+        printer.print_voice_response.assert_not_called()

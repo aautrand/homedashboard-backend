@@ -1,5 +1,6 @@
 from datetime import datetime
 from unittest.mock import MagicMock
+from zoneinfo import ZoneInfo
 
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langchain_core.messages import AIMessage
@@ -37,6 +38,32 @@ class TestHomeAgent:
         message = graph.invoke.call_args[0][0]["messages"][0]
         assert "Tuesday 2026-10-06 08:30" in message.content
         assert message.content.endswith("what's on today?")
+
+    def test_respond_records_tools_used(self):
+        graph = MagicMock()
+        graph.invoke.return_value = {
+            "messages": [
+                AIMessage(
+                    "", tool_calls=[{"name": "print_text", "args": {}, "id": "1"}]
+                ),
+                AIMessage("Printed your list."),
+            ]
+        }
+        agent = HomeAgent(graph)
+
+        agent.respond("print my todo list")
+
+        assert agent.used_tools == {"print_text"}
+
+    def test_respond_reports_time_in_configured_timezone(self):
+        graph = MagicMock()
+        graph.invoke.return_value = {"messages": [AIMessage("ok")]}
+        tz = ZoneInfo("America/Denver")
+
+        HomeAgent(graph, tz=tz).respond("what time is it?")
+
+        message = graph.invoke.call_args[0][0]["messages"][0]
+        assert f"{datetime.now(tz):%Y-%m-%d %H:}" in message.content
 
 
 class TestBuildHomeAgent:

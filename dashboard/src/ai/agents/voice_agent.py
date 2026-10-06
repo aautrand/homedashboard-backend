@@ -1,11 +1,13 @@
-"""Voice query pipeline: transcribe → agent → save to DB.
+"""Voice query pipeline: transcribe → agent → save to DB → print reply.
 
 Built as a LangGraph graph so each step is a node with its own dependency,
-and a silent recording ends the run before the agent is called. Nothing is
-printed here; the agent prints only when asked to (its print_text tool).
+and a silent recording ends the run before the agent is called. Only the
+agent's reply is printed, never the transcription. If the agent already
+printed through its print_text tool, the reply is not printed a second time.
 """
 
 import logging
+from datetime import datetime, tzinfo
 from typing import BinaryIO, TypedDict
 
 from langgraph.graph import END, START, StateGraph
@@ -20,12 +22,14 @@ class VoiceState(TypedDict, total=False):
     response: str
 
 
-def build_voice_graph(transcriber, agent, voice_queries):
+def build_voice_graph(transcriber, agent, voice_queries, printer, tz: tzinfo = None):
     """
     Args:
         transcriber: Speech-to-text client exposing transcribe().
-        agent: Exposes respond(text) -> str (see HomeAgent).
+        agent: Exposes respond(text) -> str and used_tools (see HomeAgent).
         voice_queries: VoiceQueryManager for persisting the exchange.
+        printer: ReceiptPrinter the reply is printed on.
+        tz: Timezone for the receipt timestamp; None uses server time.
     """
 
     def transcribe(state: VoiceState) -> dict:
@@ -54,19 +58,40 @@ def build_voice_graph(transcriber, agent, voice_queries):
         )
         return {}
 
+    def print_response(state: VoiceState) -> dict:
+        if "print_text" in agent.used_tools:
+            logger.info("Agent already printed for %r", state["filename"])
+            return {}
+        # The exchange is already saved; failing to queue the print (broker
+        # unreachable) should not fail it. Publishing succeeds whether or not a
+        # printer is consuming, so an offline printer is not detected here.
+        try:
+            printer.print_voice_response(state["response"], datetime.now(tz))
+        except Exception:
+            logger.exception("Failed to print response for %r", state["filename"])
+        return {}
+
     graph = StateGraph(VoiceState)
     graph.add_node("transcribe", transcribe)
     graph.add_node("respond", respond)
     graph.add_node("persist", persist)
+    graph.add_node("print_response", print_response)
     graph.add_edge(START, "transcribe")
     graph.add_conditional_edges("transcribe", has_speech, ["respond", END])
     graph.add_edge("respond", "persist")
-    graph.add_edge("persist", END)
+    graph.add_edge("persist", "print_response")
+    graph.add_edge("print_response", END)
     return graph.compile()
 
 
 def process_voice_query(
-    audio: BinaryIO, filename: str, transcriber, agent, voice_queries
+    audio: BinaryIO,
+    filename: str,
+    transcriber,
+    agent,
+    voice_queries,
+    printer,
+    tz: tzinfo = None,
 ) -> dict:
     """
     Run the full voice query pipeline for one recording.
@@ -74,12 +99,12 @@ def process_voice_query(
     Args:
         audio: Readable audio file object.
         filename: Remote filename (stored in MinIO) used as the DB reference.
-        transcriber, agent, voice_queries: See build_voice_graph().
+        transcriber, agent, voice_queries, printer, tz: See build_voice_graph().
 
     Returns:
         Dict with transcription and llm_response ("" when nothing was said).
     """
-    result = build_voice_graph(transcriber, agent, voice_queries).invoke(
+    result = build_voice_graph(transcriber, agent, voice_queries, printer, tz).invoke(
         {"audio": audio, "filename": filename}
     )
     return {

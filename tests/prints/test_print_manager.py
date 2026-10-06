@@ -191,6 +191,20 @@ class TestPrintText:
         assert result["title"] == ""
 
 
+class TestPrintVoiceResponse:
+
+    def test_title_is_timestamp_and_body_is_reply(self):
+        result = PrintManager.print_voice_response(
+            "It's 12:18 PM.\nAnything else?", datetime(2026, 10, 6, 12, 18)
+        )
+
+        assert "Oct 06, 2026 12:18" in result["title"]
+        body = json.dumps(result)
+        assert "It's 12:18 PM." in body
+        assert "Anything else?" in body
+        assert "You asked" not in body
+
+
 class TestBuildPopQuiz:
 
     def test_with_cards(self):
