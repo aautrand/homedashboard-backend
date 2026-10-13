@@ -1,8 +1,8 @@
 pipeline {
     agent any
 
+    // NEXUS_REGISTRY (host:port) comes from a Jenkins global environment variable.
     environment {
-        NEXUS_REGISTRY = 'localhost:8082'
         IMAGE          = 'homedashboard-be'
         CONTAINER_FILE = '/home/aautrand/.config/containers/systemd/homedashboard-be.container'
     }
@@ -16,7 +16,7 @@ pipeline {
                                                       passwordVariable: 'NEXUS_PASS')]) {
                         def tags = sh(
                             script: """
-                                curl -s -u \$NEXUS_USER:\$NEXUS_PASS http://${NEXUS_REGISTRY}/v2/${IMAGE}/tags/list | \
+                                curl -s -u \$NEXUS_USER:\$NEXUS_PASS http://${env.NEXUS_REGISTRY}/v2/${IMAGE}/tags/list | \
                                 python3 -c "import json,sys; d=json.load(sys.stdin); print('\\n'.join(sorted(d['tags'], key=lambda v: [int(x) for x in v.split('.')], reverse=True)))"
                             """,
                             returnStdout: true
@@ -39,7 +39,7 @@ pipeline {
                 sshagent(['aautrand-deploy-key']) {
                     sh """
                         ssh -o StrictHostKeyChecking=no aautrand@localhost '
-                            sed -i "s|^Image=.*|Image=${NEXUS_REGISTRY}/${IMAGE}:${env.SELECTED_VERSION}|" ${CONTAINER_FILE}
+                            sed -i "s|^Image=.*|Image=${env.NEXUS_REGISTRY}/${IMAGE}:${env.SELECTED_VERSION}|" ${CONTAINER_FILE}
                             XDG_RUNTIME_DIR=/run/user/\$(id -u) systemctl --user daemon-reload
                             XDG_RUNTIME_DIR=/run/user/\$(id -u) systemctl --user restart homedashboard-be
                         '

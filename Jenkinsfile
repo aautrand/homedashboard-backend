@@ -5,9 +5,10 @@ pipeline {
         string(name: 'VERSION', description: 'New version to release (e.g. 1.4.2)', trim: true)
     }
 
+    // NEXUS_REGISTRY (host:port) and FORGEJO_HOST come from Jenkins global
+    // environment variables, so no internal addresses live in the repo.
     environment {
-        NEXUS_REGISTRY = 'localhost:8082'
-        IMAGE          = 'homedashboard-be'
+        IMAGE = 'homedashboard-be'
     }
 
     stages {
@@ -38,7 +39,7 @@ pipeline {
                         git config user.name "Jenkins"
                         git add version
                         git commit -m "[system] Bump version to ${params.VERSION}" || true
-                        git push http://\$GIT_USER:\$GIT_PASS@git.example.internal/aautrand/homedashboard-be.git HEAD:dev
+                        git push http://\$GIT_USER:\$GIT_PASS@\$FORGEJO_HOST/aautrand/homedashboard-be.git HEAD:dev
                     """
                 }
             }
@@ -46,7 +47,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh "podman build -t ${NEXUS_REGISTRY}/${IMAGE}:${params.VERSION} ."
+                sh "podman build -t ${env.NEXUS_REGISTRY}/${IMAGE}:${params.VERSION} ."
             }
         }
 
@@ -56,8 +57,8 @@ pipeline {
                                                    usernameVariable: 'NEXUS_USER',
                                                    passwordVariable: 'NEXUS_PASS')]) {
                     sh """
-                        podman login --tls-verify=false ${NEXUS_REGISTRY} -u \$NEXUS_USER -p \$NEXUS_PASS
-                        podman push ${NEXUS_REGISTRY}/${IMAGE}:${params.VERSION}
+                        podman login --tls-verify=false ${env.NEXUS_REGISTRY} -u \$NEXUS_USER -p \$NEXUS_PASS
+                        podman push ${env.NEXUS_REGISTRY}/${IMAGE}:${params.VERSION}
                     """
                 }
             }

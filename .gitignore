@@ -55,6 +55,13 @@ venv.bak/
 # dotenv environment variables
 .env
 .env.*
+!.env.example
+demo.env
+
+# Local-only assistant and planning docs (not published)
+CLAUDE.md
+.claude/
+PROJECT_SUMMARY.md
 
 # SQLite database files
 *.db

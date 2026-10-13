@@ -34,3 +34,17 @@ jobs:
       - run: pip install poetry
       - run: poetry install --no-root --with dev
       - run: poetry run bandit -c bandit.yaml -r dashboard/
+
+  # Backstop for the local pre-push hook: the public mirror syncs on push, so
+  # a finding here means something is already out and must be rotated.
+  secrets:
+    runs-on: docker
+    container: nikolaik/python-nodejs:python3.11-nodejs20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: |
+          case "$(uname -m)" in aarch64|arm64) arch=arm64 ;; *) arch=x64 ;; esac
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_${arch}.tar.gz" | tar -xz -C /usr/local/bin gitleaks
+      - run: gitleaks git --no-banner --redact .

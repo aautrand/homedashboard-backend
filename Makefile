@@ -31,3 +31,7 @@ push: check
 
 lint-fix:
 	ruff check --fix .
+
+# Turn on the pre-push secret scan in .githooks/ (needs gitleaks).
+hooks:
+	git config core.hooksPath .githooks
