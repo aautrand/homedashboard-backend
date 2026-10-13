@@ -1,6 +1,10 @@
 # use bash so read -p works reliably
 SHELL := /bin/bash
 
+# Settings and secrets live outside the repo; nothing here loads a .env file.
+ENV_FILE ?= $(HOME)/.config/homedashboard/env
+WITH_ENV = set -a; . $(ENV_FILE); set +a;
+
 build:
 	docker compose build
 
@@ -31,6 +35,14 @@ push: check
 
 lint-fix:
 	ruff check --fix .
+
+# Run the app the way production does, with settings from ENV_FILE.
+serve:
+	$(WITH_ENV) gunicorn --bind 0.0.0.0:8050 --timeout 180 app:app
+
+# Apply database migrations against the database named in ENV_FILE.
+migrate:
+	$(WITH_ENV) alembic upgrade head
 
 # Turn on the pre-push secret scan in .githooks/ (needs gitleaks).
 hooks:
