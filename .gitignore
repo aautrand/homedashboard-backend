@@ -53,8 +53,7 @@ venv.bak/
 .vscode/
 
 # dotenv environment variables
-.env
-.env.*
+.env*
 !.env.example
 demo.env
 

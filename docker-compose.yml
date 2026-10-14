@@ -5,6 +5,10 @@ services:
       - "8050:8050"
     volumes:
       - .:/app
+    # Settings and secrets come from a file outside the repo.
+    env_file:
+      - path: ${HOME}/.config/homedashboard/env
+        required: false
     environment:
       - FLASK_ENV=development
       - FLASK_RUN_PORT=8050
