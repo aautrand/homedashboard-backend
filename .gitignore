@@ -61,6 +61,7 @@ demo.env
 CLAUDE.md
 .claude/
 PROJECT_SUMMARY.md
+docs/known-issues.md
 
 # SQLite database files
 *.db
