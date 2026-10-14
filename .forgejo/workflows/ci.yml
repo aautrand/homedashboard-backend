@@ -46,5 +46,5 @@ jobs:
           fetch-depth: 0
       - run: |
           case "$(uname -m)" in aarch64|arm64) arch=arm64 ;; *) arch=x64 ;; esac
-          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_${arch}.tar.gz" | tar -xz -C /usr/local/bin gitleaks
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_${arch}.tar.gz" | tar -xz -C /usr/local/bin gitleaks
       - run: gitleaks git --no-banner --redact .
